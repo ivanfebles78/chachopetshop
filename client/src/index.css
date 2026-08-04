@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-cream text-ink font-sans antialiased;
+    background-image: radial-gradient(120% 100% at 50% 0%, #fdfbf7 0%, #faf6ef 55%, #f4ede0 100%);
+    min-height: 100vh;
+  }
+
+  ::selection {
+    @apply bg-brand-500/20 text-brand-900;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display tracking-tight;
+  }
+
+  /* Scrollbar sutil */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-brand-700/25 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-brand-700/40;
+  }
+}
+
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-7xl px-5 sm:px-8;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-200
+           disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2
+           focus-visible:ring-brand-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-cream;
+  }
+  .btn-primary {
+    @apply btn bg-brand-600 px-6 py-3 text-cream shadow-soft hover:bg-brand-700 hover:shadow-lift active:scale-[0.98];
+  }
+  .btn-ghost {
+    @apply btn border border-brand-900/10 bg-white/60 px-6 py-3 text-brand-900 backdrop-blur
+           hover:border-brand-900/20 hover:bg-white active:scale-[0.98];
+  }
+  .btn-amber {
+    @apply btn bg-amber-500 px-6 py-3 text-ink shadow-soft hover:bg-amber-400 active:scale-[0.98];
+  }
+
+  .card {
+    @apply rounded-4xl border border-brand-900/[0.06] bg-white/80 shadow-soft backdrop-blur;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full border border-brand-900/10 bg-white/70 px-3 py-1
+           text-sm font-medium text-brand-900 transition-colors;
+  }
+  .chip-active {
+    @apply border-brand-600 bg-brand-600 text-cream;
+  }
+
+  .glass-nav {
+    @apply border-b border-brand-900/[0.06] bg-cream/70 backdrop-blur-xl;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .mask-fade-x {
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}

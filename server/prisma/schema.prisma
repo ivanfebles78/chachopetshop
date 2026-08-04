@@ -1,0 +1,154 @@
+// NutriPet — esquema de datos (PostgreSQL vía Prisma)
+// Modelo facetado: un producto se cruza con Animal (para quién),
+// Category (qué tipo) y Need (necesidad de salud), más Brand y variantes.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum CategoryType {
+  DRY_FOOD
+  WET_FOOD
+  SEMIMOIST
+  SNACKS
+  SUPPLEMENTS
+  HYGIENE
+  ACCESSORIES
+  BEDS
+  TRAVEL
+  VET_DIET
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  CANCELLED
+}
+
+model Brand {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  logoUrl   String?
+  featured  Boolean   @default(false)
+  products  Product[]
+  createdAt DateTime  @default(now())
+}
+
+model Animal {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  emoji    String?
+  sortOrder Int      @default(0)
+  products Product[]  @relation("ProductAnimals")
+}
+
+model Category {
+  id        String       @id @default(cuid())
+  name      String
+  slug      String       @unique
+  type      CategoryType
+  sortOrder Int          @default(0)
+  products  Product[]    @relation("ProductCategories")
+}
+
+model Need {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  products Product[]  @relation("ProductNeeds")
+}
+
+model Product {
+  id          String           @id @default(cuid())
+  name        String
+  slug        String           @unique
+  description String
+  brand       Brand            @relation(fields: [brandId], references: [id])
+  brandId     String
+  price       Decimal          @db.Decimal(10, 2)
+  compareAt   Decimal?         @db.Decimal(10, 2)
+  image       String
+  gallery     String[]
+  rating      Float            @default(4.6)
+  reviews     Int              @default(0)
+  featured    Boolean          @default(false)
+  bestseller  Boolean          @default(false)
+  active      Boolean          @default(true)
+  animals     Animal[]         @relation("ProductAnimals")
+  categories  Category[]       @relation("ProductCategories")
+  needs       Need[]           @relation("ProductNeeds")
+  variants    ProductVariant[]
+  createdAt   DateTime         @default(now())
+
+  @@index([brandId])
+}
+
+model ProductVariant {
+  id        String  @id @default(cuid())
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  label     String // p.ej. "3 kg", "12 kg", "Pack 6x400g"
+  price     Decimal @db.Decimal(10, 2)
+  sku       String  @unique
+  stock     Int     @default(0)
+
+  @@index([productId])
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  role         Role     @default(CUSTOMER)
+  orders       Order[]
+  createdAt    DateTime @default(now())
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  user            User?       @relation(fields: [userId], references: [id])
+  userId          String?
+  email           String
+  status          OrderStatus @default(PENDING)
+  subtotal        Decimal     @db.Decimal(10, 2)
+  shipping        Decimal     @db.Decimal(10, 2) @default(0)
+  total           Decimal     @db.Decimal(10, 2)
+  stripeSessionId String?     @unique
+  shippingName    String?
+  shippingAddress String?
+  shippingCity    String?
+  shippingZip     String?
+  items           OrderItem[]
+  createdAt       DateTime    @default(now())
+
+  @@index([userId])
+}
+
+model OrderItem {
+  id           String  @id @default(cuid())
+  order        Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId      String
+  productId    String
+  variantId    String?
+  name         String
+  variantLabel String?
+  unitPrice    Decimal @db.Decimal(10, 2)
+  quantity     Int
+  image        String?
+
+  @@index([orderId])
+}
