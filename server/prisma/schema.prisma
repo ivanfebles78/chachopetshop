@@ -1,4 +1,4 @@
-// NutriPet — esquema de datos (PostgreSQL vía Prisma)
+// Chacho Pet Shop — esquema de datos (PostgreSQL vía Prisma)
 // Modelo facetado: un producto se cruza con Animal (para quién),
 // Category (qué tipo) y Need (necesidad de salud), más Brand y variantes.
 

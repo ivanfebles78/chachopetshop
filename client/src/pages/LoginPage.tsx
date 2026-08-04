@@ -33,7 +33,7 @@ export function LoginPage({ mode: initial = 'login' }: { mode?: 'login' | 'regis
             {mode === 'login' ? 'Bienvenido de nuevo' : 'Crea tu cuenta'}
           </h1>
           <p className="mt-1 text-sm text-brand-900/60">
-            {mode === 'login' ? 'Accede para ver tus pedidos' : 'Únete a la manada NutriPet'}
+            {mode === 'login' ? 'Accede para ver tus pedidos' : 'Únete a la manada Chacho'}
           </p>
         </div>
 
@@ -68,7 +68,7 @@ export function LoginPage({ mode: initial = 'login' }: { mode?: 'login' | 'regis
         </p>
 
         <p className="mt-4 rounded-xl bg-brand-100/60 px-3 py-2 text-center text-xs text-brand-800">
-          Demo admin: <strong>admin@nutripet.com</strong> / <strong>admin1234</strong> · <Link to="/admin" className="underline">panel</Link>
+          Demo admin: <strong>daniel</strong> / <strong>Test1234</strong> · <Link to="/admin" className="underline">panel</Link>
         </p>
       </div>
     </div>

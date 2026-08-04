@@ -31,7 +31,7 @@ export function Footer() {
         <div>
           <Link to="/" className="flex items-center gap-2 font-display text-xl font-extrabold text-brand-800">
             <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-cream">🐾</span>
-            NutriPet
+            Chacho
           </Link>
           <p className="mt-4 max-w-xs text-sm text-brand-900/60">
             Nutrición premium y accesorios para perros, gatos, aves y más. Cuidamos a quienes más quieres.
@@ -48,7 +48,7 @@ export function Footer() {
 
       <div className="border-t border-brand-900/10">
         <div className="container-page flex flex-col items-center justify-between gap-2 py-6 text-xs text-brand-900/50 sm:flex-row">
-          <p>© {new Date().getFullYear()} NutriPet. Todos los derechos reservados.</p>
+          <p>© {new Date().getFullYear()} Chacho Pet Shop. Todos los derechos reservados.</p>
           <p>Hecho con 💚 en Canarias</p>
         </div>
       </div>

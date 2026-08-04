@@ -33,7 +33,7 @@ export function Navbar() {
       <div className="container-page flex h-16 items-center gap-4 md:h-20">
         <Link to="/" className="flex items-center gap-2 font-display text-xl font-extrabold text-brand-800">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-600 text-cream">🐾</span>
-          NutriPet
+          Chacho
         </Link>
 
         <nav className="ml-4 hidden items-center gap-1 lg:flex">

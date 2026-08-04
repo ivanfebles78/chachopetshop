@@ -60,5 +60,5 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 app.listen(env.PORT, () => {
-  console.log(`🐾 NutriPet API escuchando en http://localhost:${env.PORT}`);
+  console.log(`🐾 Chacho Pet Shop API escuchando en http://localhost:${env.PORT}`);
 });

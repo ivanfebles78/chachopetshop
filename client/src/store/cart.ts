@@ -59,7 +59,7 @@ export const useCart = create<CartState>()(
       close: () => set({ isOpen: false }),
       toggle: () => set((s) => ({ isOpen: !s.isOpen })),
     }),
-    { name: 'nutripet-cart' },
+    { name: 'chacho-cart' },
   ),
 );
 

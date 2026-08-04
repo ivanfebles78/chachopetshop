@@ -1,4 +1,4 @@
-# 🐾 NutriPet
+# 🐾 Chacho Pet Shop
 
 Tienda online de **nutrición y accesorios para mascotas** (perros, gatos, aves, roedores, peces, reptiles).
 Escaparate con diseño premium animado + tienda completa: catálogo facetado, carrito, checkout, cuentas y panel de administración.
@@ -55,8 +55,8 @@ npm run dev:client   # Web en http://localhost:5173
 ```
 
 Usuarios de demostración:
-- **Admin:** `admin@nutripet.com` / `admin1234` → `/admin`
-- **Cliente:** `cliente@nutripet.com` / `cliente1234`
+- **Admin:** `daniel` / `Test1234` (o `admin@chachopetshop.com` / `admin1234`) → `/admin`
+- **Cliente:** `cliente@chachopetshop.com` / `cliente1234`
 
 > **Checkout sin Stripe:** si no defines `STRIPE_SECRET_KEY`, el checkout usa un **pago de demostración** que marca el pedido como pagado y te lleva a la página de confirmación. Ideal para probar el flujo completo sin configurar nada.
 

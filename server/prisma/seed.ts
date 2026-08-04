@@ -444,7 +444,7 @@ const PRODUCTS: Seed[] = [
 ];
 
 async function main() {
-  console.log('🌱 Sembrando NutriPet...');
+  console.log('🌱 Sembrando Chacho Pet Shop...');
 
   // Limpieza (orden por dependencias).
   await prisma.orderItem.deleteMany();
@@ -499,8 +499,8 @@ async function main() {
 
   await prisma.user.create({
     data: {
-      email: 'admin@nutripet.com',
-      name: 'Admin NutriPet',
+      email: 'admin@chachopetshop.com',
+      name: 'Admin Chacho',
       role: 'ADMIN',
       passwordHash: await bcrypt.hash('admin1234', 10),
     },
@@ -510,7 +510,7 @@ async function main() {
   });
   const cliente = await prisma.user.create({
     data: {
-      email: 'cliente@nutripet.com',
+      email: 'cliente@chachopetshop.com',
       name: 'Cliente Demo',
       passwordHash: await bcrypt.hash('cliente1234', 10),
     },
@@ -565,7 +565,7 @@ async function main() {
   }
 
   console.log(`✅ Listo: ${PRODUCTS.length} productos, ${BRANDS.length} marcas, ${ORDERS} pedidos demo.`);
-  console.log('   Admin: admin@nutripet.com / admin1234  ·  daniel / Test1234');
+  console.log('   Admin: admin@chachopetshop.com / admin1234  ·  daniel / Test1234');
 }
 
 main()
