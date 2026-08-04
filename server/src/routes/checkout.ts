@@ -95,11 +95,9 @@ checkoutRouter.post('/', async (req, res, next) => {
     // --- Modo demo: sin claves de Stripe, marcamos pagado y devolvemos éxito ---
     if (!stripe) {
       await prisma.order.update({ where: { id: order.id }, data: { status: 'PAID' } });
-      return res.json({
-        demo: true,
-        orderId: order.id,
-        url: `${env.PUBLIC_SITE_URL}/checkout/success?order=${order.id}`,
-      });
+      // URL relativa: el navegador la resuelve contra el origen actual (funciona
+      // en local y en producción sin depender de PUBLIC_SITE_URL).
+      return res.json({ demo: true, orderId: order.id, url: `/checkout/success?order=${order.id}` });
     }
 
     // --- Stripe Checkout real ---

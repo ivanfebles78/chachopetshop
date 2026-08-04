@@ -1,0 +1,10 @@
+# No copiar dependencias ni artefactos locales (se instalan/compilan dentro de la imagen)
+**/node_modules
+**/dist
+.git
+.claude
+
+# Nunca meter secretos en la imagen
+**/.env
+**/.env.*
+!**/.env.example

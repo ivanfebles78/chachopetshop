@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 
-/** Convierte los Decimal de Prisma a number para poder enviarlos como JSON limpio. */
-export function toNumber(value: Prisma.Decimal | number | null | undefined): number | null {
+/** Convierte los Decimal de Prisma (o cualquier valor numérico) a number para JSON limpio. */
+export function toNumber(value: unknown): number | null {
   if (value === null || value === undefined) return null;
   return typeof value === 'number' ? value : Number(value);
 }
