@@ -27,5 +27,6 @@ COPY --from=server-build /app/server /app/server
 # Frontend compilado en la ruta que espera el servidor (../../client/dist)
 COPY --from=client-build /app/client/dist /app/client/dist
 WORKDIR /app/server
-# Aplica el esquema a la BD y arranca. La API sirve el frontend en la misma URL.
-CMD ["sh", "-c", "npx prisma db push --skip-generate && node dist/index.js"]
+# 1) Aplica el esquema  2) siembra SOLO si la BD está vacía  3) arranca la API
+# (la API sirve también el frontend en la misma URL).
+CMD ["sh", "-c", "npx prisma db push --skip-generate && { SEED_ONLY_IF_EMPTY=1 npx tsx prisma/seed.ts || echo 'seed omitido'; } && node dist/index.js"]

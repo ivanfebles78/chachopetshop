@@ -444,6 +444,16 @@ const PRODUCTS: Seed[] = [
 ];
 
 async function main() {
+  // En producción arrancamos con SEED_ONLY_IF_EMPTY=1: solo sembramos si no hay
+  // datos, para no borrar pedidos reales en cada despliegue.
+  if (process.env.SEED_ONLY_IF_EMPTY === '1') {
+    const count = await prisma.product.count().catch(() => 0);
+    if (count > 0) {
+      console.log(`⏭️  Seed omitido: la BD ya tiene ${count} productos.`);
+      return;
+    }
+  }
+
   console.log('🌱 Sembrando Chacho Pet Shop...');
 
   // Limpieza (orden por dependencias).
