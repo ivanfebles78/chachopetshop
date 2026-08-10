@@ -49,7 +49,7 @@ export function Footer() {
       <div className="border-t border-brand-900/10">
         <div className="container-page flex flex-col items-center justify-between gap-2 py-6 text-xs text-brand-900/50 sm:flex-row">
           <p>© {new Date().getFullYear()} Chacho Pet Shop. Todos los derechos reservados.</p>
-          <p>Hecho con 💚 en Canarias</p>
+          <p>Hecho con 💛 en Canarias</p>
         </div>
       </div>
     </footer>

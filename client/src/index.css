@@ -13,7 +13,7 @@
 
   body {
     @apply bg-cream text-ink font-sans antialiased;
-    background-image: radial-gradient(120% 100% at 50% 0%, #fdfbf7 0%, #faf6ef 55%, #f4ede0 100%);
+    background-image: radial-gradient(120% 100% at 50% 0%, #fbfcfe 0%, #f3f7fd 55%, #e8f0fa 100%);
     min-height: 100vh;
   }
 
