@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Clock, Facebook, Instagram, Mail, MapPin, Phone } from 'lucide-react';
 import { Reveal } from '@/components/Reveal';
 import { toast } from '@/store/toast';
+import { api } from '@/lib/api';
 
 // ⚠️ Datos de ejemplo — edítalos con los reales de Chacho Pet Shop.
 const INFO = {
@@ -15,17 +17,25 @@ const INFO = {
 export function ContactoPage() {
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
   const [accept, setAccept] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!accept) {
       toast.error('Debes aceptar la política de privacidad.');
       return;
     }
-    // Demo: sin backend de correo todavía. Mostramos confirmación y limpiamos.
-    toast.success('¡Gracias! Hemos recibido tu mensaje, te responderemos pronto.');
-    setForm({ name: '', email: '', subject: '', message: '' });
-    setAccept(false);
+    setBusy(true);
+    try {
+      await api.contact(form);
+      toast.success('¡Gracias! Hemos recibido tu mensaje, te responderemos pronto.');
+      setForm({ name: '', email: '', subject: '', message: '' });
+      setAccept(false);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const field = (key: keyof typeof form, label: string, type = 'text') => (
@@ -72,9 +82,11 @@ export function ContactoPage() {
             </label>
             <label className="flex items-start gap-2 text-sm text-brand-900/70">
               <input type="checkbox" checked={accept} onChange={(e) => setAccept(e.target.checked)} className="mt-0.5 h-4 w-4 rounded border-brand-900/20 text-brand-600 focus:ring-sky-500" />
-              <span>He leído y acepto la política de privacidad.</span>
+              <span>He leído y acepto la <Link to="/privacidad" className="font-semibold text-brand-700 underline">política de privacidad</Link>.</span>
             </label>
-            <button type="submit" className="btn-primary w-full py-3.5 text-base">Enviar mensaje</button>
+            <button type="submit" disabled={busy} className="btn-primary w-full py-3.5 text-base">
+              {busy ? 'Enviando…' : 'Enviar mensaje'}
+            </button>
           </form>
         </Reveal>
 

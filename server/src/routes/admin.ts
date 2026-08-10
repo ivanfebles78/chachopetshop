@@ -146,3 +146,32 @@ adminRouter.patch('/orders/:id', async (req, res, next) => {
     next(err);
   }
 });
+
+// --- Mensajes de contacto ---
+adminRouter.get('/messages', async (_req, res, next) => {
+  try {
+    const messages = await prisma.contactMessage.findMany({ orderBy: { createdAt: 'desc' } });
+    res.json({ messages });
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.patch('/messages/:id', async (req, res, next) => {
+  try {
+    const { read } = z.object({ read: z.boolean() }).parse(req.body);
+    await prisma.contactMessage.update({ where: { id: req.params.id }, data: { read } });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.delete('/messages/:id', async (req, res, next) => {
+  try {
+    await prisma.contactMessage.delete({ where: { id: req.params.id } });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});

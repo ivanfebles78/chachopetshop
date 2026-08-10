@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BarChart3, Package, Receipt, Trash2 } from 'lucide-react';
+import { BarChart3, Mail, MailOpen, Package, Receipt, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { cn, eur } from '@/lib/cn';
@@ -14,13 +14,15 @@ const STATUSES: Order['status'][] = ['PENDING', 'PAID', 'FULFILLED', 'CANCELLED'
 
 export function AdminPage() {
   const { user, loading } = useAuth();
-  const [tab, setTab] = useState<'stats' | 'products' | 'orders'>('stats');
+  const [tab, setTab] = useState<'stats' | 'products' | 'orders' | 'messages'>('stats');
   const [nonce, setNonce] = useState(0);
   const isAdmin = user?.role === 'ADMIN';
 
   const analytics = useFetch(() => (isAdmin ? api.adminAnalytics() : Promise.resolve(null)), [user?.id, nonce]);
   const products = useFetch(() => (isAdmin ? api.adminProducts() : Promise.resolve(null)), [user?.id, nonce]);
   const orders = useFetch(() => (isAdmin ? api.adminOrders() : Promise.resolve(null)), [user?.id, nonce]);
+  const messages = useFetch(() => (isAdmin ? api.adminMessages() : Promise.resolve(null)), [user?.id, nonce]);
+  const unread = messages.data?.messages.filter((m) => !m.read).length ?? 0;
 
   if (loading) return <div className="container-page py-20 text-center text-brand-900/50">Cargando…</div>;
   if (user?.role !== 'ADMIN') {
@@ -52,6 +54,24 @@ export function AdminPage() {
       toast.error((err as Error).message);
     }
   };
+  const markMessage = async (id: string, read: boolean) => {
+    try {
+      await api.adminMarkMessage(id, read);
+      setNonce((n) => n + 1);
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
+  const deleteMessage = async (id: string) => {
+    if (!confirm('¿Eliminar este mensaje?')) return;
+    try {
+      await api.adminDeleteMessage(id);
+      toast.success('Mensaje eliminado');
+      setNonce((n) => n + 1);
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  };
 
   return (
     <div className="container-page py-10">
@@ -66,6 +86,9 @@ export function AdminPage() {
         </TabBtn>
         <TabBtn active={tab === 'orders'} onClick={() => setTab('orders')} icon={<Receipt className="h-4 w-4" />}>
           Pedidos ({orders.data?.orders.length ?? 0})
+        </TabBtn>
+        <TabBtn active={tab === 'messages'} onClick={() => setTab('messages')} icon={<Mail className="h-4 w-4" />}>
+          Mensajes{unread > 0 && <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-xs font-bold text-ink">{unread}</span>}
         </TabBtn>
       </div>
 
@@ -111,7 +134,7 @@ export function AdminPage() {
             </tbody>
           </table>
         </div>
-      ) : (
+      ) : tab === 'orders' ? (
         <div className="space-y-3">
           {!orders.data?.orders.length ? (
             <div className="card rounded-4xl py-12 text-center text-brand-900/60">Aún no hay pedidos.</div>
@@ -134,7 +157,42 @@ export function AdminPage() {
             ))
           )}
         </div>
+      ) : (
+        <MessagesPanel data={messages.data?.messages} onRead={markMessage} onDelete={deleteMessage} />
       )}
+    </div>
+  );
+}
+
+function MessagesPanel({
+  data, onRead, onDelete,
+}: { data?: import('@/lib/types').ContactMessage[]; onRead: (id: string, read: boolean) => void; onDelete: (id: string) => void }) {
+  if (!data) return <div className="card rounded-4xl py-12 text-center text-brand-900/50">Cargando…</div>;
+  if (!data.length) return <div className="card rounded-4xl py-12 text-center text-brand-900/60">Aún no hay mensajes.</div>;
+  return (
+    <div className="space-y-3">
+      {data.map((m) => (
+        <div key={m.id} className={cn('card rounded-4xl p-5', !m.read && 'border-l-4 border-l-amber-500')}>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="font-display font-bold text-ink">
+                {!m.read && <span className="mr-2 rounded-full bg-amber-500 px-2 py-0.5 text-xs font-bold text-ink">Nuevo</span>}
+                {m.subject}
+              </p>
+              <p className="text-sm text-brand-900/60">{m.name} · <a href={`mailto:${m.email}`} className="hover:text-brand-700">{m.email}</a> · {new Date(m.createdAt).toLocaleString('es-ES')}</p>
+            </div>
+            <div className="flex gap-1">
+              <button onClick={() => onRead(m.id, !m.read)} className="rounded-lg p-2 text-brand-900/50 hover:bg-brand-50 hover:text-brand-700" aria-label={m.read ? 'Marcar no leído' : 'Marcar leído'}>
+                {m.read ? <MailOpen className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
+              </button>
+              <button onClick={() => onDelete(m.id)} className="rounded-lg p-2 text-brand-900/40 hover:bg-red-50 hover:text-red-500" aria-label="Eliminar">
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <p className="mt-3 whitespace-pre-wrap rounded-2xl bg-brand-50 p-4 text-sm text-brand-900/80">{m.message}</p>
+        </div>
+      ))}
     </div>
   );
 }

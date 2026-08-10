@@ -1,6 +1,7 @@
 import type {
   Analytics,
   AuthUser,
+  ContactMessage,
   Order,
   Product,
   ProductListResponse,
@@ -93,7 +94,15 @@ export const api = {
   order: (id: string) => request<{ order: Order }>(`/orders/${id}`),
   myOrders: () => request<{ orders: Order[] }>('/orders'),
 
+  contact: (data: { name: string; email: string; subject: string; message: string }) =>
+    request<{ ok: boolean; id: string }>('/contact', { method: 'POST', body: JSON.stringify(data) }),
+
   adminAnalytics: () => request<Analytics>('/admin/analytics'),
+  adminMessages: () => request<{ messages: ContactMessage[] }>('/admin/messages'),
+  adminMarkMessage: (id: string, read: boolean) =>
+    request<{ ok: boolean }>(`/admin/messages/${id}`, { method: 'PATCH', body: JSON.stringify({ read }) }),
+  adminDeleteMessage: (id: string) =>
+    request<{ ok: boolean }>(`/admin/messages/${id}`, { method: 'DELETE' }),
   adminProducts: () => request<{ products: Product[] }>('/admin/products'),
   adminDeleteProduct: (id: string) => request<{ ok: boolean }>(`/admin/products/${id}`, { method: 'DELETE' }),
   adminOrders: () => request<{ orders: Order[] }>('/admin/orders'),

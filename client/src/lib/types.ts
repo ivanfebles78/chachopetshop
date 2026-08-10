@@ -63,6 +63,16 @@ export type Order = {
 
 export type AuthUser = { id: string; email: string; role: 'CUSTOMER' | 'ADMIN' };
 
+export type ContactMessage = {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  read: boolean;
+  createdAt: string;
+};
+
 export type Analytics = {
   kpis: {
     revenueToday: number;

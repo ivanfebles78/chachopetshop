@@ -13,6 +13,7 @@ import { authRouter } from './routes/auth.js';
 import { checkoutRouter, stripeWebhookHandler } from './routes/checkout.js';
 import { ordersRouter } from './routes/orders.js';
 import { adminRouter } from './routes/admin.js';
+import { contactRouter } from './routes/contact.js';
 
 const app = express();
 app.set('trust proxy', 1);
@@ -36,6 +37,7 @@ app.use('/api/products', productsRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/checkout', checkoutRouter);
 app.use('/api/orders', ordersRouter);
+app.use('/api/contact', contactRouter);
 app.use('/api/admin', adminRouter);
 
 // --- En producción, servimos el build del frontend desde el mismo servicio ---

@@ -10,6 +10,10 @@ import { AccountPage } from './pages/AccountPage';
 import { AdminPage } from './pages/AdminPage';
 import { ConocenosPage } from './pages/ConocenosPage';
 import { ContactoPage } from './pages/ContactoPage';
+import { AvisoLegalPage } from './pages/legal/AvisoLegalPage';
+import { PrivacidadPage } from './pages/legal/PrivacidadPage';
+import { CookiesPage } from './pages/legal/CookiesPage';
+import { CondicionesPage } from './pages/legal/CondicionesPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 export const router = createBrowserRouter([
@@ -24,6 +28,10 @@ export const router = createBrowserRouter([
       { path: '/checkout/cancel', element: <CheckoutResultPage kind="cancel" /> },
       { path: '/conocenos', element: <ConocenosPage /> },
       { path: '/contacto', element: <ContactoPage /> },
+      { path: '/aviso-legal', element: <AvisoLegalPage /> },
+      { path: '/privacidad', element: <PrivacidadPage /> },
+      { path: '/cookies', element: <CookiesPage /> },
+      { path: '/condiciones', element: <CondicionesPage /> },
       { path: '/login', element: <LoginPage /> },
       { path: '/registro', element: <LoginPage mode="register" /> },
       { path: '/cuenta', element: <AccountPage /> },

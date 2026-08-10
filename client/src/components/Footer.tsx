@@ -43,7 +43,7 @@ export function Footer() {
         </div>
         <FooterCol title="Comprar" links={[['Perros', '/tienda?animal=perro'], ['Gatos', '/tienda?animal=gato'], ['Aves', '/tienda?animal=ave'], ['Ofertas', '/tienda?featured=1']]} />
         <FooterCol title="Ayuda" links={[['Conócenos', '/conocenos'], ['Contacto', '/contacto'], ['Envíos y devoluciones', '/contacto'], ['Mi cuenta', '/cuenta']]} />
-        <FooterCol title="Legal" links={[['Aviso legal', '#'], ['Privacidad', '#'], ['Cookies', '#'], ['Términos', '#']]} />
+        <FooterCol title="Legal" links={[['Aviso legal', '/aviso-legal'], ['Privacidad', '/privacidad'], ['Cookies', '/cookies'], ['Condiciones de compra', '/condiciones']]} />
       </div>
 
       <div className="border-t border-brand-900/10">
