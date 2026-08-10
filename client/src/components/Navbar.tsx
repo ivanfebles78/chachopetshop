@@ -69,7 +69,11 @@ export function Navbar() {
       <div className="bg-brand-800 text-cream/90">
         <div className="container-page flex h-9 items-center justify-between text-xs font-medium">
           <span className="flex items-center gap-2"><Truck className="h-3.5 w-3.5 text-amber-400" /> Envío 24-48h en Canarias · Gratis desde 49€</span>
-          <a href="tel:+34922000000" className="hidden items-center gap-2 hover:text-amber-400 sm:flex"><Phone className="h-3.5 w-3.5" /> 922 00 00 00</a>
+          <div className="hidden items-center gap-4 sm:flex">
+            <Link to="/conocenos" className="hover:text-amber-400">Conócenos</Link>
+            <Link to="/contacto" className="hover:text-amber-400">Contacto</Link>
+            <a href="tel:+34922000000" className="flex items-center gap-1.5 hover:text-amber-400"><Phone className="h-3.5 w-3.5" /> 922 00 00 00</a>
+          </div>
         </div>
       </div>
 
@@ -201,9 +205,13 @@ function MobileMenu({
             </div>
           ),
         )}
-        <Link to={loggedIn ? '/cuenta' : '/login'} onClick={onClose} className="block rounded-xl px-2 py-2 font-bold text-brand-800 hover:bg-brand-50">
-          {loggedIn ? 'Mi cuenta' : 'Iniciar sesión'}
-        </Link>
+        <div className="border-t border-brand-900/10 pt-2">
+          <Link to="/conocenos" onClick={onClose} className="block rounded-xl px-2 py-2 font-bold text-brand-800 hover:bg-brand-50">Conócenos</Link>
+          <Link to="/contacto" onClick={onClose} className="block rounded-xl px-2 py-2 font-bold text-brand-800 hover:bg-brand-50">Contacto</Link>
+          <Link to={loggedIn ? '/cuenta' : '/login'} onClick={onClose} className="block rounded-xl px-2 py-2 font-bold text-brand-800 hover:bg-brand-50">
+            {loggedIn ? 'Mi cuenta' : 'Iniciar sesión'}
+          </Link>
+        </div>
       </div>
     </motion.div>
   );

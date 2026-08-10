@@ -8,6 +8,8 @@ import { CheckoutResultPage } from './pages/CheckoutResultPage';
 import { LoginPage } from './pages/LoginPage';
 import { AccountPage } from './pages/AccountPage';
 import { AdminPage } from './pages/AdminPage';
+import { ConocenosPage } from './pages/ConocenosPage';
+import { ContactoPage } from './pages/ContactoPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 export const router = createBrowserRouter([
@@ -20,6 +22,8 @@ export const router = createBrowserRouter([
       { path: '/checkout', element: <CheckoutPage /> },
       { path: '/checkout/success', element: <CheckoutResultPage kind="success" /> },
       { path: '/checkout/cancel', element: <CheckoutResultPage kind="cancel" /> },
+      { path: '/conocenos', element: <ConocenosPage /> },
+      { path: '/contacto', element: <ContactoPage /> },
       { path: '/login', element: <LoginPage /> },
       { path: '/registro', element: <LoginPage mode="register" /> },
       { path: '/cuenta', element: <AccountPage /> },

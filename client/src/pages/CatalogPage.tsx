@@ -15,6 +15,24 @@ const SORTS = [
   ['newest', 'Novedades'],
 ] as const;
 
+// Descripción de sección (para que cada entrada del menú tenga su cabecera propia).
+const SECTION_DESC: Record<string, string> = {
+  perro: 'Nutrición, snacks y accesorios para perros de todas las razas y edades.',
+  gato: 'Todo para tu gato: pienso, comida húmeda, arena, rascadores y más.',
+  ave: 'Alimento y accesorios para canarios, periquitos y otras aves.',
+  roedor: 'Heno, mezclas y premios para conejos, cobayas y hámsters.',
+  pez: 'Alimento y cuidado para tus peces de agua dulce y tropical.',
+  reptil: 'Nutrición y accesorios para reptiles y terrarios.',
+  'dietas-veterinarias': 'Dietas clínicas para necesidades específicas, recomendadas por veterinarios.',
+  'alimentacion-seca': 'Piensos secos de alta calidad, sin cereales y recetas premium.',
+  'alimentacion-humeda': 'Latas y tarrinas de comida húmeda natural y apetecible.',
+  'premios-snacks': 'Premios, snacks dentales y recompensas saludables.',
+  suplementos: 'Suplementos y cosmética para el bienestar de tu mascota.',
+  accesorios: 'Comederos, transportines, rascadores y mucho más.',
+  higiene: 'Higiene, cosmética y arenas aglomerantes.',
+  camas: 'Camas, colchones y zonas de descanso cómodas.',
+};
+
 export function CatalogPage() {
   const [params, setParams] = useSearchParams();
   const [mobileFilters, setMobileFilters] = useState(false);
@@ -69,7 +87,11 @@ export function CatalogPage() {
     <div className="container-page py-8">
       <div className="mb-6">
         <h1 className="font-display text-3xl font-bold text-ink sm:text-4xl">{title}</h1>
-        <p className="mt-1 text-brand-900/60">{data?.total ?? '—'} productos</p>
+        {(() => {
+          const desc = (filters.category && SECTION_DESC[filters.category]) || (filters.animal && SECTION_DESC[filters.animal]);
+          return desc ? <p className="mt-2 max-w-2xl text-brand-900/60">{desc}</p> : null;
+        })()}
+        <p className="mt-1 text-sm text-brand-900/50">{data?.total ?? '—'} productos</p>
       </div>
 
       <div className="flex items-center justify-between gap-3 lg:hidden">

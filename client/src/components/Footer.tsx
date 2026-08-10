@@ -42,7 +42,7 @@ export function Footer() {
           </div>
         </div>
         <FooterCol title="Comprar" links={[['Perros', '/tienda?animal=perro'], ['Gatos', '/tienda?animal=gato'], ['Aves', '/tienda?animal=ave'], ['Ofertas', '/tienda?featured=1']]} />
-        <FooterCol title="Ayuda" links={[['Envíos y devoluciones', '#'], ['Preguntas frecuentes', '#'], ['Contacto', '#'], ['Mi cuenta', '/cuenta']]} />
+        <FooterCol title="Ayuda" links={[['Conócenos', '/conocenos'], ['Contacto', '/contacto'], ['Envíos y devoluciones', '/contacto'], ['Mi cuenta', '/cuenta']]} />
         <FooterCol title="Legal" links={[['Aviso legal', '#'], ['Privacidad', '#'], ['Cookies', '#'], ['Términos', '#']]} />
       </div>
 
