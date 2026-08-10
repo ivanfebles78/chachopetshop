@@ -89,7 +89,7 @@ checkoutRouter.post('/', async (req, res, next) => {
   try {
     const input = checkoutBody.parse(req.body);
     if (req.user) input.email = req.user.email;
-    const { order, lineItems } = await buildOrder(input);
+    const { order, lineItems, shipping } = await buildOrder(input);
     if (req.user) await prisma.order.update({ where: { id: order.id }, data: { userId: req.user.id } });
 
     // --- Modo demo: sin claves de Stripe, marcamos pagado y devolvemos éxito ---
@@ -101,20 +101,34 @@ checkoutRouter.post('/', async (req, res, next) => {
     }
 
     // --- Stripe Checkout real ---
+    // Base de la URL de retorno: la calculamos desde la petición (funciona en
+    // cualquier dominio sin configurar PUBLIC_SITE_URL). Fallback a la variable.
+    const host = req.get('host');
+    const base = req.headers.origin ?? (host ? `${req.protocol}://${host}` : env.PUBLIC_SITE_URL);
+
+    const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = lineItems.map((l) => ({
+      quantity: l.quantity,
+      price_data: {
+        currency: 'eur',
+        unit_amount: Math.round(l.unitPrice * 100),
+        product_data: { name: l.variantLabel ? `${l.name} · ${l.variantLabel}` : l.name },
+      },
+    }));
+    // El envío se cobra como una línea más para que el total coincida con el pedido.
+    if (shipping > 0) {
+      line_items.push({
+        quantity: 1,
+        price_data: { currency: 'eur', unit_amount: Math.round(shipping * 100), product_data: { name: 'Gastos de envío' } },
+      });
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       customer_email: input.email,
-      line_items: lineItems.map((l) => ({
-        quantity: l.quantity,
-        price_data: {
-          currency: 'eur',
-          unit_amount: Math.round(l.unitPrice * 100),
-          product_data: { name: l.variantLabel ? `${l.name} · ${l.variantLabel}` : l.name },
-        },
-      })),
+      line_items,
       metadata: { orderId: order.id },
-      success_url: `${env.PUBLIC_SITE_URL}/checkout/success?order=${order.id}`,
-      cancel_url: `${env.PUBLIC_SITE_URL}/checkout/cancel?order=${order.id}`,
+      success_url: `${base}/checkout/success?order=${order.id}`,
+      cancel_url: `${base}/checkout/cancel?order=${order.id}`,
     });
 
     await prisma.order.update({ where: { id: order.id }, data: { stripeSessionId: session.id } });
