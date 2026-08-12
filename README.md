@@ -60,6 +60,21 @@ Usuarios de demostración:
 
 > **Checkout sin Stripe:** si no defines `STRIPE_SECRET_KEY`, el checkout usa un **pago de demostración** que marca el pedido como pagado y te lleva a la página de confirmación. Ideal para probar el flujo completo sin configurar nada.
 
+## 💳 Activar pagos reales con Stripe (guía para el cliente)
+
+La tienda sale de fábrica en **modo demo**. Para cobrar de verdad, el propietario crea su cuenta de Stripe y añade **2 variables** en Railway + **1 webhook**. No hace falta tocar código ni volver a desplegar manualmente.
+
+1. **Clave secreta:** en [dashboard.stripe.com](https://dashboard.stripe.com) → *Desarrolladores → Claves de API* → copiar la **Clave secreta** (`sk_test_…` en pruebas, `sk_live_…` en real).
+2. **Variable en Railway** → servicio → *Variables*: `STRIPE_SECRET_KEY = sk_…` (al guardarla, el checkout deja de ser demo).
+3. **Webhook:** en Stripe → *Desarrolladores → Webhooks → Añadir endpoint*:
+   - URL: `https://TU-DOMINIO/api/checkout/webhook`
+   - Evento: `checkout.session.completed`
+   - Copiar el *Signing secret* (`whsec_…`) y añadirlo en Railway: `STRIPE_WEBHOOK_SECRET = whsec_…`
+4. **Métodos de pago** (tarjeta, Bizum…): se activan en Stripe → *Ajustes → Métodos de pago*.
+5. **Prueba (modo test):** tarjeta `4242 4242 4242 4242`, fecha futura, CVC y CP cualesquiera. El pedido debe pasar a **Pagado** en *Panel → Pedidos*.
+
+Notas: el importe cobrado **incluye el envío**; la URL de retorno se calcula sola desde la petición. Sin `STRIPE_WEBHOOK_SECRET` el cobro se realiza pero el pedido queda **Pendiente** (el webhook es lo que lo marca como Pagado).
+
 ## ☁️ Despliegue barato (GitHub → Railway → Cloudflare)
 
 ### 1. API + PostgreSQL en Railway
