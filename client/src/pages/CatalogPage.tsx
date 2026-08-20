@@ -11,7 +11,6 @@ const SORTS = [
   ['relevance', 'Relevancia'],
   ['price_asc', 'Precio: menor'],
   ['price_desc', 'Precio: mayor'],
-  ['rating', 'Mejor valorados'],
   ['newest', 'Novedades'],
 ] as const;
 

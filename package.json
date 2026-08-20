@@ -9,6 +9,8 @@
     "dev:client": "npm run dev --prefix client",
     "db:push": "npm run db:push --prefix server",
     "db:seed": "npm run db:seed --prefix server",
-    "build": "npm run build --prefix client && npm run build --prefix server"
+    "build": "npm run build --prefix client && npm run build --prefix server",
+    "test": "npm run test --prefix server",
+    "typecheck": "npm run typecheck --prefix server && cd client && npx tsc -b --noEmit"
   }
 }

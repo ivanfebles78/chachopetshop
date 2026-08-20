@@ -495,8 +495,6 @@ async function main() {
         compareAt: p.compareAt ?? null,
         image: img(p.slug),
         gallery: [img(p.slug), img(`${p.slug}-2`), img(`${p.slug}-3`)],
-        rating: Number((4.2 + Math.random() * 0.8).toFixed(1)),
-        reviews: Math.floor(20 + Math.random() * 380),
         featured: p.featured ?? false,
         bestseller: p.bestseller ?? false,
         animals: { connect: p.animals.map((s) => ({ id: animalId(s) })) },

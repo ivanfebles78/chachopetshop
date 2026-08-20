@@ -29,9 +29,18 @@ enum CategoryType {
   VET_DIET
 }
 
+/**
+ * Estados de un pedido.
+ *
+ * PENDING es «creado, esperando el pago»; PAID sólo lo escribe un webhook de
+ * Stripe con firma válida y pago confirmado. FAILED y CANCELLED se separan
+ * porque significan cosas distintas para el stock y para el cliente: un pago
+ * rechazado puede reintentarse, uno cancelado lo abandonó la persona.
+ */
 enum OrderStatus {
   PENDING
   PAID
+  FAILED
   FULFILLED
   CANCELLED
 }
@@ -82,8 +91,13 @@ model Product {
   compareAt   Decimal?         @db.Decimal(10, 2)
   image       String
   gallery     String[]
-  rating      Float            @default(4.6)
-  reviews     Int              @default(0)
+  /*
+   * Reservados para un sistema de reseñas REAL. Hasta que exista, quedan
+   * vacíos y no se publican: `@default(4.6)` convertía en «4,6 estrellas» a
+   * cualquier producto recién creado, sin que nadie hubiese opinado.
+   */
+  rating      Float?
+  reviews     Int?
   featured    Boolean          @default(false)
   bestseller  Boolean          @default(false)
   active      Boolean          @default(true)
@@ -128,6 +142,30 @@ model Order {
   shipping        Decimal     @db.Decimal(10, 2) @default(0)
   total           Decimal     @db.Decimal(10, 2)
   stripeSessionId String?     @unique
+
+  /*
+   * Secreto de acceso al pedido, para que quien compra sin cuenta pueda ver su
+   * confirmación. NO es el identificador: el id va en la URL y acaba en el
+   * historial y en la cabecera Referer; esto son 32 bytes aleatorios que sólo
+   * conoce quien completó la compra.
+   */
+  /*
+   * Nullable a propósito. Los pedidos que ya existen en producción no tienen
+   * token, y añadir una columna NOT NULL UNIQUE a una tabla con filas falla al
+   * desplegar. Un pedido sin token simplemente no se puede consultar con token:
+   * se consulta autenticado, que es lo que ya hacía antes de esta fase.
+   */
+  accessToken     String?     @unique
+
+  /*
+   * Si las existencias de este pedido siguen retenidas. El stock se descuenta al
+   * crear la sesión de pago para que dos personas no puedan comprar la misma
+   * última unidad, y se devuelve si el pago falla, se cancela o caduca. El
+   * booleano hace que devolverlo sea idempotente: un webhook repetido no puede
+   * reponer el stock dos veces.
+   */
+  stockCommitted  Boolean     @default(false)
+
   shippingName    String?
   shippingAddress String?
   shippingCity    String?
@@ -151,6 +189,22 @@ model OrderItem {
   image        String?
 
   @@index([orderId])
+}
+
+/**
+ * Eventos de Stripe ya procesados.
+ *
+ * Stripe reintenta los webhooks por diseño, así que llegan duplicados de forma
+ * rutinaria. Sin este registro, un reintento volvería a aplicar los efectos:
+ * reponer stock, cambiar estados, disparar correos. La clave única sobre el id
+ * del evento es lo que convierte «procesar» en una operación idempotente.
+ */
+model StripeEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+
+  @@index([processedAt])
 }
 
 model ContactMessage {

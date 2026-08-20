@@ -86,15 +86,30 @@ export const api = {
     email: string;
     items: { productId: string; variantId?: string; quantity: number }[];
     shipping?: { name?: string; address?: string; city?: string; zip?: string };
-  }) => request<{ demo: boolean; orderId: string; url: string }>('/checkout', {
+  }) => request<{ orderId: string; url: string }>('/checkout', {
     method: 'POST',
     body: JSON.stringify(data),
   }),
 
-  order: (id: string) => request<{ order: Order }>(`/orders/${id}`),
+  /*
+   * El token va como parámetro porque es lo que permite a quien compra SIN
+   * cuenta ver su confirmación. El identificador del pedido ya no basta: antes
+   * bastaba, y por eso cualquiera con el enlace veía nombre y dirección.
+   */
+  order: (id: string, token?: string) =>
+    request<{ order: Order }>(`/orders/${id}${token ? `?t=${encodeURIComponent(token)}` : ''}`),
   myOrders: () => request<{ orders: Order[] }>('/orders'),
 
-  contact: (data: { name: string; email: string; subject: string; message: string }) =>
+  contact: (data: {
+    name: string;
+    email: string;
+    phone?: string;
+    subject: string;
+    message: string;
+    // Consentimiento expreso: el servidor lo exige, no es decorativo.
+    consent: boolean;
+    website?: string;
+  }) =>
     request<{ ok: boolean; id: string }>('/contact', { method: 'POST', body: JSON.stringify(data) }),
 
   adminAnalytics: () => request<Analytics>('/admin/analytics'),

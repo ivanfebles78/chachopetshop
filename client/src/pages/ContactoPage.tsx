@@ -15,7 +15,16 @@ const INFO = {
 };
 
 export function ContactoPage() {
-  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+  // `phone` es opcional y `website` es el cebo para robots: invisible para una
+  // persona, así que si llega con algo, quien envía es automático.
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: '',
+    website: '',
+  });
   const [accept, setAccept] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -27,9 +36,9 @@ export function ContactoPage() {
     }
     setBusy(true);
     try {
-      await api.contact(form);
+      await api.contact({ ...form, consent: accept });
       toast.success('¡Gracias! Hemos recibido tu mensaje, te responderemos pronto.');
-      setForm({ name: '', email: '', subject: '', message: '' });
+      setForm({ name: '', email: '', phone: '', subject: '', message: '', website: '' });
       setAccept(false);
     } catch (err) {
       toast.error((err as Error).message);
@@ -69,7 +78,26 @@ export function ContactoPage() {
               {field('name', 'Nombre')}
               {field('email', 'Email', 'email')}
             </div>
+            {field('phone', 'Teléfono (opcional)', 'tel')}
             {field('subject', 'Asunto')}
+
+            {/*
+              Cebo para robots. No se oculta con `display:none` —algunos lo
+              detectan— sino sacándolo de la vista y del recorrido de teclado, y
+              se marca `aria-hidden` para que un lector de pantalla lo ignore.
+            */}
+            <div className="absolute left-[-9999px]" aria-hidden="true">
+              <label>
+                No rellenar
+                <input
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={form.website}
+                  onChange={(e) => setForm({ ...form, website: e.target.value })}
+                />
+              </label>
+            </div>
             <label className="block">
               <span className="mb-1 block text-sm font-semibold text-brand-900/70">Mensaje</span>
               <textarea

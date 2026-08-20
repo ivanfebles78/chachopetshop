@@ -92,7 +92,7 @@ export function CheckoutPage() {
             {submitting ? 'Procesando…' : `Pagar ${eur(total)}`}
           </button>
           <p className="text-center text-xs text-brand-900/50">
-            Pago seguro procesado con Stripe. Si no hay claves configuradas, se usa un pago de demostración.
+            Pago seguro procesado con Stripe. No guardamos los datos de tu tarjeta.
           </p>
         </form>
 
