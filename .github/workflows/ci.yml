@@ -43,12 +43,18 @@ jobs:
           node-version: 20
       - name: Instalar dependencias
         run: npm ci --prefix server
+      # `working-directory` y no `--prefix`: `npm exec` lanza el binario con el
+      # directorio ACTUAL como cwd, así que desde la raíz Prisma no encuentra
+      # `server/prisma/schema.prisma`. Con `npm run` no pasa —los scripts se
+      # ejecutan en el directorio del paquete—, y por eso sólo fallaban estos dos.
       - name: Generar el cliente de Prisma
-        run: npm --prefix server exec prisma generate
+        working-directory: server
+        run: npx prisma generate
       - name: Aplicar migraciones
         # `migrate deploy`, igual que en producción: así la CI comprueba también
         # que las migraciones versionadas aplican sobre una base limpia.
-        run: npm --prefix server exec prisma migrate deploy
+        working-directory: server
+        run: npx prisma migrate deploy
       - name: Comprobación de tipos
         run: npm run typecheck --prefix server
       - name: Pruebas
