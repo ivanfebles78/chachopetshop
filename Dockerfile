@@ -27,6 +27,17 @@ COPY --from=server-build /app/server /app/server
 # Frontend compilado en la ruta que espera el servidor (../../client/dist)
 COPY --from=client-build /app/client/dist /app/client/dist
 WORKDIR /app/server
-# 1) Aplica el esquema  2) siembra SOLO si la BD está vacía  3) arranca la API
-# (la API sirve también el frontend en la misma URL).
-CMD ["sh", "-c", "npx prisma db push --skip-generate && { SEED_ONLY_IF_EMPTY=1 npx tsx prisma/seed.ts || echo 'seed omitido'; } && node dist/index.js"]
+# Arranque: APLICA MIGRACIONES VERSIONADAS y arranca la API.
+#
+# Antes se ejecutaba `prisma db push`, que sincroniza el esquema a la fuerza y
+# ante una divergencia puede ELIMINAR columnas y sus datos sin preguntar. Está
+# pensado para prototipar, no para una base con pedidos reales, y además no
+# dejaba historial: no había forma de saber qué cambió ni de revertirlo.
+#
+# `migrate deploy` sólo aplica migraciones ya escritas y revisadas, nunca
+# improvisa un cambio de esquema, y falla si encuentra algo que no esperaba.
+#
+# La siembra ya NO va aquí. Poblar el catálogo es una operación de datos, no de
+# arranque, y un contenedor que se reinicia no debería tocar el contenido de la
+# tienda. Queda como comando explícito: `npm run db:seed`.
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/index.js"]

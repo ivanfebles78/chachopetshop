@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import { cn, eur } from '@/lib/cn';
-import { Rating } from './Rating';
 import { useCart } from '@/store/cart';
 import { toast } from '@/store/toast';
 
@@ -74,7 +73,6 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
           <h3 className="line-clamp-2 font-display text-[0.98rem] font-semibold leading-snug text-ink">
             {product.name}
           </h3>
-          <Rating value={product.rating} reviews={product.reviews} className="mt-auto" />
           <div className="flex items-baseline gap-2 pt-1">
             <span className="font-display text-lg font-bold text-brand-800">
               {cheapest && product.variants.length > 1 && (

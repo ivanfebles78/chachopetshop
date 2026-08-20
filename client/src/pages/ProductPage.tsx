@@ -5,7 +5,6 @@ import { Check, ChevronRight, Minus, Plus, ShoppingBag, Truck } from 'lucide-rea
 import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { cn, eur } from '@/lib/cn';
-import { Rating } from '@/components/Rating';
 import { ProductCard } from '@/components/ProductCard';
 import { ErrorState } from '@/components/ErrorState';
 import { useCart } from '@/store/cart';
@@ -92,7 +91,6 @@ export function ProductPage() {
             {product.brand.name}
           </Link>
           <h1 className="mt-2 font-display text-3xl font-bold text-ink sm:text-4xl">{product.name}</h1>
-          <div className="mt-3"><Rating value={product.rating} reviews={product.reviews} /></div>
 
           <div className="mt-5 flex items-baseline gap-3">
             <span className="font-display text-4xl font-extrabold text-brand-700">{eur(price)}</span>

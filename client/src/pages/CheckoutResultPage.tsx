@@ -7,7 +7,13 @@ import { eur } from '@/lib/cn';
 export function CheckoutResultPage({ kind }: { kind: 'success' | 'cancel' }) {
   const [params] = useSearchParams();
   const orderId = params.get('order') ?? '';
-  const { data } = useFetch(() => (orderId ? api.order(orderId) : Promise.resolve(null)), [orderId]);
+  // Token de acceso al pedido: lo emite el servidor al crearlo y viaja en la
+  // URL de retorno de Stripe. Sin él, un pedido de invitado no se consulta.
+  const token = params.get('t') ?? '';
+  const { data } = useFetch(
+    () => (orderId ? api.order(orderId, token) : Promise.resolve(null)),
+    [orderId, token],
+  );
   const order = data?.order;
 
   if (kind === 'cancel') {

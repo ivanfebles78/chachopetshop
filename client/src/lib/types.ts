@@ -16,8 +16,6 @@ export type Product = {
   compareAt: number | null;
   image: string;
   gallery: string[];
-  rating: number;
-  reviews: number;
   featured: boolean;
   bestseller: boolean;
   animals: Animal[];

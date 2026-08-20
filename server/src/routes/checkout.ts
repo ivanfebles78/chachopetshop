@@ -1,8 +1,9 @@
 import { Router, type Request, type Response } from 'express';
+import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import Stripe from 'stripe';
 import { prisma } from '../db.js';
-import { env } from '../env.js';
+import { env, isProd } from '../env.js';
 import { toNumber } from '../lib/serialize.js';
 
 export const checkoutRouter = Router();
@@ -10,103 +11,239 @@ export const checkoutRouter = Router();
 const FREE_SHIPPING_THRESHOLD = 49;
 const SHIPPING_FLAT = 4.95;
 
-const stripe = env.STRIPE_SECRET_KEY ? new Stripe(env.STRIPE_SECRET_KEY) : null;
+/**
+ * Versión de la API fijada.
+ *
+ * Sin esto, Stripe usa la versión de la cuenta y una actualización suya puede
+ * cambiar la forma de los objetos sin que nosotros toquemos nada. Preferimos que
+ * subir de versión sea una decisión con su diff.
+ */
+const STRIPE_API_VERSION = '2025-02-24.acacia' as const;
+
+const stripe = env.STRIPE_SECRET_KEY
+  ? new Stripe(env.STRIPE_SECRET_KEY, { apiVersion: STRIPE_API_VERSION })
+  : null;
+
+/** Error de negocio: se traduce a 4xx en lugar de a un 500 genérico. */
+function errorDeCliente(mensaje: string, status = 400) {
+  return Object.assign(new Error(mensaje), { status });
+}
 
 const checkoutBody = z.object({
   email: z.string().email(),
   items: z
     .array(
       z.object({
-        productId: z.string(),
-        variantId: z.string().optional(),
+        productId: z.string().min(1),
+        variantId: z.string().min(1).optional(),
+        // Entero y positivo. Un 1.5 o un -3 no llegan siquiera a la lógica.
         quantity: z.number().int().min(1).max(99),
       }),
     )
-    .min(1, 'El carrito está vacío'),
+    .min(1, 'El carrito está vacío')
+    .max(50, 'Demasiadas líneas en el pedido'),
   shipping: z
     .object({
-      name: z.string().optional(),
-      address: z.string().optional(),
-      city: z.string().optional(),
-      zip: z.string().optional(),
+      name: z.string().max(160).optional(),
+      address: z.string().max(240).optional(),
+      city: z.string().max(120).optional(),
+      zip: z.string().max(20).optional(),
     })
     .optional(),
 });
 
+type Entrada = z.infer<typeof checkoutBody>;
+
 /**
- * Reconstruye el pedido con precios AUTORITATIVOS de la BD (nunca se confía en
- * los precios que manda el cliente) y crea un Order en estado PENDING.
+ * Reconstruye el pedido con precios AUTORITATIVOS de la base de datos.
+ *
+ * Nada de lo que manda el cliente sobre dinero se usa: sólo identificadores y
+ * cantidades. Si el navegador envía `unitPrice: 0.01`, se ignora.
  */
-async function buildOrder(input: z.infer<typeof checkoutBody>) {
+async function construirLineas(input: Entrada) {
   const ids = [...new Set(input.items.map((i) => i.productId))];
-  const products = await prisma.product.findMany({
+  const productos = await prisma.product.findMany({
     where: { id: { in: ids }, active: true },
     include: { variants: true },
   });
-  const byId = new Map(products.map((p) => [p.id, p]));
+  const porId = new Map(productos.map((p) => [p.id, p]));
 
-  const lineItems = input.items.map((item) => {
-    const product = byId.get(item.productId);
-    if (!product) throw Object.assign(new Error('Producto no disponible'), { status: 400 });
-    const variant = item.variantId
-      ? product.variants.find((v) => v.id === item.variantId)
-      : undefined;
-    const unitPrice = toNumber(variant?.price ?? product.price) ?? 0;
+  // Se agrupan las líneas repetidas del mismo par producto+variante: si no, dos
+  // líneas de 1 unidad cada una comprobarían el stock por separado y podrían
+  // pasar las dos con una sola unidad disponible.
+  const agrupadas = new Map<string, { productId: string; variantId?: string; quantity: number }>();
+  for (const item of input.items) {
+    const clave = `${item.productId}:${item.variantId ?? ''}`;
+    const previo = agrupadas.get(clave);
+    if (previo) previo.quantity += item.quantity;
+    else agrupadas.set(clave, { ...item });
+  }
+
+  const lineas = [...agrupadas.values()].map((item) => {
+    const producto = porId.get(item.productId);
+    if (!producto) throw errorDeCliente('Producto no disponible');
+
+    let variante = undefined;
+    if (item.variantId) {
+      variante = producto.variants.find((v) => v.id === item.variantId);
+      /*
+       * Antes, una variante desconocida se ignoraba y el pedido caía al precio
+       * base del producto: pedir el saco de 12 kg con un id inventado lo cobraba
+       * como el de 3 kg. Ahora es un error, no un descuento.
+       */
+      if (!variante) throw errorDeCliente('La variante indicada no existe para este producto');
+    } else if (producto.variants.length > 0) {
+      throw errorDeCliente('Debes elegir un formato del producto');
+    }
+
+    const unitPrice = toNumber(variante?.price ?? producto.price) ?? 0;
     return {
-      productId: product.id,
-      variantId: variant?.id ?? null,
-      name: product.name,
-      variantLabel: variant?.label ?? null,
-      image: product.image,
+      productId: producto.id,
+      variantId: variante?.id ?? null,
+      name: producto.name,
+      variantLabel: variante?.label ?? null,
+      image: producto.image,
       unitPrice,
       quantity: item.quantity,
     };
   });
 
-  const subtotal = lineItems.reduce((sum, l) => sum + l.unitPrice * l.quantity, 0);
+  const subtotal = lineas.reduce((suma, l) => suma + l.unitPrice * l.quantity, 0);
   const shipping = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : SHIPPING_FLAT;
-  const total = subtotal + shipping;
+  return { lineas, subtotal, shipping, total: subtotal + shipping };
+}
 
-  const order = await prisma.order.create({
-    data: {
-      email: input.email,
-      subtotal,
-      shipping,
-      total,
-      shippingName: input.shipping?.name,
-      shippingAddress: input.shipping?.address,
-      shippingCity: input.shipping?.city,
-      shippingZip: input.shipping?.zip,
-      items: { create: lineItems },
-    },
-    include: { items: true },
+/**
+ * Reserva existencias de forma ATÓMICA.
+ *
+ * Estrategia elegida: **descontar al crear la sesión de pago y devolver si el
+ * pago no llega a buen puerto** (opción A del análisis, con liberación
+ * determinista). La alternativa —descontar sólo tras el pago verificado— evita
+ * retenciones fantasma, pero permite que dos personas paguen la misma última
+ * unidad y obliga a devolver el dinero a una de ellas. En una tienda con dos o
+ * tres sacos de cada formato, vender algo que no existe es peor que retener una
+ * unidad diez minutos.
+ *
+ * La atomicidad la da `updateMany` con la condición en el propio WHERE: es un
+ * único `UPDATE ... WHERE stock >= n`, y PostgreSQL bloquea la fila. Leer y
+ * luego escribir —el patrón evidente— tiene una ventana entre las dos
+ * operaciones por la que caben dos compradores.
+ */
+async function reservar(lineas: { variantId: string | null; quantity: number }[]) {
+  const reservadas: { variantId: string; quantity: number }[] = [];
+  try {
+    for (const linea of lineas) {
+      if (!linea.variantId) continue;
+      const { count } = await prisma.productVariant.updateMany({
+        where: { id: linea.variantId, stock: { gte: linea.quantity } },
+        data: { stock: { decrement: linea.quantity } },
+      });
+      if (count === 0) {
+        throw errorDeCliente('No hay stock suficiente para completar el pedido', 409);
+      }
+      reservadas.push({ variantId: linea.variantId, quantity: linea.quantity });
+    }
+    return reservadas;
+  } catch (err) {
+    // Lo ya reservado en este intento se devuelve antes de propagar el error.
+    await devolver(reservadas);
+    throw err;
+  }
+}
+
+/** Devuelve al stock lo reservado. */
+async function devolver(reservadas: { variantId: string; quantity: number }[]) {
+  for (const r of reservadas) {
+    await prisma.productVariant.update({
+      where: { id: r.variantId },
+      data: { stock: { increment: r.quantity } },
+    });
+  }
+}
+
+/**
+ * Devuelve el stock de un pedido UNA sola vez.
+ *
+ * `stockCommitted` se pone a false con la misma condición en el WHERE, así que
+ * dos webhooks simultáneos no pueden reponer dos veces: el segundo actualiza 0
+ * filas y no hace nada.
+ */
+async function liberarStockDelPedido(orderId: string) {
+  const { count } = await prisma.order.updateMany({
+    where: { id: orderId, stockCommitted: true },
+    data: { stockCommitted: false },
   });
+  if (count === 0) return;
 
-  return { order, lineItems, subtotal, shipping, total };
+  const items = await prisma.orderItem.findMany({ where: { orderId } });
+  await devolver(
+    items
+      .filter((i) => i.variantId)
+      .map((i) => ({ variantId: i.variantId as string, quantity: i.quantity })),
+  );
 }
 
 checkoutRouter.post('/', async (req, res, next) => {
+  let reservadas: { variantId: string; quantity: number }[] = [];
+  let orderId: string | null = null;
+
   try {
     const input = checkoutBody.parse(req.body);
     if (req.user) input.email = req.user.email;
-    const { order, lineItems, shipping } = await buildOrder(input);
-    if (req.user) await prisma.order.update({ where: { id: order.id }, data: { userId: req.user.id } });
 
-    // --- Modo demo: sin claves de Stripe, marcamos pagado y devolvemos éxito ---
+    /*
+     * FALLA CERRADO. Sin Stripe no hay venta.
+     *
+     * Antes esto era `if (!stripe)` seguido de marcar el pedido como PAID y
+     * devolver éxito. La falta de configuración se convertía en una tienda que
+     * regalaba el género, y no se notaba porque nada fallaba.
+     */
     if (!stripe) {
-      await prisma.order.update({ where: { id: order.id }, data: { status: 'PAID' } });
-      // URL relativa: el navegador la resuelve contra el origen actual (funciona
-      // en local y en producción sin depender de PUBLIC_SITE_URL).
-      return res.json({ demo: true, orderId: order.id, url: `/checkout/success?order=${order.id}` });
+      throw Object.assign(
+        new Error('El pago no está disponible en este momento. Inténtalo más tarde.'),
+        { status: 503 },
+      );
     }
 
-    // --- Stripe Checkout real ---
-    // Base de la URL de retorno: la calculamos desde la petición (funciona en
-    // cualquier dominio sin configurar PUBLIC_SITE_URL). Fallback a la variable.
-    const host = req.get('host');
-    const base = req.headers.origin ?? (host ? `${req.protocol}://${host}` : env.PUBLIC_SITE_URL);
+    const { lineas, subtotal, shipping, total } = await construirLineas(input);
 
-    const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = lineItems.map((l) => ({
+    // Reservar ANTES de crear nada en Stripe: si no hay stock, el cliente no
+    // llega a ver una pasarela de pago por algo que no podemos servir.
+    reservadas = await reservar(lineas);
+
+    const pedido = await prisma.order.create({
+      data: {
+        email: input.email,
+        userId: req.user?.id,
+        subtotal,
+        shipping,
+        total,
+        status: 'PENDING',
+        stockCommitted: true,
+        accessToken: randomBytes(32).toString('hex'),
+        shippingName: input.shipping?.name,
+        shippingAddress: input.shipping?.address,
+        shippingCity: input.shipping?.city,
+        shippingZip: input.shipping?.zip,
+        items: { create: lineas },
+      },
+    });
+    orderId = pedido.id;
+
+    /*
+     * URL de retorno contra una LISTA BLANCA.
+     *
+     * Antes salía de `req.headers.origin`, que la controla quien llama: bastaba
+     * enviar otro origen para que Stripe redirigiese al dominio del atacante
+     * tras el pago. Ahora el origen del cliente sólo se acepta si coincide con
+     * uno configurado; si no, se usa el sitio público.
+     */
+    const permitidos = env.CLIENT_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean);
+    const solicitado = req.headers.origin;
+    const base =
+      solicitado && permitidos.includes(solicitado) ? solicitado : env.PUBLIC_SITE_URL;
+
+    const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = lineas.map((l) => ({
       quantity: l.quantity,
       price_data: {
         currency: 'eur',
@@ -114,11 +251,14 @@ checkoutRouter.post('/', async (req, res, next) => {
         product_data: { name: l.variantLabel ? `${l.name} · ${l.variantLabel}` : l.name },
       },
     }));
-    // El envío se cobra como una línea más para que el total coincida con el pedido.
     if (shipping > 0) {
       line_items.push({
         quantity: 1,
-        price_data: { currency: 'eur', unit_amount: Math.round(shipping * 100), product_data: { name: 'Gastos de envío' } },
+        price_data: {
+          currency: 'eur',
+          unit_amount: Math.round(shipping * 100),
+          product_data: { name: 'Gastos de envío' },
+        },
       });
     }
 
@@ -126,35 +266,111 @@ checkoutRouter.post('/', async (req, res, next) => {
       mode: 'payment',
       customer_email: input.email,
       line_items,
-      metadata: { orderId: order.id },
-      success_url: `${base}/checkout/success?order=${order.id}`,
-      cancel_url: `${base}/checkout/cancel?order=${order.id}`,
+      metadata: { orderId: pedido.id },
+      // El token va en la URL de retorno: es lo que deja ver la confirmación a
+      // quien compra sin cuenta, sin abrir el pedido a cualquiera con el id.
+      success_url: `${base}/checkout/success?order=${pedido.id}&t=${pedido.accessToken ?? ''}`,
+      cancel_url: `${base}/checkout/cancel?order=${pedido.id}`,
     });
 
-    await prisma.order.update({ where: { id: order.id }, data: { stripeSessionId: session.id } });
-    res.json({ demo: false, orderId: order.id, url: session.url });
+    await prisma.order.update({
+      where: { id: pedido.id },
+      data: { stripeSessionId: session.id },
+    });
+
+    res.json({ orderId: pedido.id, url: session.url });
   } catch (err) {
+    /*
+     * Si algo falla después de reservar, se devuelve el stock. Un fallo de pago
+     * no puede destruir inventario: sería una tienda que se queda sin género
+     * cada vez que a alguien le rechazan la tarjeta.
+     */
+    if (orderId) {
+      await liberarStockDelPedido(orderId);
+      /*
+       * Y se marca como fallido. Si se dejara en PENDING, «pendiente de pago»
+       * acabaría significando dos cosas —esperando a que el cliente pague, y
+       * roto antes de llegar a la pasarela— y ninguna consulta podría
+       * distinguirlas. Un pedido que nunca llegó a Stripe no está esperando
+       * nada.
+       */
+      await prisma.order.updateMany({
+        where: { id: orderId, status: 'PENDING' },
+        data: { status: 'FAILED' },
+      });
+    } else if (reservadas.length) {
+      await devolver(reservadas);
+    }
     next(err);
   }
 });
 
 /**
- * Webhook de Stripe. Se monta con express.raw en index.ts porque necesita el
- * cuerpo sin parsear para verificar la firma.
+ * Webhook de Stripe.
+ *
+ * Se monta con `express.raw` en `app.ts` porque la verificación de firma
+ * necesita el cuerpo sin parsear. Ese orden ya estaba bien y no se toca.
  */
 export async function stripeWebhookHandler(req: Request, res: Response) {
-  if (!stripe || !env.STRIPE_WEBHOOK_SECRET) return res.status(200).json({ skipped: true });
-  const sig = req.headers['stripe-signature'];
+  /*
+   * Sin secreto NO se procesa nada.
+   *
+   * Antes respondía 200 con `{ skipped: true }`, que es fallar hacia abierto:
+   * Stripe daba el evento por entregado y nosotros no habíamos comprobado nada.
+   */
+  if (!stripe || !env.STRIPE_WEBHOOK_SECRET) {
+    return res.status(503).json({ error: 'Webhook no configurado' });
+  }
+
+  const firma = req.headers['stripe-signature'];
+  if (!firma) return res.status(400).json({ error: 'Falta la firma' });
+
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig as string, env.STRIPE_WEBHOOK_SECRET);
-  } catch (err) {
-    return res.status(400).send(`Webhook error: ${(err as Error).message}`);
+    event = stripe.webhooks.constructEvent(req.body, firma as string, env.STRIPE_WEBHOOK_SECRET);
+  } catch {
+    // Sin detalle: el mensaje de la librería puede revelar cómo se ha fallado.
+    return res.status(400).json({ error: 'Firma no válida' });
   }
+
+  /*
+   * IDEMPOTENCIA. Stripe reintenta por diseño, así que los duplicados son
+   * rutina, no excepción. La clave primaria sobre el id del evento hace que el
+   * segundo intento choque y se descarte sin aplicar nada dos veces.
+   */
+  try {
+    await prisma.stripeEvent.create({ data: { id: event.id, type: event.type } });
+  } catch {
+    return res.json({ received: true, duplicated: true });
+  }
+
+  const sesion = event.data.object as Stripe.Checkout.Session;
+  const orderId = sesion?.metadata?.orderId;
+
   if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const orderId = session.metadata?.orderId;
-    if (orderId) await prisma.order.update({ where: { id: orderId }, data: { status: 'PAID' } });
+    /*
+     * Que la sesión se complete no basta: `payment_status` es lo que dice si el
+     * dinero está cobrado. Una sesión completada con pago pendiente existe.
+     */
+    if (orderId && sesion.payment_status === 'paid') {
+      await prisma.order.updateMany({
+        where: { id: orderId, status: 'PENDING' },
+        data: { status: 'PAID' },
+      });
+    }
+  } else if (
+    event.type === 'checkout.session.expired' ||
+    event.type === 'checkout.session.async_payment_failed' ||
+    event.type === 'payment_intent.payment_failed'
+  ) {
+    if (orderId) {
+      await prisma.order.updateMany({
+        where: { id: orderId, status: 'PENDING' },
+        data: { status: 'FAILED' },
+      });
+      await liberarStockDelPedido(orderId);
+    }
   }
+
   res.json({ received: true });
 }

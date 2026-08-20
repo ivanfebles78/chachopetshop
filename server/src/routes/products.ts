@@ -17,7 +17,8 @@ const listQuery = z.object({
   maxPrice: z.coerce.number().optional(),
   featured: z.enum(['true', 'false']).optional(),
   bestseller: z.enum(['true', 'false']).optional(),
-  sort: z.enum(['relevance', 'price_asc', 'price_desc', 'rating', 'newest']).default('relevance'),
+  // Sin 'rating': no hay valoraciones reales por las que ordenar.
+  sort: z.enum(['relevance', 'price_asc', 'price_desc', 'newest']).default('relevance'),
   page: z.coerce.number().min(1).default(1),
   pageSize: z.coerce.number().min(1).max(48).default(12),
 });
@@ -68,8 +69,6 @@ productsRouter.get('/', async (req, res, next) => {
         ? { price: 'asc' }
         : p.sort === 'price_desc'
         ? { price: 'desc' }
-        : p.sort === 'rating'
-        ? { rating: 'desc' }
         : p.sort === 'newest'
         ? { createdAt: 'desc' }
         : { bestseller: 'desc' };

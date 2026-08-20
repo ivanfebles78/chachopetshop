@@ -1,0 +1,84 @@
+# Integración continua de Chacho Pet Shop.
+#
+# El proyecto no tenía ninguna: nada comprobaba una rama antes de fusionarla.
+# Las pruebas que más importan aquí —que el checkout falle cerrado, que no se
+# venda de más, que un pedido ajeno no se lea— necesitan una base de datos de
+# VERDAD: la sobreventa es una garantía de PostgreSQL, y contra un doble de
+# Prisma no se puede demostrar.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  servidor:
+    name: Servidor (tipos, pruebas de seguridad y comercio)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: chacho_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://test:test@localhost:5432/chacho_test
+      JWT_SECRET: clave-de-integracion-continua-no-usada-en-produccion
+      NODE_ENV: test
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Instalar dependencias
+        run: npm ci --prefix server
+      - name: Generar el cliente de Prisma
+        run: npm --prefix server exec prisma generate
+      - name: Aplicar migraciones
+        # `migrate deploy`, igual que en producción: así la CI comprueba también
+        # que las migraciones versionadas aplican sobre una base limpia.
+        run: npm --prefix server exec prisma migrate deploy
+      - name: Comprobación de tipos
+        run: npm run typecheck --prefix server
+      - name: Pruebas
+        run: npm run test --prefix server
+
+  cliente:
+    name: Cliente (tipos y build de producción)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci --prefix client
+      - run: npm run build --prefix client
+
+  secretos:
+    name: Sin credenciales en el repositorio
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Buscar cadenas con forma de credencial
+        run: |
+          # Claves reales de Stripe (sk_live/sk_test), y ficheros .env versionados.
+          if git grep -nIE 'sk_(live|test)_[A-Za-z0-9]{20,}|whsec_[A-Za-z0-9]{20,}' -- . ':!*.md'; then
+            echo "Se han encontrado cadenas con forma de clave de Stripe."
+            exit 1
+          fi
+          if git ls-files | grep -E '^\.env($|\.)' ; then
+            echo "Hay un fichero .env versionado."
+            exit 1
+          fi
+          echo "Sin credenciales detectadas."
