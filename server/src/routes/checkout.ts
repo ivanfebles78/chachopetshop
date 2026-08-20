@@ -3,7 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import Stripe from 'stripe';
 import { prisma } from '../db.js';
-import { env, isProd } from '../env.js';
+import { env, origenesPermitidos } from '../env.js';
 import { toNumber } from '../lib/serialize.js';
 
 export const checkoutRouter = Router();
@@ -238,10 +238,9 @@ checkoutRouter.post('/', async (req, res, next) => {
      * tras el pago. Ahora el origen del cliente sólo se acepta si coincide con
      * uno configurado; si no, se usa el sitio público.
      */
-    const permitidos = env.CLIENT_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean);
     const solicitado = req.headers.origin;
     const base =
-      solicitado && permitidos.includes(solicitado) ? solicitado : env.PUBLIC_SITE_URL;
+      solicitado && origenesPermitidos.includes(solicitado) ? solicitado : env.PUBLIC_SITE_URL;
 
     const line_items: Stripe.Checkout.SessionCreateParams.LineItem[] = lineas.map((l) => ({
       quantity: l.quantity,

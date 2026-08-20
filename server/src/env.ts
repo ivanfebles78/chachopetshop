@@ -36,18 +36,34 @@ export const OBLIGATORIAS_EN_PRODUCCION = [
   'JWT_SECRET',
   'STRIPE_SECRET_KEY',
   'STRIPE_WEBHOOK_SECRET',
+  /*
+   * Obligatoria desde que la URL de retorno de Stripe usa una lista blanca.
+   * Su valor por defecto era `http://localhost:5173`, así que en producción,
+   * tras PAGAR, Stripe devolvía al cliente a una página muerta en su propio
+   * ordenador. No rompía el arranque ni salía en ningún registro: sólo lo
+   * habría descubierto el primer cliente que comprara de verdad.
+   */
+  'PUBLIC_SITE_URL',
 ] as const;
 
 /** Opcionales: su ausencia desactiva una función, no abre un agujero. */
 export const OPCIONALES = [
   'PORT',
+  // Orígenes admitidos para CORS y para la URL de retorno de Stripe. Si no se
+  // indica, sólo se acepta `PUBLIC_SITE_URL`, que es lo correcto cuando la API
+  // y el frontend comparten dominio — que es el caso hoy.
   'CLIENT_ORIGIN',
-  'PUBLIC_SITE_URL',
   'SMTP_HOST',
   'SMTP_PORT',
   'SMTP_USER',
   'SMTP_PASS',
-  'CONTACT_TO_EMAIL',
+  /*
+   * Estos dos nombres son los que lee `lib/mailer.ts`. El informe de la Fase 1
+   * decía `CONTACT_TO_EMAIL`, que NO existe en el código: configurarla no habría
+   * hecho nada y el correo habría ido a `SMTP_USER` sin avisar.
+   */
+  'CONTACT_TO',
+  'CONTACT_FROM',
 ] as const;
 
 /** Sólo desarrollo y pruebas. En producción se rechaza explícitamente. */
@@ -59,7 +75,7 @@ const schema = z.object({
   DATABASE_URL: z.string().min(1),
   PORT: z.coerce.number().default(4000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  CLIENT_ORIGIN: z.string().default('http://localhost:5173'),
+  CLIENT_ORIGIN: z.string().optional(),
 
   /*
    * Sin valor por defecto, a propósito. En desarrollo y en pruebas se rellena
@@ -71,7 +87,7 @@ const schema = z.object({
 
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
-  PUBLIC_SITE_URL: z.string().default('http://localhost:5173'),
+  PUBLIC_SITE_URL: z.string().url('PUBLIC_SITE_URL debe ser una URL absoluta'),
 });
 
 /**
@@ -81,6 +97,11 @@ const schema = z.object({
  * incómodo. Efecto secundario buscado: al reiniciar, las sesiones caducan — que
  * es exactamente lo que debe pasar cuando el secreto cambia.
  */
+if (!esProduccion && !process.env.PUBLIC_SITE_URL) {
+  // En desarrollo apunta al servidor de Vite; en producción es obligatoria.
+  process.env.PUBLIC_SITE_URL = 'http://localhost:5173';
+}
+
 if (!esProduccion && !process.env.JWT_SECRET) {
   process.env.JWT_SECRET = `dev-efimero-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
@@ -119,6 +140,21 @@ if (esProduccion) {
     process.exit(1);
   }
 }
+
+/**
+ * Orígenes admitidos, como lista ya normalizada.
+ *
+ * Un solo punto de verdad para CORS y para la URL de retorno de Stripe: antes
+ * cada uno partía `CLIENT_ORIGIN` por su cuenta y podían discrepar. Si no se
+ * indica, el único origen válido es el sitio público — que es lo correcto
+ * cuando la API sirve también el frontend, como aquí.
+ */
+export const origenesPermitidos: string[] = (
+  parsed.data.CLIENT_ORIGIN ?? parsed.data.PUBLIC_SITE_URL
+)
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
 
 export const env = parsed.data;
 export const isProd = env.NODE_ENV === 'production';
