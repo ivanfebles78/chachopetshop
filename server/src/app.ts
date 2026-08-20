@@ -5,7 +5,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import { ZodError } from 'zod';
-import { env, isProd } from './env.js';
+import { env, isProd, origenesPermitidos } from './env.js';
 import { attachUser } from './middleware/auth.js';
 import { taxonomyRouter } from './routes/taxonomy.js';
 import { productsRouter } from './routes/products.js';
@@ -41,7 +41,7 @@ export function createApp() {
 
   app.use(
     cors({
-      origin: env.CLIENT_ORIGIN.split(',').map((o) => o.trim()),
+      origin: origenesPermitidos,
       credentials: true,
     }),
   );

@@ -69,6 +69,7 @@ describe('detección de configuración incompleta', () => {
     const faltan = faltantesEnProduccion({
       DATABASE_URL: 'x',
       JWT_SECRET: 'y',
+      PUBLIC_SITE_URL: 'https://ejemplo.test',
     } as NodeJS.ProcessEnv);
     expect(faltan).toEqual(['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET']);
   });
