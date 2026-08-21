@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Lock, ShoppingBag } from 'lucide-react';
 import { api } from '@/lib/api';
@@ -17,6 +17,16 @@ export function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ email: user?.email ?? '', name: '', address: '', city: '', zip: '' });
+
+  /*
+   * El correo se rellena cuando la sesión termina de cargar, no sólo al montar.
+   * El valor inicial de `useState` se calcula UNA vez, y en ese instante
+   * `AuthProvider` todavía está preguntando quién eres: el campo se quedaba
+   * vacío para todo cliente que ya había entrado.
+   */
+  useEffect(() => {
+    if (user?.email) setForm((f) => (f.email ? f : { ...f, email: user.email }));
+  }, [user?.email]);
 
   const shipping = subtotal >= FREE_SHIPPING || subtotal === 0 ? 0 : SHIPPING_FLAT;
   const total = subtotal + shipping;
@@ -44,7 +54,17 @@ export function CheckoutPage() {
       clear();
       window.location.href = res.url;
     } catch (err) {
-      const msg = (err as Error).message;
+      /*
+       * 401 aquí significa que la cookie de sesión ya no vale —caducada, o
+       * firmada con un secreto anterior a una rotación—. Antes esto no llegaba
+       * a pasar: el servidor seguía como invitado y el pedido se guardaba sin
+       * dueño. Ahora se corta y se dice qué hacer.
+       */
+      const apiError = err as { status?: number; message: string };
+      const msg =
+        apiError.status === 401
+          ? 'Tu sesión ha caducado. Vuelve a iniciar sesión para completar la compra.'
+          : apiError.message;
       setError(msg);
       toast.error(msg);
       setSubmitting(false);
