@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { existsSync } from 'node:fs';
 import { ZodError } from 'zod';
 import { env, isProd, origenesPermitidos } from './env.js';
-import { attachUser } from './middleware/auth.js';
+import { attachUser, rejectBrokenSession } from './middleware/auth.js';
 import { taxonomyRouter } from './routes/taxonomy.js';
 import { productsRouter } from './routes/products.js';
 import { authRouter } from './routes/auth.js';
@@ -54,7 +54,12 @@ export function createApp() {
   app.use('/api/taxonomy', taxonomyRouter);
   app.use('/api/products', productsRouter);
   app.use('/api/auth', limiteAutenticacion, authRouter);
-  app.use('/api/checkout', limiteCheckout, checkoutRouter);
+  /*
+   * `rejectBrokenSession` sólo aquí: es donde la identidad decide de quién es el
+   * pedido. Con una cookie que ya no verifica, seguir adelante como invitado
+   * crea un pedido sin dueño sin que nadie se entere.
+   */
+  app.use('/api/checkout', limiteCheckout, rejectBrokenSession, checkoutRouter);
   app.use('/api/orders', ordersRouter);
   app.use('/api/contact', limiteContacto, contactRouter);
   app.use('/api/admin', adminRouter);
