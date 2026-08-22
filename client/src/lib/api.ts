@@ -50,6 +50,16 @@ export type ProductFilters = {
   pageSize?: number;
   featured?: boolean;
   bestseller?: boolean;
+  /*
+   * SÓLO LO REBAJADO DE VERDAD (`compareAt > price`).
+   *
+   * El servidor admite este filtro desde la Fase 2A y el menú enlaza a
+   * `/tienda?oferta=1`… pero faltaba aquí, así que el catálogo se comía el
+   * parámetro y respondía con los 28 productos. Es decir: «Ofertas» prometía
+   * rebajas y entregaba la tienda entera. Justo lo que la 2A quería evitar,
+   * vivo en producción porque se comprobó la API y no la página.
+   */
+  oferta?: boolean;
 };
 
 function toQuery(f: ProductFilters): string {
@@ -66,6 +76,7 @@ function toQuery(f: ProductFilters): string {
   if (f.pageSize) p.set('pageSize', String(f.pageSize));
   if (f.featured) p.set('featured', 'true');
   if (f.bestseller) p.set('bestseller', 'true');
+  if (f.oferta) p.set('oferta', '1');
   const s = p.toString();
   return s ? `?${s}` : '';
 }

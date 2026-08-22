@@ -48,6 +48,7 @@ export function CatalogPage() {
       q: params.get('q') ?? undefined,
       sort: params.get('sort') ?? 'relevance',
       featured: params.get('featured') === '1' || undefined,
+      oferta: params.get('oferta') === '1' || undefined,
       page: Number(params.get('page') ?? 1),
       pageSize: 12,
     };
@@ -72,6 +73,7 @@ export function CatalogPage() {
   const activeCount =
     (filters.animal ? 1 : 0) +
     (filters.category ? 1 : 0) +
+    (filters.oferta ? 1 : 0) +
     (filters.need?.length ?? 0) +
     (filters.brand?.length ?? 0) +
     (filters.featured ? 1 : 0);
