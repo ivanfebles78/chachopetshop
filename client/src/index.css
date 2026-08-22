@@ -197,6 +197,21 @@
    * que es cuando hace falta. No se oculta con `display:none` porque entonces
    * no sería enfocable, que es justo lo contrario de lo que se busca.
    */
+  /*
+   * Estado de un pedido.
+   *
+   * El color acompaña, no informa por sí solo: la etiqueta siempre lleva
+   * texto. Quien no distingue verde de ámbar —y quien lo lee en voz alta—
+   * necesita la palabra, no el tono.
+   */
+  .chip-estado {
+    @apply inline-flex items-center rounded-pill px-3 py-1 text-caption font-bold;
+  }
+  .estado-ok      { @apply bg-success-subtle text-success; }
+  .estado-espera  { @apply bg-info-subtle text-info; }
+  .estado-aviso   { @apply bg-warning-subtle text-warning; }
+  .estado-neutro  { @apply bg-surface-sunken text-content-muted; }
+
   .skip-link {
     @apply sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50
            focus:rounded-control focus:bg-brand-700 focus:px-4 focus:py-2.5

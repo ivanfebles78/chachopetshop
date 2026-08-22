@@ -74,12 +74,26 @@ export type OrderItem = {
 export type Order = {
   id: string;
   email: string;
-  status: 'PENDING' | 'PAID' | 'FULFILLED' | 'CANCELLED';
+  /*
+   * `FAILED` faltaba. Está en el esquema desde la Fase 1 y el servidor lo
+   * devuelve; el cliente no lo contemplaba, así que un pago rechazado se
+   * quedaba sin etiqueta que enseñar.
+   */
+  status: 'PENDING' | 'PAID' | 'FAILED' | 'FULFILLED' | 'CANCELLED';
   subtotal: number;
   shipping: number;
   total: number;
   createdAt: string;
   items: OrderItem[];
+  /*
+   * La dirección de entrega ya viajaba en la respuesta —el serializador la
+   * incluye— pero el tipo no la declaraba, así que no se enseñaba en ninguna
+   * pantalla. Opcionales porque los pedidos antiguos pueden no tenerla.
+   */
+  shippingName?: string | null;
+  shippingAddress?: string | null;
+  shippingCity?: string | null;
+  shippingZip?: string | null;
 };
 
 export type AuthUser = { id: string; email: string; role: 'CUSTOMER' | 'ADMIN' };

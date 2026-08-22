@@ -5,11 +5,17 @@ import Stripe from 'stripe';
 import { prisma } from '../db.js';
 import { env, origenesPermitidos } from '../env.js';
 import { toNumber } from '../lib/serialize.js';
+import { envioPara } from '../lib/envio.js';
 
 export const checkoutRouter = Router();
 
-const FREE_SHIPPING_THRESHOLD = 49;
-const SHIPPING_FLAT = 4.95;
+/*
+ * Las reglas de envío viven en `lib/envio.ts`, no aquí.
+ *
+ * Estaban escritas seis veces entre servidor y cliente. Coincidían todas hoy,
+ * y bastaba con cambiar una para que la tienda anunciara un umbral y cobrara
+ * con otro. Ahora lo que se anuncia y lo que se cobra son el mismo dato.
+ */
 
 /**
  * Versión de la API fijada.
@@ -109,7 +115,7 @@ async function construirLineas(input: Entrada) {
   });
 
   const subtotal = lineas.reduce((suma, l) => suma + l.unitPrice * l.quantity, 0);
-  const shipping = subtotal >= FREE_SHIPPING_THRESHOLD || subtotal === 0 ? 0 : SHIPPING_FLAT;
+  const shipping = envioPara(subtotal);
   return { lineas, subtotal, shipping, total: subtotal + shipping };
 }
 

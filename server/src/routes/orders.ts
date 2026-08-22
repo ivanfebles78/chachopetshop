@@ -32,6 +32,46 @@ function tokenCoincide(recibido: unknown, esperado: string | null): boolean {
 }
 
 /**
+ * GET /api/orders/ultima-direccion — la dirección del último pedido.
+ *
+ * Para no pedirle a quien ya ha comprado que vuelva a escribir su dirección
+ * entera. El modelo `User` no guarda dirección —sólo correo, nombre y rol—,
+ * así que el único sitio donde consta es en sus propios pedidos.
+ *
+ * Va ANTES de `/:id` a propósito: si no, `ultima-direccion` se interpretaría
+ * como el identificador de un pedido.
+ *
+ * Sólo autenticado, y sólo la suya: se filtra por `userId`, nunca por correo.
+ */
+ordersRouter.get('/ultima-direccion', requireAuth, async (req, res, next) => {
+  try {
+    const ultimo = await prisma.order.findFirst({
+      where: { userId: req.user!.id, shippingAddress: { not: null } },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        shippingName: true,
+        shippingAddress: true,
+        shippingCity: true,
+        shippingZip: true,
+      },
+    });
+    res.json({
+      direccion: ultimo
+        ? {
+            nombre: ultimo.shippingName ?? '',
+            direccion: ultimo.shippingAddress ?? '',
+            ciudad: ultimo.shippingCity ?? '',
+            cp: ultimo.shippingZip ?? '',
+          }
+        : null,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+/**
  * GET /api/orders/:id — consulta de un pedido.
  *
  * Antes esto NO pedía nada: con el identificador se obtenía nombre, dirección,

@@ -87,6 +87,9 @@ function toQuery(f: ProductFilters): string {
 
 export const api = {
   taxonomy: () => request<Taxonomy>('/taxonomy'),
+  /* Las reglas comerciales que la tienda anuncia, para que lo que se enseña y
+     lo que se cobra no puedan separarse. */
+  config: () => request<{ envio: { gratisDesde: number; tarifa: number; zona: string; plazo: string } }>('/config'),
   products: (f: ProductFilters = {}) => request<ProductListResponse>(`/products${toQuery(f)}`),
   product: (slug: string) =>
     /*
@@ -121,6 +124,15 @@ export const api = {
   order: (id: string, token?: string) =>
     request<{ order: Order }>(`/orders/${id}${token ? `?t=${encodeURIComponent(token)}` : ''}`),
   myOrders: () => request<{ orders: Order[] }>('/orders'),
+  /*
+   * La dirección del último pedido, para no volver a pedírsela a quien ya ha
+   * comprado. El modelo de usuario no guarda dirección: el único sitio donde
+   * consta es en sus propios pedidos.
+   */
+  ultimaDireccion: () =>
+    request<{ direccion: { nombre: string; direccion: string; ciudad: string; cp: string } | null }>(
+      '/orders/ultima-direccion',
+    ),
 
   contact: (data: {
     name: string;

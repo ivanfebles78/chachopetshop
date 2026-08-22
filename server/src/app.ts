@@ -9,6 +9,7 @@ import { env, isProd, origenesPermitidos } from './env.js';
 import { attachUser, rejectBrokenSession } from './middleware/auth.js';
 import { taxonomyRouter } from './routes/taxonomy.js';
 import { productsRouter } from './routes/products.js';
+import { configRouter } from './routes/config.js';
 import { authRouter } from './routes/auth.js';
 import { checkoutRouter, stripeWebhookHandler } from './routes/checkout.js';
 import { ordersRouter } from './routes/orders.js';
@@ -52,6 +53,7 @@ export function createApp() {
   app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }));
   app.use('/api', limiteGeneral);
   app.use('/api/taxonomy', taxonomyRouter);
+  app.use('/api/config', configRouter);
   app.use('/api/products', productsRouter);
   app.use('/api/auth', limiteAutenticacion, authRouter);
   /*
