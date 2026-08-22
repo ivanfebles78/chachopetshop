@@ -61,7 +61,7 @@ jobs:
         run: npm run test --prefix server
 
   cliente:
-    name: Cliente (tipos y build de producción)
+    name: Cliente (tipos, pruebas y build de producción)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -69,6 +69,12 @@ jobs:
         with:
           node-version: 20
       - run: npm ci --prefix client
+      # Las pruebas de cliente NO se ejecutaban aquí: este trabajo sólo compilaba.
+      # Una prueba que la CI no corre no garantiza nada; es un fichero que se
+      # queda atrás sin que nadie se entere. Cubren el menú contra el catálogo,
+      # el armazón, las capas modales y que no vuelva ningún dato inventado.
+      - run: npm run test --prefix client
+      # `build` incluye `tsc -b`, así que la comprobación de tipos va dentro.
       - run: npm run build --prefix client
 
   secretos:
