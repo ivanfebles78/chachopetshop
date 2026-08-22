@@ -130,7 +130,7 @@ export function CatalogPage() {
           ) : data && data.items.length > 0 ? (
             <>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                {data.items.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
+                {data.items.map((p) => <ProductCard key={p.id} product={p} />)}
               </div>
               {data.totalPages > 1 && (
                 <Pagination page={data.page} totalPages={data.totalPages} onPage={(n) => patch('page', String(n))} />

@@ -1,12 +1,11 @@
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import { cn, eur } from '@/lib/cn';
 import { useCart } from '@/store/cart';
 import { toast } from '@/store/toast';
 
-export function ProductCard({ product, index = 0 }: { product: Product; index?: number }) {
+export function ProductCard({ product }: { product: Product }) {
   const add = useCart((s) => s.add);
   const cheapest = product.variants[0];
   const price = cheapest?.price ?? product.price;
@@ -27,13 +26,18 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
     toast.success(`${product.name} añadido al carrito`);
   };
 
+  /*
+   * SIN ANIMACIÓN DE ENTRADA, y a propósito.
+   *
+   * Cada tarjeta nacía con `opacity: 0` y esperaba a que `whileInView` la
+   * revelara. Comprobado en el navegador: con la rejilla ENTERA a la vista,
+   * tres de las siete tarjetas se quedaban en `opacity: 0`. En una tienda eso
+   * significa productos que no existen para quien mira.
+   *
+   * Un escalonado bonito no compensa el riesgo de que no se vea la mercancía.
+   */
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: '-40px' }}
-      transition={{ duration: 0.5, delay: (index % 4) * 0.06, ease: [0.16, 1, 0.3, 1] }}
-    >
+    <div>
       <Link
         to={`/producto/${product.slug}`}
         className="group relative flex h-full flex-col overflow-hidden rounded-4xl border border-brand-900/[0.06] bg-white/80 shadow-soft backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-lift"
@@ -42,7 +46,10 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
           <img
             src={product.image}
             alt={product.name}
+            width={800}
+            height={800}
             loading="lazy"
+            decoding="async"
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
           <div className="absolute left-3 top-3 flex flex-col gap-1.5">
@@ -51,16 +58,33 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
                 -{Math.round((1 - price / product.compareAt!) * 100)}%
               </span>
             )}
+            {/*
+              Decía «Top ventas», y no lo sostiene ningún dato: `bestseller` es una
+              marca que se pone a mano, no un recuento de pedidos. Contrastado
+              contra los pedidos pagados, los siete productos marcados suman
+              MENOS unidades que el resto del catálogo, así que la etiqueta decía
+              justo lo contrario de lo que pasa.
+              «Recomendado» sí es cierto: es lo que la tienda elige destacar.
+            */}
             {product.bestseller && (
               <span className="rounded-full bg-brand-900 px-2.5 py-1 text-xs font-semibold text-cream">
-                Top ventas
+                Recomendado
               </span>
             )}
           </div>
+          {/*
+            Estaba en `opacity-0` hasta pasar el ratón por encima. Dos problemas:
+            en un móvil NO HAY hover, así que el atajo no existía en el
+            dispositivo donde más se compra; y seguía siendo enfocable, o sea
+            que con el tabulador se llegaba a un botón invisible.
+
+            Ahora se ve siempre por debajo de `sm` —donde no hay puntero— y
+            aparece al enfocarlo con el teclado.
+          */}
           <button
             onClick={quickAdd}
-            aria-label="Añadir al carrito"
-            className="absolute bottom-3 right-3 flex h-11 w-11 translate-y-2 items-center justify-center rounded-full bg-brand-600 text-cream opacity-0 shadow-lift transition-all duration-300 hover:bg-brand-700 group-hover:translate-y-0 group-hover:opacity-100"
+            aria-label={`Añadir ${product.name} al carrito`}
+            className="absolute bottom-3 right-3 flex h-11 w-11 items-center justify-center rounded-full bg-brand-600 text-cream shadow-raised transition-all duration-300 hover:bg-brand-700 focus-visible:opacity-100 sm:translate-y-2 sm:opacity-0 sm:group-hover:translate-y-0 sm:group-hover:opacity-100 sm:focus-visible:translate-y-0"
           >
             <Plus className="h-5 w-5" />
           </button>
@@ -86,7 +110,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
           </div>
         </div>
       </Link>
-    </motion.div>
+    </div>
   );
 }
 

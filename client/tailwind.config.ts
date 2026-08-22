@@ -175,33 +175,58 @@ export default {
        * desplazándose sola, que además impide leer los nombres de las marcas.
        */
       keyframes: {
+        /*
+         * Ésta sí usa opacidad, y puede: la lleva sólo el VELO del carrito, que
+         * es decorativo. Si se quedara a 0 no se oscurecería el fondo y ya está;
+         * no hay nada que leer debajo.
+         */
         'fade-in': { from: { opacity: '0' }, to: { opacity: '1' } },
+        /*
+         * SIN OPACIDAD, y esto es lo importante.
+         *
+         * Mientras una animación está en marcha manda ELLA, no el `fill-mode`:
+         * en el instante 0 aplica su primer fotograma. Y el reloj de las
+         * animaciones sólo avanza mientras el documento se pinta —en una
+         * pestaña en segundo plano se queda parado en 0—. Con un primer
+         * fotograma de `opacity: 0`, eso significa contenido invisible durante
+         * todo ese rato: se comprobó, catorce elementos de «Conócenos», el
+         * titular incluido, con opacidad 0 y el reloj congelado.
+         *
+         * Animando sólo la posición, el peor caso es que el texto aparezca sin
+         * deslizarse. El contenido no depende de que la animación corra.
+         */
         'slide-up': {
-          from: { opacity: '0', transform: 'translateY(8px)' },
-          to: { opacity: '1', transform: 'translateY(0)' },
+          from: { transform: 'translateY(8px)' },
+          to: { transform: 'translateY(0)' },
         },
         'slide-in-right': {
           from: { transform: 'translateX(100%)' },
           to: { transform: 'translateX(0)' },
         },
 
-        /*
-         * OBSOLETO, y a propósito. `blob` y `float` se han retirado: eran
-         * manchas de color flotando en la portada, decoración sin función.
-         *
-         * `marquee` se queda hasta 2B por un motivo concreto: la tira de marcas
-         * duplica la lista dentro de un `overflow-hidden` y CUENTA con el
-         * desplazamiento para que se vean todas. Quitarlo ahora dejaría media
-         * lista recortada y sin forma de llegar a ella, en una pantalla que esta
-         * fase ni siquiera abre. Se va cuando 2B rehaga esa sección.
-         */
-        marquee: { from: { transform: 'translateX(0)' }, to: { transform: 'translateX(-50%)' } },
       },
+      /*
+       * `forwards`, NUNCA `both`. La diferencia parece de matiz y no lo es.
+       *
+       * `both` incluye `backwards`, que aplica el PRIMER fotograma mientras la
+       * animación aún no ha empezado. Y el primer fotograma de éstas es
+       * `opacity: 0` —o, en el cajón, estar fuera de la pantalla—. Si por lo
+       * que sea la animación no llega a arrancar —la pestaña se abrió en
+       * segundo plano y no se ha pintado, el subarbol está fuera de vista, una
+       * extensión las desactiva— ese primer fotograma se queda fijo y el
+       * contenido no aparece JAMÁS.
+       *
+       * Se comprobó: con `both`, catorce elementos de «Conócenos» —titular,
+       * texto e historia— seguían a opacidad 0 pasados dos segundos y medio.
+       *
+       * Con `forwards`, antes de empezar el elemento se ve normal y al terminar
+       * se queda en el último fotograma. Como mucho se pierde la animación; no
+       * se pierde el contenido. Una animación no puede esconder nada.
+       */
       animation: {
-        'fade-in': 'fade-in 150ms ease-out both',
-        'slide-up': 'slide-up 180ms cubic-bezier(0.16,1,0.3,1) both',
-        'slide-in-right': 'slide-in-right 220ms cubic-bezier(0.16,1,0.3,1) both',
-        marquee: 'marquee 32s linear infinite',
+        'fade-in': 'fade-in 150ms ease-out forwards',
+        'slide-up': 'slide-up 180ms cubic-bezier(0.16,1,0.3,1) forwards',
+        'slide-in-right': 'slide-in-right 220ms cubic-bezier(0.16,1,0.3,1) forwards',
       },
     },
   },
