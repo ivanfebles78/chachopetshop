@@ -1,18 +1,21 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Clock, Facebook, Instagram, Mail, MapPin, Phone } from 'lucide-react';
+import { REDES_SOCIALES, datosDeContacto } from '@/lib/empresa';
 import { Reveal } from '@/components/Reveal';
 import { toast } from '@/store/toast';
 import { api } from '@/lib/api';
 
-// ⚠️ Datos de ejemplo — edítalos con los reales de Chacho Pet Shop.
-const INFO = {
-  address: 'Calle Ejemplo, 1 · 38001 Santa Cruz de Tenerife',
-  phone: '922 00 00 00',
-  phoneHref: '+34922000000',
-  email: 'hola@chachopetshop.com',
-  hours: 'Lunes a viernes de 9:30 a 20:00 · Sábados de 10:00 a 14:00',
-};
+/*
+ * Los datos de contacto ya NO se escriben aquí: vienen de `lib/empresa.ts`,
+ * que es el único sitio donde se configuran y hoy está vacío a propósito.
+ *
+ * Lo que había era inventado y estaba publicado: la dirección «Calle Ejemplo,
+ * 1», el teléfono «922 00 00 00» con su enlace `tel:`, un horario y un correo.
+ * Se ha retirado sin sustituirlo por otra invención. El formulario —que sí
+ * funciona y llega al buzón de la tienda— sigue siendo la vía de contacto.
+ */
+const ICONO = { 'Teléfono': Phone, 'Email': Mail, 'Dirección': MapPin, 'Horario': Clock } as const;
 
 export function ContactoPage() {
   // `phone` es opcional y `website` es el cebo para robots: invisible para una
@@ -27,6 +30,7 @@ export function ContactoPage() {
   });
   const [accept, setAccept] = useState(false);
   const [busy, setBusy] = useState(false);
+  const contacto = datosDeContacto();
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,26 +125,49 @@ export function ContactoPage() {
         {/* Datos de contacto */}
         <Reveal delay={0.1}>
           <div className="space-y-4">
-            <div className="card space-y-4 rounded-4xl p-6">
-              <ContactRow icon={<MapPin className="h-5 w-5" />} title="Dirección" value={INFO.address} />
-              <ContactRow icon={<Phone className="h-5 w-5" />} title="Teléfono" value={<a href={`tel:${INFO.phoneHref}`} className="hover:text-brand-700">{INFO.phone}</a>} />
-              <ContactRow icon={<Mail className="h-5 w-5" />} title="Email" value={<a href={`mailto:${INFO.email}`} className="hover:text-brand-700">{INFO.email}</a>} />
-              <ContactRow icon={<Clock className="h-5 w-5" />} title="Horario" value={INFO.hours} />
-            </div>
-
-            <div className="card flex items-center justify-between rounded-4xl p-6">
-              <span className="font-semibold text-brand-900/80">Síguenos</span>
-              <div className="flex gap-2">
-                <a href="#" aria-label="Instagram" className="rounded-full border border-brand-900/10 p-2.5 text-brand-900/60 hover:bg-brand-50 hover:text-brand-700"><Instagram className="h-4 w-4" /></a>
-                <a href="#" aria-label="Facebook" className="rounded-full border border-brand-900/10 p-2.5 text-brand-900/60 hover:bg-brand-50 hover:text-brand-700"><Facebook className="h-4 w-4" /></a>
+            {contacto.length > 0 && (
+              <div className="card space-y-4 rounded-4xl p-6">
+                {contacto.map((c) => {
+                  const Icono = ICONO[c.etiqueta as keyof typeof ICONO];
+                  return (
+                    <ContactRow
+                      key={c.etiqueta}
+                      icon={<Icono className="h-5 w-5" />}
+                      title={c.etiqueta}
+                      value={c.href ? <a href={c.href} className="hover:text-brand-700">{c.valor}</a> : c.valor}
+                    />
+                  );
+                })}
               </div>
-            </div>
+            )}
 
-            {/* Placeholder de mapa (edita con un embed real de Google Maps) */}
-            <div className="relative flex h-44 items-center justify-center overflow-hidden rounded-4xl bg-brand-100 text-brand-700">
-              <MapPin className="h-8 w-8" />
-              <span className="absolute bottom-3 left-4 text-xs font-medium text-brand-700/70">Aquí puedes incrustar Google Maps</span>
-            </div>
+            {/* Los iconos sociales tenían `href="#"`: parecían pulsables y no
+                llevaban a ninguna parte. Vuelven cuando existan los perfiles. */}
+            {REDES_SOCIALES.length > 0 && (
+              <div className="card flex items-center justify-between rounded-4xl p-6">
+                <span className="font-semibold text-brand-900/80">Síguenos</span>
+                <div className="flex gap-2">
+                  {REDES_SOCIALES.map((r) => (
+                    <a
+                      key={r.nombre}
+                      href={r.url}
+                      aria-label={r.nombre}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                      className="rounded-full border border-brand-900/10 p-2.5 text-brand-900/60 hover:bg-brand-50 hover:text-brand-700"
+                    >
+                      {r.nombre === 'Instagram' ? <Instagram className="h-4 w-4" /> : <Facebook className="h-4 w-4" />}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/*
+              Aquí había un recuadro gris que le decía al CLIENTE «Aquí puedes
+              incrustar Google Maps»: una nota para quien programa, publicada.
+              El mapa vuelve cuando haya una dirección real que señalar.
+            */}
           </div>
         </Reveal>
       </div>
@@ -153,7 +180,7 @@ function ContactRow({ icon, title, value }: { icon: React.ReactNode; title: stri
     <div className="flex items-start gap-3">
       <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand-100 text-brand-700">{icon}</div>
       <div>
-        <p className="text-xs font-bold uppercase tracking-wide text-brand-900/40">{title}</p>
+        <p className="text-xs font-bold uppercase tracking-wide text-content-subtle">{title}</p>
         <p className="text-brand-900/80">{value}</p>
       </div>
     </div>

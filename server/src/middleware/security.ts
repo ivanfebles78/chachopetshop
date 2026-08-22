@@ -44,17 +44,31 @@ export const cabecerasDeSeguridad: RequestHandler = helmet({
       objectSrc: ["'none'"],
       scriptSrc: ["'self'", ...STRIPE_SCRIPTS],
       /*
-       * `unsafe-inline` en estilos, y sólo en estilos.
+       * ESTILOS: la concesión se ha estrechado (Fase 2A).
        *
-       * Es una concesión real y conviene que quede escrita: Tailwind no la
-       * necesita —compila a un fichero—, pero el proyecto usa `style={{…}}` en
-       * varios sitios (el panel de analítica, sobre todo) y React los emite como
-       * atributos `style` en línea. Sin esto, esas pantallas se rompen.
+       * Antes era `style-src 'unsafe-inline'`, que permite DOS cosas muy
+       * distintas de golpe: los atributos `style="…"` que React emite, y
+       * cualquier bloque `<style>` inyectado en la página. Lo primero hace
+       * falta; lo segundo es el vector de verdad —con CSS se puede tapar un
+       * botón, repintar un precio o sacar datos a golpe de selector— y no lo
+       * usa nadie aquí: el build de Vite compila TODO el CSS a un fichero
+       * enlazado, y en `dist/index.html` no queda ni un `<style>`.
        *
-       * Se retirará cuando la Fase 2 sustituya esos estilos en línea. No se
-       * concede en `script-src`, que es donde de verdad duele.
+       * Así que se separan. `style-src` deja de admitir lo inline, y la
+       * excepción baja a `style-src-attr`, que cubre sólo los atributos.
+       *
+       * Lo que sigue necesitando el atributo son las barras del panel de
+       * analítica: su anchura sale de los datos (`width: 43%`), no puede ser una
+       * clase de Tailwind, y es pantalla de administración.
+       *
+       * OJO SI ALGUIEN AÑADE `AnimatePresence mode="popLayout"`: framer-motion
+       * inyecta entonces un `<style>` de verdad, que esto bloquea. Tiene arreglo
+       * —`<MotionConfig nonce>`— pero hay que acordarse, y no se vería en local:
+       * el servidor de Vite no manda estas cabeceras, sólo Express en producción.
+       * Hoy no se usa ese modo en ninguna parte.
        */
-      styleSrc: ["'self'", "'unsafe-inline'", ...FUENTES_ESTILO],
+      styleSrc: ["'self'", ...FUENTES_ESTILO],
+      styleSrcAttr: ["'unsafe-inline'"],
       fontSrc: ["'self'", ...FUENTES_FICHERO],
       imgSrc: ["'self'", ...IMAGENES],
       connectSrc: ["'self'", ...STRIPE_CONNECT],

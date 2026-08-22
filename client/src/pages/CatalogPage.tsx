@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { SlidersHorizontal, X } from 'lucide-react';
+import { SearchX, SlidersHorizontal, X } from 'lucide-react';
 import { api, type ProductFilters } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { cn } from '@/lib/cn';
@@ -90,7 +90,7 @@ export function CatalogPage() {
           const desc = (filters.category && SECTION_DESC[filters.category]) || (filters.animal && SECTION_DESC[filters.animal]);
           return desc ? <p className="mt-2 max-w-2xl text-brand-900/60">{desc}</p> : null;
         })()}
-        <p className="mt-1 text-sm text-brand-900/50">{data?.total ?? '—'} productos</p>
+        <p className="mt-1 text-sm text-content-subtle">{data?.total ?? '—'} productos</p>
       </div>
 
       <div className="flex items-center justify-between gap-3 lg:hidden">
@@ -138,7 +138,7 @@ export function CatalogPage() {
             </>
           ) : (
             <div className="card flex flex-col items-center gap-3 rounded-4xl py-16 text-center">
-              <span className="text-4xl">🔍</span>
+              <SearchX className="h-10 w-10 text-content-muted" aria-hidden="true" />
               <p className="font-display text-lg font-semibold text-ink">Sin resultados</p>
               <p className="text-brand-900/60">Prueba a quitar algún filtro.</p>
               <button onClick={() => setParams(new URLSearchParams())} className="btn-ghost mt-2">Limpiar filtros</button>
@@ -176,13 +176,24 @@ export function CatalogPage() {
 
 function SortSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="rounded-full border border-brand-900/10 bg-white px-4 py-2.5 text-sm font-semibold text-brand-900 outline-none focus:border-brand-500"
-    >
-      {SORTS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
-    </select>
+    /*
+     * El desplegable no tenía NOMBRE. Se veía «Más vendidos» y se entendía por
+     * el sitio que ocupa, pero un lector de pantalla anunciaba «menú
+     * desplegable, más vendidos» sin decir de qué: ordenar, filtrar, elegir
+     * envío. axe lo marca como fallo crítico y con razón —es el control que
+     * decide en qué orden se ve la tienda—. La etiqueta va oculta a la vista
+     * porque el contexto sí es evidente MIRANDO; lo que faltaba era el nombre.
+     */
+    <label>
+      <span className="sr-only">Ordenar los productos</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded-full border border-brand-900/10 bg-white px-4 py-2.5 text-sm font-semibold text-brand-900 outline-none focus:border-brand-500"
+      >
+        {SORTS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+      </select>
+    </label>
   );
 }
 
@@ -272,7 +283,7 @@ function FilterPanel({ taxonomy, filters, patch, toggleMulti, onClear, activeCou
 function FilterGroup({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-brand-900/50">{title}</h3>
+      <h3 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-content-subtle">{title}</h3>
       {children}
     </div>
   );

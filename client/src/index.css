@@ -11,9 +11,13 @@
     scroll-behavior: smooth;
   }
 
+  /*
+   * El degradado radial del fondo se ha retirado. Era una capa de color en toda
+   * la página que no aportaba nada y competía con la fotografía que llegará en
+   * 2B. Papel plano, y que destaque el producto.
+   */
   body {
-    @apply bg-cream text-ink font-sans antialiased;
-    background-image: radial-gradient(120% 100% at 50% 0%, #fbfcfe 0%, #f3f7fd 55%, #e8f0fa 100%);
+    @apply bg-cream text-content font-sans antialiased;
     min-height: 100vh;
   }
 
@@ -25,54 +29,169 @@
     @apply font-display tracking-tight;
   }
 
-  /* Scrollbar sutil */
+  /*
+   * Anillo de foco GLOBAL, no sólo en `.btn`.
+   *
+   * Antes lo tenían los botones y nada más: cualquier enlace suelto se quedaba
+   * con el contorno por defecto del navegador, que cambia según el navegador y
+   * casi no se ve sobre fondo claro. Quien navega con teclado necesita saber
+   * dónde está en TODOS los controles, no en algunos.
+   */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    @apply outline-none ring-2 ring-brand-500 ring-offset-2 ring-offset-cream;
+    border-radius: theme('borderRadius.control');
+  }
+
+  /*
+   * Quien pide menos movimiento, recibe menos movimiento. Se anula todo salvo
+   * la opacidad, que sigue siendo útil para saber que algo ha aparecido.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-brand-700/25 rounded-full;
+    @apply rounded-pill bg-edge-strong;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-brand-700/40;
+    @apply bg-content-subtle;
   }
 }
 
 @layer components {
+  /* ── Anchura de página ───────────────────────────────────────────────── */
   .container-page {
-    @apply mx-auto w-full max-w-7xl px-5 sm:px-8;
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
   }
 
+  /* ── Botones ─────────────────────────────────────────────────────────────
+   *
+   * Tres variantes × tres tamaños. Antes había tres variantes y un solo
+   * tamaño, y toda la interfaz usaba `rounded-full`: hasta los botones de
+   * formulario parecían pastillas.
+   *
+   * El radio pasa a ser el de control. La píldora se reserva a lo que de
+   * verdad lo es: chips, insignias y botones de icono redondos.
+   */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-200
-           disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2
-           focus-visible:ring-brand-500/60 focus-visible:ring-offset-2 focus-visible:ring-offset-cream;
+    @apply inline-flex items-center justify-center gap-2 rounded-control font-semibold
+           transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-55;
   }
+  .btn-sm { @apply h-9 px-3.5 text-body-sm; }
+  .btn-md { @apply h-11 px-5 text-body; }
+  .btn-lg { @apply h-12 px-6 text-body-lg; }
+
   .btn-primary {
-    @apply btn bg-brand-600 px-6 py-3 text-cream shadow-soft hover:bg-brand-700 hover:shadow-lift active:scale-[0.98];
+    @apply btn btn-md bg-brand-600 text-content-inverse shadow-rest
+           hover:bg-brand-700 active:bg-brand-800;
   }
   .btn-ghost {
-    @apply btn border border-brand-900/10 bg-white/60 px-6 py-3 text-brand-900 backdrop-blur
-           hover:border-brand-900/20 hover:bg-white active:scale-[0.98];
+    @apply btn btn-md border border-edge bg-surface text-content
+           hover:border-edge-strong hover:bg-surface-sunken;
   }
   .btn-amber {
-    @apply btn bg-amber-500 px-6 py-3 text-ink shadow-soft hover:bg-amber-400 active:scale-[0.98];
+    @apply btn btn-md bg-amber-500 text-ink shadow-rest hover:bg-amber-400 active:bg-amber-600;
+  }
+  /* Terciario: acción de texto, sin caja. */
+  .btn-link {
+    @apply inline-flex items-center gap-1.5 font-semibold text-brand-600
+           underline-offset-4 hover:text-brand-700 hover:underline;
   }
 
+  /*
+   * Botón de icono. Aquí la píldora SÍ está justificada: es un objetivo
+   * circular sin texto, y 44px es el mínimo cómodo con el pulgar.
+   */
+  .btn-icon {
+    @apply inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-pill
+           text-content-muted transition-colors hover:bg-surface-sunken hover:text-brand-700;
+  }
+
+  /* ── Campos ──────────────────────────────────────────────────────────── */
+  .field {
+    @apply h-11 w-full rounded-control border border-edge bg-surface px-3.5 text-body
+           text-content placeholder:text-content-subtle
+           focus:border-brand-400 focus:outline-none;
+  }
+  .field-label {
+    @apply mb-1.5 block text-body-sm font-semibold text-content-muted;
+  }
+  .field-error {
+    @apply mt-1.5 block text-body-sm text-danger;
+  }
+
+  /* ── Superficies ─────────────────────────────────────────────────────── */
   .card {
-    @apply rounded-4xl border border-brand-900/[0.06] bg-white/80 shadow-soft backdrop-blur;
+    @apply rounded-card border border-edge-subtle bg-surface shadow-rest;
+  }
+  .card-raised {
+    @apply rounded-card border border-edge-subtle bg-surface-raised shadow-raised;
   }
 
+  /* ── Chips e insignias — la píldora vive aquí ────────────────────────── */
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-brand-900/10 bg-white/70 px-3 py-1
-           text-sm font-medium text-brand-900 transition-colors;
+    @apply inline-flex items-center gap-1.5 rounded-pill border border-edge bg-surface
+           px-3 py-1 text-body-sm font-medium text-content transition-colors;
   }
   .chip-active {
-    @apply border-brand-600 bg-brand-600 text-cream;
+    @apply border-brand-600 bg-brand-600 text-content-inverse;
+  }
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-pill px-2.5 py-0.5 text-caption font-semibold;
+  }
+  .badge-neutral { @apply badge bg-surface-sunken text-content-muted; }
+  .badge-success { @apply badge bg-success-subtle text-success; }
+  .badge-warning { @apply badge bg-warning-subtle text-warning; }
+  .badge-danger  { @apply badge bg-danger-subtle text-danger; }
+  .badge-info    { @apply badge bg-info-subtle text-info; }
+
+  /* ── Shell ───────────────────────────────────────────────────────────── */
+
+  /*
+   * Cabecera sólida, sin cristal. Los `backdrop-blur` se han retirado: costaban
+   * pintado en cada desplazamiento y sobre papel claro no se distinguían de un
+   * fondo liso.
+   */
+  .site-header {
+    @apply sticky top-0 z-40 border-b border-edge-subtle bg-cream;
   }
 
-  .glass-nav {
-    @apply border-b border-brand-900/[0.06] bg-cream/70 backdrop-blur-xl;
+  /* Enlace de navegación de la cabecera. */
+  .nav-link {
+    @apply inline-flex items-center gap-1 rounded-control px-3 py-2 text-body font-semibold
+           text-content transition-colors hover:bg-surface-sunken hover:text-brand-700;
+  }
+  .nav-link-active {
+    @apply bg-surface-sunken text-brand-700;
+  }
+
+  /* Enlace dentro de un panel del mega-menú. */
+  .menu-link {
+    @apply flex items-center justify-between gap-2 rounded-control px-2.5 py-1.5 text-body-sm
+           text-content-muted transition-colors hover:bg-surface-sunken hover:text-brand-700;
+  }
+  .menu-heading {
+    @apply mb-1.5 px-2.5 text-overline font-bold uppercase text-content-subtle;
+  }
+
+  /*
+   * Enlace de saltar al contenido. Fuera de la vista hasta que recibe el foco,
+   * que es cuando hace falta. No se oculta con `display:none` porque entonces
+   * no sería enfocable, que es justo lo contrario de lo que se busca.
+   */
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50
+           focus:rounded-control focus:bg-brand-700 focus:px-4 focus:py-2.5
+           focus:text-body font-semibold focus:text-content-inverse;
   }
 }
 

@@ -32,7 +32,7 @@ export function CheckoutResultPage({ kind }: { kind: 'success' | 'cancel' }) {
       <div className="flex h-20 w-20 items-center justify-center rounded-full bg-brand-100">
         <CheckCircle2 className="h-11 w-11 text-brand-600" />
       </div>
-      <h1 className="font-display text-3xl font-bold text-ink sm:text-4xl">¡Gracias por tu pedido! 🐾</h1>
+      <h1 className="font-display text-3xl font-bold text-ink sm:text-4xl">¡Gracias por tu pedido!</h1>
       <p className="max-w-md text-brand-900/60">
         Hemos recibido tu compra correctamente. Te enviaremos un email de confirmación
         {order ? <> a <strong className="text-brand-800">{order.email}</strong></> : ''}.
@@ -41,7 +41,7 @@ export function CheckoutResultPage({ kind }: { kind: 'success' | 'cancel' }) {
       {order && (
         <div className="card w-full max-w-md space-y-4 rounded-4xl p-6 text-left">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-brand-900/50">Pedido</span>
+            <span className="text-sm text-content-subtle">Pedido</span>
             <span className="font-mono text-sm font-semibold text-brand-800">#{order.id.slice(-8).toUpperCase()}</span>
           </div>
           <div className="space-y-2 border-t border-brand-900/10 pt-4">

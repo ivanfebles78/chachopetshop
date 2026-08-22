@@ -20,9 +20,9 @@ export function ProductPage() {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
 
-  if (loading) return <div className="container-page py-20 text-center text-brand-900/50">Cargando…</div>;
+  if (loading) return <div className="container-page py-20 text-center text-content-subtle">Cargando…</div>;
   if (error) return <div className="container-page py-16"><ErrorState message={error} onRetry={refetch} /></div>;
-  if (!data) return <div className="container-page py-20 text-center text-brand-900/50">Producto no encontrado.</div>;
+  if (!data) return <div className="container-page py-20 text-center text-content-subtle">Producto no encontrado.</div>;
 
   const { product, related } = data;
   const variant = product.variants.find((v) => v.id === variantId) ?? product.variants[0];
@@ -48,7 +48,7 @@ export function ProductPage() {
 
   return (
     <div className="container-page py-8">
-      <nav className="mb-6 flex items-center gap-1 text-sm text-brand-900/50">
+      <nav className="mb-6 flex items-center gap-1 text-sm text-content-subtle">
         <Link to="/" className="hover:text-brand-700">Inicio</Link>
         <ChevronRight className="h-3.5 w-3.5" />
         <Link to="/tienda" className="hover:text-brand-700">Tienda</Link>
@@ -70,15 +70,24 @@ export function ProductPage() {
           {gallery.length > 1 && (
             <div className="mt-3 flex gap-3">
               {gallery.map((g, i) => (
+                /*
+                 * Estas miniaturas eran botones SIN NOMBRE: dentro sólo había
+                 * una imagen con `alt` vacío, así que no quedaba nada que
+                 * anunciar y se oían como «botón», tres veces seguidas. axe lo
+                 * marca como crítico. Además ahora se dice CUÁL está puesta:
+                 * el borde de color no lo ve todo el mundo.
+                 */
                 <button
                   key={i}
                   onClick={() => setActiveImg(i)}
+                  aria-label={`Ver la imagen ${i + 1} de ${gallery.length}`}
+                  aria-pressed={i === activeImg}
                   className={cn(
                     'h-20 w-20 overflow-hidden rounded-2xl border-2 transition-colors',
                     i === activeImg ? 'border-brand-600' : 'border-transparent opacity-70 hover:opacity-100',
                   )}
                 >
-                  <img src={g} alt="" className="h-full w-full object-cover" />
+                  <img src={g} alt="" aria-hidden="true" className="h-full w-full object-cover" />
                 </button>
               ))}
             </div>
@@ -94,7 +103,7 @@ export function ProductPage() {
 
           <div className="mt-5 flex items-baseline gap-3">
             <span className="font-display text-4xl font-extrabold text-brand-700">{eur(price)}</span>
-            {hasDiscount && <span className="text-xl text-brand-900/40 line-through">{eur(product.compareAt)}</span>}
+            {hasDiscount && <span className="text-xl text-content-subtle line-through">{eur(product.compareAt)}</span>}
             {hasDiscount && (
               <span className="rounded-full bg-amber-500 px-2.5 py-1 text-xs font-bold text-ink">
                 Ahorra {eur(product.compareAt! - price)}
@@ -130,7 +139,7 @@ export function ProductPage() {
                     )}
                   >
                     {v.label}
-                    <span className={cn('ml-2', v.id === variant?.id ? 'text-cream/80' : 'text-brand-900/50')}>{eur(v.price)}</span>
+                    <span className={cn('ml-2', v.id === variant?.id ? 'text-cream/80' : 'text-content-subtle')}>{eur(v.price)}</span>
                   </button>
                 ))}
               </div>

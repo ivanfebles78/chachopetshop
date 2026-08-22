@@ -24,7 +24,7 @@ export function AdminPage() {
   const messages = useFetch(() => (isAdmin ? api.adminMessages() : Promise.resolve(null)), [user?.id, nonce]);
   const unread = messages.data?.messages.filter((m) => !m.read).length ?? 0;
 
-  if (loading) return <div className="container-page py-20 text-center text-brand-900/50">Cargando…</div>;
+  if (loading) return <div className="container-page py-20 text-center text-content-subtle">Cargando…</div>;
   if (user?.role !== 'ADMIN') {
     return (
       <div className="container-page flex flex-col items-center gap-4 py-24 text-center">
@@ -98,12 +98,12 @@ export function AdminPage() {
         ) : analytics.data ? (
           <AnalyticsDashboard data={analytics.data} />
         ) : (
-          <div className="card rounded-4xl py-16 text-center text-brand-900/50">Cargando estadísticas…</div>
+          <div className="card rounded-4xl py-16 text-center text-content-subtle">Cargando estadísticas…</div>
         )
       ) : tab === 'products' ? (
         <div className="card overflow-hidden rounded-4xl">
           <table className="w-full text-sm">
-            <thead className="bg-brand-900/[0.03] text-left text-xs uppercase tracking-wide text-brand-900/50">
+            <thead className="bg-brand-900/[0.03] text-left text-xs uppercase tracking-wide text-content-subtle">
               <tr>
                 <th className="px-5 py-3">Producto</th>
                 <th className="px-5 py-3">Marca</th>
@@ -125,7 +125,7 @@ export function AdminPage() {
                   <td className="px-5 py-3 font-semibold">{eur(p.price)}</td>
                   <td className="px-5 py-3 text-brand-900/60">{p.variants.length}</td>
                   <td className="px-5 py-3 text-right">
-                    <button onClick={() => deleteProduct(p.id)} className="rounded-lg p-2 text-brand-900/40 hover:bg-red-50 hover:text-red-500" aria-label="Eliminar">
+                    <button onClick={() => deleteProduct(p.id)} className="rounded-lg p-2 text-content-subtle hover:bg-red-50 hover:text-red-500" aria-label="Eliminar">
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </td>
@@ -143,7 +143,7 @@ export function AdminPage() {
               <div key={o.id} className="card flex flex-wrap items-center justify-between gap-3 rounded-4xl p-5">
                 <div>
                   <span className="font-mono text-sm font-semibold text-brand-800">#{o.id.slice(-8).toUpperCase()}</span>
-                  <p className="text-xs text-brand-900/50">{o.email} · {new Date(o.createdAt).toLocaleString('es-ES')}</p>
+                  <p className="text-xs text-content-subtle">{o.email} · {new Date(o.createdAt).toLocaleString('es-ES')}</p>
                 </div>
                 <span className="font-display font-bold text-ink">{eur(o.total)}</span>
                 <select
@@ -167,7 +167,7 @@ export function AdminPage() {
 function MessagesPanel({
   data, onRead, onDelete,
 }: { data?: import('@/lib/types').ContactMessage[]; onRead: (id: string, read: boolean) => void; onDelete: (id: string) => void }) {
-  if (!data) return <div className="card rounded-4xl py-12 text-center text-brand-900/50">Cargando…</div>;
+  if (!data) return <div className="card rounded-4xl py-12 text-center text-content-subtle">Cargando…</div>;
   if (!data.length) return <div className="card rounded-4xl py-12 text-center text-brand-900/60">Aún no hay mensajes.</div>;
   return (
     <div className="space-y-3">
@@ -182,10 +182,10 @@ function MessagesPanel({
               <p className="text-sm text-brand-900/60">{m.name} · <a href={`mailto:${m.email}`} className="hover:text-brand-700">{m.email}</a> · {new Date(m.createdAt).toLocaleString('es-ES')}</p>
             </div>
             <div className="flex gap-1">
-              <button onClick={() => onRead(m.id, !m.read)} className="rounded-lg p-2 text-brand-900/50 hover:bg-brand-50 hover:text-brand-700" aria-label={m.read ? 'Marcar no leído' : 'Marcar leído'}>
+              <button onClick={() => onRead(m.id, !m.read)} className="rounded-lg p-2 text-content-subtle hover:bg-brand-50 hover:text-brand-700" aria-label={m.read ? 'Marcar no leído' : 'Marcar leído'}>
                 {m.read ? <MailOpen className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
               </button>
-              <button onClick={() => onDelete(m.id)} className="rounded-lg p-2 text-brand-900/40 hover:bg-red-50 hover:text-red-500" aria-label="Eliminar">
+              <button onClick={() => onDelete(m.id)} className="rounded-lg p-2 text-content-subtle hover:bg-red-50 hover:text-red-500" aria-label="Eliminar">
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>

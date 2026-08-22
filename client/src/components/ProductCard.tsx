@@ -76,12 +76,12 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
           <div className="flex items-baseline gap-2 pt-1">
             <span className="font-display text-lg font-bold text-brand-800">
               {cheapest && product.variants.length > 1 && (
-                <span className="mr-1 text-xs font-medium text-brand-900/50">desde</span>
+                <span className="mr-1 text-xs font-medium text-content-subtle">desde</span>
               )}
               {eur(price)}
             </span>
             {hasDiscount && (
-              <span className="text-sm text-brand-900/40 line-through">{eur(product.compareAt)}</span>
+              <span className="text-sm text-content-subtle line-through">{eur(product.compareAt)}</span>
             )}
           </div>
         </div>

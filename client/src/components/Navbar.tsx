@@ -1,164 +1,145 @@
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { ChevronDown, Menu, Phone, Search, ShoppingBag, Truck, User, X } from 'lucide-react';
+import { ChevronDown, Menu, Search, ShoppingBag, Truck, User, X } from 'lucide-react';
 import { selectCount, useCart } from '@/store/cart';
 import { useAuth } from '@/store/auth';
+import { useNavegacion } from '@/lib/useNavegacion';
+import type { EntradaNav } from '@/lib/navigation';
+import { MobileNav } from './MobileNav';
 
-const t = (params: string) => `/tienda?${params}`;
-
-type Col = { title: string; links: [string, string][] };
-type MenuEntry = { label: string; href?: string; cols?: Col[]; footer?: [string, string] };
-
-const MENU: MenuEntry[] = [
-  {
-    label: 'Perros',
-    cols: [
-      { title: 'Alimentación', links: [['Pienso seco', t('animal=perro&category=alimentacion-seca')], ['Comida húmeda', t('animal=perro&category=alimentacion-humeda')], ['Semihúmeda', t('animal=perro&category=semihumeda')]] },
-      { title: 'Cuidado', links: [['Premios y snacks', t('animal=perro&category=premios-snacks')], ['Suplementos y salud', t('animal=perro&category=suplementos')], ['Higiene y cosmética', t('animal=perro&category=higiene')]] },
-      { title: 'Más', links: [['Accesorios', t('animal=perro&category=accesorios')], ['Camas y descanso', t('animal=perro&category=camas')], ['Dietas veterinarias', t('animal=perro&category=dietas-veterinarias')]] },
-    ],
-    footer: ['Ver todo para perros', t('animal=perro')],
-  },
-  {
-    label: 'Gatos',
-    cols: [
-      { title: 'Alimentación', links: [['Pienso seco', t('animal=gato&category=alimentacion-seca')], ['Comida húmeda', t('animal=gato&category=alimentacion-humeda')], ['Semihúmeda', t('animal=gato&category=semihumeda')]] },
-      { title: 'Cuidado', links: [['Premios y snacks', t('animal=gato&category=premios-snacks')], ['Suplementos y salud', t('animal=gato&category=suplementos')], ['Arena y aglomerantes', t('animal=gato&category=higiene')]] },
-      { title: 'Más', links: [['Accesorios y rascadores', t('animal=gato&category=accesorios')], ['Camas y descanso', t('animal=gato&category=camas')], ['Dietas veterinarias', t('animal=gato&category=dietas-veterinarias')]] },
-    ],
-    footer: ['Ver todo para gatos', t('animal=gato')],
-  },
-  {
-    label: 'Otras mascotas',
-    cols: [
-      { title: 'Mascotas', links: [['Aves', t('animal=ave')], ['Roedores', t('animal=roedor')], ['Peces', t('animal=pez')], ['Reptiles', t('animal=reptil')]] },
-      { title: 'Para ellos', links: [['Alimentación', t('animal=ave&category=alimentacion-seca')], ['Snacks', t('animal=roedor&category=premios-snacks')], ['Accesorios', t('category=accesorios')]] },
-    ],
-    footer: ['Ver todas las mascotas', '/tienda'],
-  },
-  {
-    label: 'Accesorios',
-    cols: [
-      { title: 'Por mascota', links: [['Perros', t('category=accesorios&animal=perro')], ['Gatos', t('category=accesorios&animal=gato')], ['Aves', t('category=accesorios&animal=ave')], ['Roedores', t('category=accesorios&animal=roedor')]] },
-      { title: 'Categorías', links: [['Camas y descanso', t('category=camas')], ['Transporte y viaje', t('category=transporte')], ['Higiene y cosmética', t('category=higiene')]] },
-    ],
-    footer: ['Ver todos los accesorios', t('category=accesorios')],
-  },
-  { label: 'Dietas veterinarias', href: t('category=dietas-veterinarias') },
-  { label: 'Ofertas', href: t('featured=1') },
-];
-
-export function Navbar() {
-  const count = useCart(selectCount);
-  const openCart = useCart((s) => s.open);
-  const { user } = useAuth();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [q, setQ] = useState('');
-  const navigate = useNavigate();
-
-  const submitSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    navigate(`/tienda?q=${encodeURIComponent(q)}`);
-    setMobileOpen(false);
-  };
-
-  return (
-    <header className="sticky top-0 z-40">
-      {/* Barra superior */}
-      <div className="bg-brand-800 text-cream/90">
-        <div className="container-page flex h-9 items-center justify-between text-xs font-medium">
-          <span className="flex items-center gap-2"><Truck className="h-3.5 w-3.5 text-amber-400" /> Envío 24-48h en Canarias · Gratis desde 49€</span>
-          <div className="hidden items-center gap-4 sm:flex">
-            <Link to="/conocenos" className="hover:text-amber-400">Conócenos</Link>
-            <Link to="/contacto" className="hover:text-amber-400">Contacto</Link>
-            <a href="tel:+34922000000" className="flex items-center gap-1.5 hover:text-amber-400"><Phone className="h-3.5 w-3.5" /> 922 00 00 00</a>
-          </div>
-        </div>
-      </div>
-
-      {/* Barra principal */}
-      <div className="glass-nav">
-        <div className="container-page flex h-16 items-center gap-4 md:h-20">
-          <Logo />
-
-          <nav className="ml-2 hidden items-center xl:flex">
-            {MENU.map((entry) => (
-              <MegaItem key={entry.label} entry={entry} />
-            ))}
-          </nav>
-
-          <form onSubmit={submitSearch} className="ml-auto hidden max-w-[13rem] flex-1 items-center lg:flex">
-            <div className="flex w-full items-center gap-2 rounded-full border border-brand-900/10 bg-white/80 px-4 py-2 focus-within:border-sky-500 focus-within:ring-2 focus-within:ring-sky-500/20">
-              <Search className="h-4 w-4 text-brand-900/40" />
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar…" className="w-full bg-transparent text-sm outline-none placeholder:text-brand-900/40" />
-            </div>
-          </form>
-
-          <div className="ml-auto flex items-center gap-1 lg:ml-0">
-            <Link to={user ? '/cuenta' : '/login'} className="hidden rounded-full p-2.5 text-brand-800/80 transition-colors hover:bg-brand-900/5 hover:text-brand-700 sm:block" aria-label="Mi cuenta">
-              <User className="h-5 w-5" />
-            </Link>
-            <button onClick={openCart} className="relative rounded-full p-2.5 text-brand-800/80 transition-colors hover:bg-brand-900/5 hover:text-brand-700" aria-label="Abrir carrito">
-              <ShoppingBag className="h-5 w-5" />
-              {count > 0 && (
-                <motion.span key={count} initial={{ scale: 0.5 }} animate={{ scale: 1 }} className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-xs font-bold text-ink">
-                  {count}
-                </motion.span>
-              )}
-            </button>
-            <button onClick={() => setMobileOpen((v) => !v)} className="rounded-full p-2.5 text-brand-800/80 hover:bg-brand-900/5 xl:hidden" aria-label="Menú">
-              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {mobileOpen && <MobileMenu onClose={() => setMobileOpen(false)} onSearch={submitSearch} q={q} setQ={setQ} loggedIn={!!user} />}
-    </header>
-  );
-}
+/**
+ * CABECERA DE LA TIENDA.
+ *
+ * Tres correcciones de fondo respecto a la anterior:
+ *
+ *   1. El menú SALE DEL CATÁLOGO (ver `lib/navigation.ts`). Antes era una lista
+ *      escrita a mano con dos destinos que no llevaban a ningún producto.
+ *
+ *   2. Los desplegables se anuncian. Antes eran `<button>` sin ninguna relación
+ *      declarada con el panel que abrían: quien no ve la pantalla no sabía que
+ *      existía un submenú, ni si estaba abierto.
+ *
+ *      Se usa el patrón de DIVULGACIÓN —`aria-expanded` + `aria-controls` sobre
+ *      un botón, y una lista de enlaces normal— y no `role="menu"`. Un menú
+ *      ARIA es para acciones de aplicación y obliga a navegar con flechas; esto
+ *      son enlaces de navegación, y el tabulador es lo que la gente espera.
+ *
+ *   3. El buscador está SIEMPRE, también en móvil. Antes sólo aparecía a partir
+ *      de `lg` y en el cajón lateral: en el dispositivo donde más se compra
+ *      había que abrir un menú para poder buscar.
+ */
 
 function Logo() {
   return (
-    <Link to="/" className="flex shrink-0 items-center gap-2" aria-label="Chacho Pet Shop — inicio">
-      <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-700 text-lg shadow-soft">🐾</span>
+    <Link to="/" className="flex shrink-0 items-center gap-2.5" aria-label="Chacho Pet Shop, ir a la portada">
+      <span className="flex h-10 w-10 items-center justify-center rounded-pill bg-brand-700 text-content-inverse">
+        <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" aria-hidden="true">
+          <circle cx="7" cy="9" r="2.4" /><circle cx="12.4" cy="6.6" r="2.4" />
+          <circle cx="17.6" cy="9.4" r="2.4" />
+          <path d="M12 12c2.6 0 5.2 2.1 5.2 4.6 0 1.9-1.6 2.9-3.4 2.9-1 0-1.3-.4-1.8-.4s-.8.4-1.8.4c-1.8 0-3.4-1-3.4-2.9C6.8 14.1 9.4 12 12 12Z" />
+        </svg>
+      </span>
       <span className="leading-none">
-        <span className="block bg-gradient-to-b from-sky-400 via-sky-500 to-amber-500 bg-clip-text font-display text-2xl font-extrabold tracking-tight text-transparent">
-          CHACHO
-        </span>
-        <span className="block text-[0.58rem] font-bold uppercase tracking-[0.35em] text-brand-700">Pet Shop</span>
+        <span className="block font-display text-heading font-extrabold tracking-tight text-brand-700">CHACHO</span>
+        <span className="block text-overline font-bold uppercase text-content-subtle">Pet Shop</span>
       </span>
     </Link>
   );
 }
 
-function MegaItem({ entry }: { entry: MenuEntry }) {
-  if (entry.href) {
+/** Un desplegable de la cabecera, con el patrón de divulgación. */
+function Desplegable({ entrada }: { entrada: EntradaNav }) {
+  /*
+   * No basta con «abierto sí o no»: hace falta saber POR QUÉ está abierto.
+   *
+   * El puntero abre al pasar por encima y el clic alterna, y las dos cosas se
+   * pelean, porque para pulsar hay que estar encima: al llegar al botón el
+   * ratón ya lo había abierto, así que el clic lo cerraba y ABRIR CON EL RATÓN
+   * ERA IMPOSIBLE. Con teclado no pasaba —no hay `mouseenter`—, de modo que el
+   * fallo sólo salía con el ratón, que es como entra casi todo el mundo.
+   *
+   * Distinguiendo el motivo, el clic sólo cierra lo que el propio clic abrió.
+   */
+  const [modo, setModo] = useState<'cerrado' | 'puntero' | 'clic'>('cerrado');
+  const abierto = modo !== 'cerrado';
+  const setAbierto = (v: boolean) => setModo(v ? 'clic' : 'cerrado');
+  const contenedor = useRef<HTMLDivElement>(null);
+  const disparador = useRef<HTMLButtonElement>(null);
+  const panelId = useId();
+
+  /* Escape cierra y devuelve el foco a quien abrió: si no, el foco se pierde. */
+  useEffect(() => {
+    if (!abierto) return;
+    const alPulsar = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setAbierto(false);
+        disparador.current?.focus();
+      }
+    };
+    const alPincharFuera = (e: MouseEvent) => {
+      if (!contenedor.current?.contains(e.target as Node)) setAbierto(false);
+    };
+    document.addEventListener('keydown', alPulsar);
+    document.addEventListener('mousedown', alPincharFuera);
+    return () => {
+      document.removeEventListener('keydown', alPulsar);
+      document.removeEventListener('mousedown', alPincharFuera);
+    };
+  }, [abierto]);
+
+  /* Al salir con el tabulador del último enlace, el panel se cierra solo. */
+  const alPerderFoco = (e: React.FocusEvent<HTMLDivElement>) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setAbierto(false);
+  };
+
+  if (!entrada.columnas) {
     return (
-      <Link to={entry.href} className="rounded-full px-3.5 py-2 text-sm font-semibold text-brand-800/80 transition-colors hover:bg-brand-900/5 hover:text-brand-700">
-        {entry.label}
+      <Link to={entrada.href} className="nav-link">
+        {entrada.etiqueta}
       </Link>
     );
   }
+
   return (
-    <div className="group relative">
-      <button className="flex items-center gap-1 rounded-full px-3.5 py-2 text-sm font-semibold text-brand-800/80 transition-colors hover:bg-brand-900/5 hover:text-brand-700 group-hover:text-brand-700">
-        {entry.label}
-        <ChevronDown className="h-3.5 w-3.5 transition-transform group-hover:rotate-180" />
+    <div
+      ref={contenedor}
+      className="relative"
+      /* El puntero sólo abre lo que estaba cerrado: nunca pisa un clic. */
+      onMouseEnter={() => setModo((m) => (m === 'cerrado' ? 'puntero' : m))}
+      /* Al salir se cierra, se hubiera abierto como se hubiera abierto. */
+      onMouseLeave={() => setModo('cerrado')}
+      onBlur={alPerderFoco}
+    >
+      <button
+        ref={disparador}
+        type="button"
+        className="nav-link"
+        aria-expanded={abierto}
+        aria-controls={panelId}
+        onClick={() => setModo((m) => (m === 'clic' ? 'cerrado' : 'clic'))}
+      >
+        {entrada.etiqueta}
+        <ChevronDown className={`h-4 w-4 transition-transform ${abierto ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
-      {/* Panel */}
-      <div className="invisible absolute left-1/2 top-full z-50 -translate-x-1/2 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-        <div className="w-max max-w-[42rem] rounded-3xl border border-brand-900/10 bg-white p-5 shadow-lift">
-          <div className="flex gap-8">
-            {entry.cols?.map((col) => (
-              <div key={col.title} className="min-w-[10rem]">
-                <p className="mb-2 text-xs font-bold uppercase tracking-wide text-amber-600">{col.title}</p>
-                <ul className="space-y-1">
-                  {col.links.map(([label, href]) => (
-                    <li key={label}>
-                      <Link to={href} className="block rounded-lg px-2 py-1.5 text-sm font-medium text-brand-900/75 transition-colors hover:bg-brand-50 hover:text-brand-700">
-                        {label}
+
+      {abierto && (
+        <div
+          id={panelId}
+          className="absolute left-0 top-full z-50 w-max min-w-[34rem] max-w-[46rem] animate-slide-up rounded-card border border-edge-subtle bg-surface p-5 shadow-raised"
+        >
+          <div className="grid grid-cols-3 gap-5">
+            {entrada.columnas.map((col, i) => (
+              <div key={`${col.titulo}-${i}`}>
+                {col.titulo.trim() && <p className="menu-heading">{col.titulo}</p>}
+                <ul className="list-none space-y-0.5 p-0">
+                  {col.enlaces.map((enlace) => (
+                    <li key={enlace.href}>
+                      <Link to={enlace.href} className="menu-link" onClick={() => setAbierto(false)}>
+                        <span>{enlace.etiqueta}</span>
+                        {/* El recuento es informativo: el nombre ya lleva el significado. */}
+                        <span className="text-caption text-content-subtle" aria-hidden="true">
+                          {enlace.total}
+                        </span>
                       </Link>
                     </li>
                   ))}
@@ -166,53 +147,143 @@ function MegaItem({ entry }: { entry: MenuEntry }) {
               </div>
             ))}
           </div>
-          {entry.footer && (
-            <Link to={entry.footer[1]} className="mt-4 flex items-center justify-center gap-1 rounded-xl bg-brand-700 py-2.5 text-sm font-semibold text-cream transition-colors hover:bg-brand-800">
-              {entry.footer[0]}
-            </Link>
+          {entrada.verTodo && (
+            <div className="mt-4 border-t border-edge-subtle pt-3">
+              <Link to={entrada.verTodo.href} className="btn-link text-body-sm" onClick={() => setAbierto(false)}>
+                {entrada.verTodo.etiqueta} →
+              </Link>
+            </div>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
-function MobileMenu({
-  onClose, onSearch, q, setQ, loggedIn,
-}: { onClose: () => void; onSearch: (e: React.FormEvent) => void; q: string; setQ: (v: string) => void; loggedIn: boolean }) {
+export function Navbar() {
+  const count = useCart(selectCount);
+  const openCart = useCart((s) => s.open);
+  const { user } = useAuth();
+  const entradas = useNavegacion();
+  const [movilAbierto, setMovilAbierto] = useState(false);
+  const [q, setQ] = useState('');
+  const navigate = useNavigate();
+  const botonMenu = useRef<HTMLButtonElement>(null);
+
+  const buscar = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!q.trim()) return;
+    navigate(`/tienda?q=${encodeURIComponent(q.trim())}`);
+    setMovilAbierto(false);
+  };
+
   return (
-    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} className="overflow-hidden border-t border-brand-900/10 bg-white xl:hidden">
-      <div className="container-page max-h-[75vh] space-y-4 overflow-y-auto py-4">
-        <form onSubmit={onSearch} className="flex items-center gap-2 rounded-full border border-brand-900/10 bg-cream px-4 py-2.5">
-          <Search className="h-4 w-4 text-brand-900/40" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar…" className="w-full bg-transparent text-sm outline-none" />
-        </form>
-        {MENU.map((entry) =>
-          entry.href ? (
-            <Link key={entry.label} to={entry.href} onClick={onClose} className="block rounded-xl px-2 py-2 font-bold text-brand-800 hover:bg-brand-50">
-              {entry.label}
-            </Link>
-          ) : (
-            <div key={entry.label}>
-              <p className="px-2 py-1 font-display font-bold text-brand-800">{entry.label}</p>
-              <div className="flex flex-wrap gap-2 px-2 pb-2">
-                {entry.cols?.flatMap((c) => c.links).map(([label, href]) => (
-                  <Link key={label + href} to={href} onClick={onClose} className="rounded-full border border-brand-900/10 bg-cream px-3 py-1 text-sm font-medium text-brand-900/75 hover:border-brand-500 hover:text-brand-700">
-                    {label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ),
-        )}
-        <div className="border-t border-brand-900/10 pt-2">
-          <Link to="/conocenos" onClick={onClose} className="block rounded-xl px-2 py-2 font-bold text-brand-800 hover:bg-brand-50">Conócenos</Link>
-          <Link to="/contacto" onClick={onClose} className="block rounded-xl px-2 py-2 font-bold text-brand-800 hover:bg-brand-50">Contacto</Link>
-          <Link to={loggedIn ? '/cuenta' : '/login'} onClick={onClose} className="block rounded-xl px-2 py-2 font-bold text-brand-800 hover:bg-brand-50">
-            {loggedIn ? 'Mi cuenta' : 'Iniciar sesión'}
-          </Link>
+    <header className="site-header">
+      {/*
+        Barra de utilidad. El teléfono de relleno («922 00 00 00») se ha
+        retirado: era un dato inventado y estaba publicado. Cuando exista el
+        número real se añade aquí, junto a «Contacto». Ver el informe.
+      */}
+      <div className="bg-brand-800 text-content-inverse">
+        <div className="container-page flex min-h-9 flex-wrap items-center justify-between gap-x-4 py-1.5 text-caption">
+          <span className="flex items-center gap-2">
+            <Truck className="h-4 w-4 shrink-0 text-amber-400" aria-hidden="true" />
+            Envío 24-48h en Canarias · Gratis desde 49&nbsp;€
+          </span>
+          <nav aria-label="Enlaces de ayuda" className="hidden items-center gap-4 sm:flex">
+            <Link to="/conocenos" className="hover:text-amber-400">Conócenos</Link>
+            <Link to="/contacto" className="hover:text-amber-400">Contacto</Link>
+          </nav>
         </div>
       </div>
-    </motion.div>
+
+      {/* Barra principal */}
+      <div className="container-page flex h-16 items-center gap-3 lg:h-20 lg:gap-5">
+        <Logo />
+
+        <nav aria-label="Catálogo" className="hidden items-center lg:flex">
+          {entradas.map((entrada) => (
+            <Desplegable key={entrada.etiqueta} entrada={entrada} />
+          ))}
+        </nav>
+
+        {/*
+          El buscador va a partir de `sm`. Por debajo, el ancho no da para el
+          logotipo, el buscador y tres controles a la vez, así que baja a su
+          propia fila (ver más abajo) en lugar de desaparecer.
+        */}
+        <form onSubmit={buscar} role="search" className="ml-auto hidden min-w-0 max-w-xs flex-1 sm:block">
+          <label htmlFor="buscador-cabecera" className="sr-only">Buscar productos</label>
+          <div className="flex items-center gap-2 rounded-control border border-edge bg-surface px-3 focus-within:border-brand-400">
+            <Search className="h-4 w-4 shrink-0 text-content-subtle" aria-hidden="true" />
+            <input
+              id="buscador-cabecera"
+              type="search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar…"
+              className="h-10 w-full min-w-0 bg-transparent text-body outline-none placeholder:text-content-subtle"
+            />
+          </div>
+        </form>
+
+        <div className="ml-auto flex shrink-0 items-center gap-0.5 sm:ml-0">
+          <Link to={user ? '/cuenta' : '/login'} className="btn-icon" aria-label={user ? 'Mi cuenta' : 'Iniciar sesión'}>
+            <User className="h-5 w-5" aria-hidden="true" />
+          </Link>
+
+          <button type="button" onClick={openCart} className="btn-icon relative" aria-label={`Abrir carrito, ${count} artículos`}>
+            <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+            {count > 0 && (
+              <span className="absolute right-1 top-1 flex h-5 min-w-5 items-center justify-center rounded-pill bg-amber-500 px-1 text-caption font-bold text-ink">
+                {count}
+              </span>
+            )}
+          </button>
+
+          <button
+            ref={botonMenu}
+            type="button"
+            onClick={() => setMovilAbierto(true)}
+            className="btn-icon lg:hidden"
+            aria-label="Abrir menú"
+            aria-expanded={movilAbierto}
+          >
+            <Menu className="h-5 w-5" aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+
+      {/* Buscador en su propia fila por debajo de `sm`: nunca desaparece. */}
+      <div className="container-page pb-3 sm:hidden">
+        <form onSubmit={buscar} role="search">
+          <label htmlFor="buscador-movil" className="sr-only">Buscar productos</label>
+          <div className="flex items-center gap-2 rounded-control border border-edge bg-surface px-3">
+            <Search className="h-4 w-4 shrink-0 text-content-subtle" aria-hidden="true" />
+            <input
+              id="buscador-movil"
+              type="search"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar en la tienda…"
+              className="h-10 w-full min-w-0 bg-transparent text-body outline-none placeholder:text-content-subtle"
+            />
+          </div>
+        </form>
+      </div>
+
+      {movilAbierto && (
+        <MobileNav
+          entradas={entradas}
+          conSesion={Boolean(user)}
+          onClose={() => {
+            setMovilAbierto(false);
+            botonMenu.current?.focus();
+          }}
+        />
+      )}
+    </header>
   );
 }
+
+export { X };

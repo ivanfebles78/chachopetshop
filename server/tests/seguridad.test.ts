@@ -117,6 +117,28 @@ describe('cabeceras de seguridad', () => {
     expect(csp).not.toMatch(/script-src[^;]*unsafe-inline/);
     expect(csp).not.toMatch(/unsafe-eval/);
   });
+
+  it('el CSS en línea sólo se admite como ATRIBUTO, nunca como bloque', async () => {
+    /*
+     * `style-src 'unsafe-inline'` permitía dos cosas distintas de un plumazo:
+     * los atributos `style="…"` que React emite —que hacen falta para las
+     * barras del panel de analítica, cuya anchura sale de los datos— y
+     * cualquier bloque `<style>` inyectado, que no lo necesita nadie: Vite
+     * compila todo el CSS a un fichero enlazado.
+     *
+     * Con CSS se tapa un botón, se repinta un precio o se sacan datos con
+     * selectores de atributo, así que la diferencia importa.
+     */
+    const csp = (await request(await app()).get('/api/health')).headers['content-security-policy'];
+
+    const styleSrc = /(?:^|;)\s*style-src ([^;]*)/.exec(csp as string)?.[1] ?? '';
+    const styleSrcAttr = /(?:^|;)\s*style-src-attr ([^;]*)/.exec(csp as string)?.[1] ?? '';
+
+    expect(styleSrc).not.toMatch(/unsafe-inline/);
+    expect(styleSrcAttr).toMatch(/'unsafe-inline'/);
+    // Las fuentes siguen pudiendo cargarse: si no, la tipografía se cae.
+    expect(styleSrc).toMatch(/fonts\.googleapis\.com/);
+  });
 });
 
 /* ══ 3. El precio lo pone el servidor ══════════════════════════════════ */

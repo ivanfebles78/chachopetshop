@@ -166,7 +166,7 @@ function BestsellerSection({ products, loading }: { products?: import('@/lib/typ
     <section className="container-page py-10">
       <div className="mb-8 flex items-end justify-between gap-4">
         <div>
-          <span className="text-sm font-bold uppercase tracking-wide text-amber-600">Los más vendidos</span>
+          <span className="text-sm font-bold uppercase tracking-wide text-amber-700">Los más vendidos</span>
           <h2 className="mt-1 font-display text-3xl font-bold text-ink sm:text-4xl">Favoritos de la manada</h2>
         </div>
         <Link to="/tienda" className="hidden shrink-0 items-center gap-1 font-semibold text-brand-700 hover:text-brand-800 sm:flex">
@@ -213,7 +213,7 @@ function BrandMarquee({ brands }: { brands: string[] }) {
   const doubled = [...brands, ...brands];
   return (
     <section className="py-12">
-      <p className="container-page mb-6 text-center text-sm font-semibold uppercase tracking-wider text-brand-900/40">
+      <p className="container-page mb-6 text-center text-sm font-semibold uppercase tracking-wider text-content-subtle">
         Trabajamos con las mejores marcas
       </p>
       <div className="mask-fade-x flex overflow-hidden">
@@ -247,17 +247,24 @@ function CtaBoxes() {
           </Link>
         </Reveal>
         <Reveal delay={0.1}>
-          <a
-            href="tel:+34922000000"
+          {/*
+            Esta tarjeta ENTERA marcaba «tel:+34922000000», que no existía: el
+            reclamo más visible de la portada llevaba a un teléfono inventado.
+            Ahora lleva al formulario, que sí llega a la tienda, y el texto ya
+            no promete una llamada que nadie podía atender. Cuando haya número
+            real (`lib/empresa.ts`) puede volver a ofrecerse aquí.
+          */}
+          <Link
+            to="/contacto"
             className="group relative flex h-full min-h-[220px] flex-col justify-between overflow-hidden rounded-5xl bg-brand-800 p-8 text-cream"
           >
             <HelpCircle className="h-8 w-8 text-amber-400" />
             <div>
               <h3 className="font-display text-3xl font-bold">¿Tienes alguna duda?</h3>
-              <p className="mt-2 max-w-sm text-cream/70">Te ayudamos a elegir la mejor nutrición para tu mascota. Llámanos o escríbenos.</p>
+              <p className="mt-2 max-w-sm text-cream/70">Te ayudamos a elegir la mejor nutrición para tu mascota. Escríbenos y te asesoramos.</p>
               <span className="mt-4 inline-flex items-center gap-1 font-semibold text-amber-400">Contactar <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></span>
             </div>
-          </a>
+          </Link>
         </Reveal>
       </div>
     </section>
