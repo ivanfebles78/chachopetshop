@@ -4,6 +4,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '../db.js';
 import { serializeProduct } from '../lib/serialize.js';
 import { calcularFacetas, type Condiciones } from '../lib/facetas.js';
+import { condicionDeBusqueda } from '../lib/busqueda.js';
 
 export const productsRouter = Router();
 
@@ -94,23 +95,19 @@ productsRouter.get('/', async (req, res, next) => {
 
     if (p.q) {
       /*
-       * Se busca también por CATEGORÍA y NECESIDAD, que faltaban.
+       * La búsqueda IGNORA TILDES desde la Fase 2D.
        *
-       * Comprobado antes de tocar nada: «alimentación seca» —una categoría que
-       * la tienda tiene, con 13 productos— devolvía CERO resultados, y
-       * «digestivo», otros cero. Quien busca por el nombre de una sección que
-       * existe se llevaba una tienda vacía.
+       * La 2C ya amplió dónde se busca —categoría, necesidad y animal, que
+       * faltaban—, pero seguía distinguiendo acentos: «alimentacion seca»
+       * devolvía cero y «alimentación seca» trece. Escrito sin tilde, que es
+       * como se escribe en un móvil, la tienda parecía vacía.
+       *
+       * `unaccent` no se puede llamar desde un `where` de Prisma, así que los
+       * ids se resuelven aparte (`lib/busqueda.ts`) y vuelven aquí como una
+       * condición normal. El resto del catálogo —facetas, orden, paginación—
+       * no se entera y no ha habido que tocarlo.
        */
-      const busqueda: Prisma.ProductWhereInput = {
-        OR: [
-          { name: { contains: p.q, mode: 'insensitive' } },
-          { description: { contains: p.q, mode: 'insensitive' } },
-          { brand: { name: { contains: p.q, mode: 'insensitive' } } },
-          { categories: { some: { name: { contains: p.q, mode: 'insensitive' } } } },
-          { needs: { some: { name: { contains: p.q, mode: 'insensitive' } } } },
-          { animals: { some: { name: { contains: p.q, mode: 'insensitive' } } } },
-        ],
-      };
+      const busqueda = await condicionDeBusqueda(p.q);
       cond.base.push(busqueda);
       and.push(busqueda);
     }

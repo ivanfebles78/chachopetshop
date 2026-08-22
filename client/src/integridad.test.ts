@@ -215,3 +215,35 @@ describe('el movimiento nunca oculta nada', () => {
     expect(reveal).not.toMatch(/animate-fade-in/);
   });
 });
+
+/* ══ No se promete lo que no se hace ═══════════════════════════════════ */
+
+describe('ninguna promesa que el sistema no cumpla', () => {
+  it('no se anuncia un correo de confirmación de pedido', () => {
+    /*
+     * Auditado en la Fase 2D: existe un `mailer` con nodemailer, pero SÓLO lo
+     * usa el formulario de contacto. Nada envía un correo al hacer un pedido, y
+     * sin embargo la página de confirmación decía «te enviaremos un email de
+     * confirmación». Es la misma familia que el teléfono inventado: algo que la
+     * tienda promete y no ocurre.
+     *
+     * El día que exista el correo de verdad, esta prueba habrá que quitarla —
+     * y quitarla obligará a mirarla, que es justo lo que se quiere.
+     */
+    cada((c, ruta) => {
+      expect(c, ruta).not.toMatch(/te enviaremos un (e-?mail|correo)/i);
+      expect(c, ruta).not.toMatch(/(e-?mail|correo) de confirmaci[oó]n/i);
+      expect(c, ruta).not.toMatch(/recibir[aá]s (un )?(e-?mail|correo)/i);
+    });
+  });
+
+  it('no se inventa urgencia en el carrito ni en el pago', () => {
+    // Ni «sólo quedan 2», ni «lo están viendo 20 personas», ni carritos que
+    // caducan. Además de falso, lo desmiente cualquiera que vuelva mañana.
+    cada((c, ruta) => {
+      expect(c, ruta).not.toMatch(/[uú]ltimas unidades|date prisa|se agota/i);
+      expect(c, ruta).not.toMatch(/personas? (est[aá]n )?(viendo|mirando)/i);
+      expect(c, ruta).not.toMatch(/tu carrito (caduca|expira)/i);
+    });
+  });
+});
