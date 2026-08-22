@@ -100,7 +100,7 @@ export function ConocenosPage() {
       {/* Valores */}
       <section className="container-page py-12">
         <div className="mb-8 text-center">
-          <span className="text-sm font-bold uppercase tracking-wide text-amber-600">Lo que nos mueve</span>
+          <span className="text-sm font-bold uppercase tracking-wide text-amber-700">Lo que nos mueve</span>
           <h2 className="mt-1 font-display text-3xl font-bold text-ink sm:text-4xl">Nuestros valores</h2>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

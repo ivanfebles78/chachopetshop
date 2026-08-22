@@ -6,10 +6,10 @@ export function LegalLayout({ title, updated, children }: { title: string; updat
   return (
     <div className="container-page max-w-3xl py-12">
       <h1 className="font-display text-4xl font-extrabold tracking-tight text-ink">{title}</h1>
-      <p className="mt-2 text-sm text-brand-900/50">Última actualización: {updated}</p>
+      <p className="mt-2 text-sm text-content-subtle">Última actualización: {updated}</p>
 
       <div className="mt-6 flex items-start gap-3 rounded-3xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-brand-800">
-        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-700" />
         <p>
           <strong>Plantilla orientativa.</strong> Sustituye los campos entre corchetes por tus datos reales
           y revísala con un asesor legal antes de publicar. No constituye asesoramiento jurídico.

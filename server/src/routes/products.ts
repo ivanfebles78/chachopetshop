@@ -16,6 +16,18 @@ const listQuery = z.object({
   minPrice: z.coerce.number().optional(),
   maxPrice: z.coerce.number().optional(),
   featured: z.enum(['true', 'false']).optional(),
+  /*
+   * Rebajados de VERDAD: los que tienen precio anterior superior al actual.
+   *
+   * Único añadido de servidor de la Fase 2A, y es deliberado. La navegación
+   * necesita una entrada «Ofertas» que signifique algo: antes apuntaba a
+   * `featured`, que es una decisión de escaparate y no un descuento, y prometía
+   * un ahorro inexistente. Sin este filtro, «Ofertas» sólo podía mentir o no
+   * existir.
+   *
+   * Es aditivo: ninguna petición anterior cambia de comportamiento.
+   */
+  oferta: z.enum(['1', 'true']).optional(),
   bestseller: z.enum(['true', 'false']).optional(),
   // Sin 'rating': no hay valoraciones reales por las que ordenar.
   sort: z.enum(['relevance', 'price_asc', 'price_desc', 'newest']).default('relevance'),
@@ -59,6 +71,12 @@ productsRouter.get('/', async (req, res, next) => {
         ...(p.minPrice !== undefined ? { gte: p.minPrice } : {}),
         ...(p.maxPrice !== undefined ? { lte: p.maxPrice } : {}),
       };
+    }
+    if (p.oferta) {
+      // `compareAt` mayor que el precio actual es lo que hace que un producto
+      // esté rebajado. Un `compareAt` nulo o igual no es una oferta.
+      and.push({ compareAt: { not: null } });
+      and.push({ compareAt: { gt: prisma.product.fields.price } });
     }
     if (p.featured) where.featured = p.featured === 'true';
     if (p.bestseller) where.bestseller = p.bestseller === 'true';

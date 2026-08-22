@@ -32,8 +32,23 @@ export function Layout() {
   return (
     <div className="flex min-h-screen flex-col">
       <ScrollToTop />
+
+      {/*
+        Saltar al contenido. Es el PRIMER elemento enfocable de la página, y
+        antes no existía: quien navega con teclado tenía que atravesar la
+        cabecera entera —logotipo, seis desplegables, buscador, cuenta, carrito—
+        en cada pantalla antes de llegar al producto.
+
+        Está oculto hasta que recibe el foco. No se oculta con `display:none`
+        porque entonces no sería enfocable, que es justo lo contrario de lo que
+        se busca.
+      */}
+      <a href="#contenido-principal" className="skip-link">
+        Saltar al contenido principal
+      </a>
+
       <Navbar />
-      <main className="flex-1">
+      <main id="contenido-principal" tabIndex={-1} className="flex-1">
         <ErrorBoundary>
           <Outlet />
         </ErrorBoundary>

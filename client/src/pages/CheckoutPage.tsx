@@ -111,7 +111,7 @@ export function CheckoutPage() {
             <Lock className="h-4 w-4" />
             {submitting ? 'Procesando…' : `Pagar ${eur(total)}`}
           </button>
-          <p className="text-center text-xs text-brand-900/50">
+          <p className="text-center text-xs text-content-subtle">
             Pago seguro procesado con Stripe. No guardamos los datos de tu tarjeta.
           </p>
         </form>
@@ -128,7 +128,7 @@ export function CheckoutPage() {
                   </div>
                   <div className="flex flex-1 flex-col">
                     <p className="line-clamp-1 text-sm font-semibold text-ink">{l.name}</p>
-                    {l.variantLabel && <p className="text-xs text-brand-900/50">{l.variantLabel}</p>}
+                    {l.variantLabel && <p className="text-xs text-content-subtle">{l.variantLabel}</p>}
                     <span className="mt-auto text-sm font-bold text-brand-800">{eur(l.unitPrice * l.quantity)}</span>
                   </div>
                 </div>

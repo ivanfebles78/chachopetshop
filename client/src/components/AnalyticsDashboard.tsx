@@ -42,7 +42,7 @@ export function AnalyticsDashboard({ data }: { data: Analytics }) {
             </div>
           ))}
         </div>
-        <div className="mt-2 flex justify-between text-xs text-brand-900/40">
+        <div className="mt-2 flex justify-between text-xs text-content-subtle">
           <span>hace 30 días</span><span>hoy</span>
         </div>
       </section>
@@ -100,7 +100,7 @@ export function AnalyticsDashboard({ data }: { data: Analytics }) {
         <section className="card rounded-4xl p-6">
           <h3 className="mb-5 font-display text-lg font-bold">Productos más vendidos</h3>
           <div className="space-y-3">
-            {topProducts.length === 0 && <p className="text-sm text-brand-900/50">Aún no hay ventas.</p>}
+            {topProducts.length === 0 && <p className="text-sm text-content-subtle">Aún no hay ventas.</p>}
             {topProducts.map((p, i) => (
               <div key={p.name}>
                 <div className="mb-1 flex items-center justify-between gap-2 text-sm">
@@ -153,7 +153,7 @@ function Kpi({ icon, label, value, accent }: { icon: React.ReactNode; label: str
       <div className={cn('mb-2 flex h-9 w-9 items-center justify-center rounded-xl', accent ? 'bg-cream/20 text-cream' : 'bg-brand-100 text-brand-700')}>
         {icon}
       </div>
-      <p className={cn('text-xs', accent ? 'text-cream/70' : 'text-brand-900/50')}>{label}</p>
+      <p className={cn('text-xs', accent ? 'text-cream/70' : 'text-content-subtle')}>{label}</p>
       <p className={cn('font-display text-xl font-bold', accent ? 'text-cream' : 'text-ink')}>{value}</p>
     </div>
   );
@@ -163,7 +163,7 @@ function SlotCard({ label, sub, revenue, orders, best }: { label: string; sub: s
   return (
     <div className={cn('rounded-3xl border p-4', best ? 'border-brand-500 bg-brand-50' : 'border-brand-900/10 bg-white')}>
       <p className="font-display font-bold text-ink">{label}</p>
-      <p className="text-xs text-brand-900/50">{sub}</p>
+      <p className="text-xs text-content-subtle">{sub}</p>
       <p className="mt-2 font-display text-2xl font-extrabold text-brand-700">{eur(revenue)}</p>
       <p className="text-xs text-brand-900/60">{orders} pedidos</p>
     </div>

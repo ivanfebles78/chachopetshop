@@ -61,14 +61,31 @@ jobs:
         run: npm run test --prefix server
 
   cliente:
-    name: Cliente (tipos y build de producción)
+    name: Cliente (tipos, pruebas y build de producción)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # Node 24 AQUÍ, y 20 en el trabajo del servidor. No es un descuido.
+          #
+          # jsdom 30 —con el que se ejecutan las pruebas de cliente— declara
+          # `engines: ^22.22.2 || ^24.15.0 || >=26`. En Node 20 ni siquiera
+          # arranca: falla con `webidl.util.markAsUncloneable is not a function`.
+          #
+          # Este trabajo es HERRAMIENTA: compila estáticos para el navegador y
+          # ejecuta pruebas. La versión de Node con la que se hace no viaja a
+          # producción. El servidor sí se queda en 20 a propósito, porque es lo
+          # que corre de verdad (`FROM node:20-slim` en el Dockerfile) y esa
+          # comprobación sólo vale si coincide con lo desplegado.
+          node-version: 24
       - run: npm ci --prefix client
+      # Las pruebas de cliente NO se ejecutaban aquí: este trabajo sólo compilaba.
+      # Una prueba que la CI no corre no garantiza nada; es un fichero que se
+      # queda atrás sin que nadie se entere. Cubren el menú contra el catálogo,
+      # el armazón, las capas modales y que no vuelva ningún dato inventado.
+      - run: npm run test --prefix client
+      # `build` incluye `tsc -b`, así que la comprobación de tipos va dentro.
       - run: npm run build --prefix client
 
   secretos:

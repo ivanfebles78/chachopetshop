@@ -1,3 +1,4 @@
+import { PawPrint } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/store/auth';
@@ -28,7 +29,7 @@ export function LoginPage({ mode: initial = 'login' }: { mode?: 'login' | 'regis
     <div className="container-page flex justify-center py-16">
       <div className="card w-full max-w-md rounded-4xl p-8">
         <div className="mb-6 text-center">
-          <span className="text-3xl">🐾</span>
+          <PawPrint className="h-8 w-8 text-brand-700" aria-hidden="true" />
           <h1 className="mt-2 font-display text-2xl font-bold text-ink">
             {mode === 'login' ? 'Bienvenido de nuevo' : 'Crea tu cuenta'}
           </h1>
