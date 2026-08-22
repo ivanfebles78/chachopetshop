@@ -1,314 +1,425 @@
 import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { SearchX, SlidersHorizontal, X } from 'lucide-react';
-import { api, type ProductFilters } from '@/lib/api';
+import { Link, useSearchParams } from 'react-router-dom';
+import { ChevronRight, SearchX, SlidersHorizontal, X } from 'lucide-react';
+import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
-import { cn } from '@/lib/cn';
+import {
+  ORDENES,
+  cuantosFiltros,
+  filtrosDeParams,
+  filtrosPuestos,
+  migasDe,
+  tituloDe,
+} from '@/lib/catalogo';
+import { canonicaDeCatalogo, useSeo } from '@/lib/useSeo';
+import { useOverlay } from '@/lib/useOverlay';
 import { ProductCard, ProductCardSkeleton } from '@/components/ProductCard';
 import { ErrorState } from '@/components/ErrorState';
+import { Filtros } from '@/components/catalogo/Filtros';
 
-const SORTS = [
-  ['relevance', 'Relevancia'],
-  ['price_asc', 'Precio: menor'],
-  ['price_desc', 'Precio: mayor'],
-  ['newest', 'Novedades'],
-] as const;
-
-// Descripción de sección (para que cada entrada del menú tenga su cabecera propia).
-const SECTION_DESC: Record<string, string> = {
-  perro: 'Nutrición, snacks y accesorios para perros de todas las razas y edades.',
-  gato: 'Todo para tu gato: pienso, comida húmeda, arena, rascadores y más.',
-  ave: 'Alimento y accesorios para canarios, periquitos y otras aves.',
-  roedor: 'Heno, mezclas y premios para conejos, cobayas y hámsters.',
-  pez: 'Alimento y cuidado para tus peces de agua dulce y tropical.',
-  reptil: 'Nutrición y accesorios para reptiles y terrarios.',
-  'dietas-veterinarias': 'Dietas clínicas para necesidades específicas, recomendadas por veterinarios.',
-  'alimentacion-seca': 'Piensos secos de alta calidad, sin cereales y recetas premium.',
-  'alimentacion-humeda': 'Latas y tarrinas de comida húmeda natural y apetecible.',
-  'premios-snacks': 'Premios, snacks dentales y recompensas saludables.',
-  suplementos: 'Suplementos y cosmética para el bienestar de tu mascota.',
-  accesorios: 'Comederos, transportines, rascadores y mucho más.',
-  higiene: 'Higiene, cosmética y arenas aglomerantes.',
-  camas: 'Camas, colchones y zonas de descanso cómodas.',
-};
-
+/**
+ * CATÁLOGO.
+ *
+ * Lo que cambia en la Fase 2C, y por qué:
+ *
+ *   · LOS FILTROS SALEN DE LOS RECUENTOS REALES. Ofrecía «Reptiles» y
+ *     «Semihúmeda», las dos con cero productos, desde antes de la 2A: allí se
+ *     arregló el menú y este panel se quedó igual. Ahora una opción sin
+ *     producto no se pinta, y las que sí llevan su número al lado.
+ *
+ *   · SE VE POR QUÉ SE ESTÁ VIENDO ESTO. Fichas con los filtros puestos, que se
+ *     sueltan de una en una. Antes sólo había un «Limpiar todo»: para quitar
+ *     una marca de tres había que empezar de cero.
+ *
+ *   · EL CAJÓN DEL MÓVIL ES UN DIÁLOGO DE VERDAD. Antes no se anunciaba como
+ *     tal, no atrapaba el foco y no se cerraba con Escape.
+ *
+ *   · LA PÁGINA TIENE NOMBRE PROPIO. Título, descripción y canónica según los
+ *     filtros. Todas las pantallas compartían el mismo título.
+ */
 export function CatalogPage() {
   const [params, setParams] = useSearchParams();
-  const [mobileFilters, setMobileFilters] = useState(false);
-  const { data: taxonomy } = useFetch(() => api.taxonomy(), []);
+  const [cajonAbierto, setCajonAbierto] = useState(false);
 
-  const filters: ProductFilters = useMemo(() => {
-    const need = params.get('need');
-    const brand = params.get('brand');
-    return {
-      animal: params.get('animal') ?? undefined,
-      category: params.get('category') ?? undefined,
-      need: need ? need.split(',') : [],
-      brand: brand ? brand.split(',') : [],
-      q: params.get('q') ?? undefined,
-      sort: params.get('sort') ?? 'relevance',
-      featured: params.get('featured') === '1' || undefined,
-      oferta: params.get('oferta') === '1' || undefined,
-      page: Number(params.get('page') ?? 1),
-      pageSize: 12,
-    };
-  }, [params]);
+  const filtros = useMemo(() => filtrosDeParams(params), [params]);
+  const { data, loading, error, refetch } = useFetch(() => api.products(filtros), [params.toString()]);
 
-  const { data, loading, error, refetch } = useFetch(() => api.products(filters), [params.toString()]);
+  const facetas = data?.facets;
+  const titulo = tituloDe(filtros, facetas);
+  const puestos = filtrosPuestos(filtros, facetas);
+  const nFiltros = cuantosFiltros(filtros);
+  const migas = migasDe(filtros, titulo);
 
-  const patch = (key: string, value: string | null) => {
-    const next = new URLSearchParams(params);
-    if (value === null || value === '') next.delete(key);
-    else next.set(key, value);
-    if (key !== 'page') next.delete('page');
-    setParams(next);
+  useSeo({
+    titulo,
+    descripcion:
+      data && facetas
+        ? `${data.total} ${data.total === 1 ? 'producto' : 'productos'} de ${titulo.toLowerCase()} en Chacho Pet Shop. Envío en 24-48 h a toda Canarias.`
+        : undefined,
+    canonica: canonicaDeCatalogo(window.location.origin, '/tienda', params),
+    // Los resultados de búsqueda son infinitos y distintos para cada persona:
+    // no son páginas que un buscador deba tener en su índice.
+    noIndexar: Boolean(filtros.q),
+  });
+
+  const poner = (clave: string, valor: string | null) => {
+    const siguiente = new URLSearchParams(params);
+    if (valor === null || valor === '') siguiente.delete(clave);
+    else siguiente.set(clave, valor);
+    // Cambiar un filtro devuelve a la primera página: si no, se puede acabar
+    // en la página 3 de un resultado que ahora tiene una.
+    if (clave !== 'page') siguiente.delete('page');
+    setParams(siguiente);
   };
 
-  const toggleMulti = (key: 'need' | 'brand', slug: string) => {
-    const current = (params.get(key)?.split(',') ?? []).filter(Boolean);
-    const next = current.includes(slug) ? current.filter((s) => s !== slug) : [...current, slug];
-    patch(key, next.join(',') || null);
+  const alternar = (clave: 'need' | 'brand', slug: string) => {
+    const actuales = (params.get(clave)?.split(',') ?? []).filter(Boolean);
+    const siguiente = actuales.includes(slug)
+      ? actuales.filter((s) => s !== slug)
+      : [...actuales, slug];
+    poner(clave, siguiente.join(',') || null);
   };
 
-  const activeCount =
-    (filters.animal ? 1 : 0) +
-    (filters.category ? 1 : 0) +
-    (filters.oferta ? 1 : 0) +
-    (filters.need?.length ?? 0) +
-    (filters.brand?.length ?? 0) +
-    (filters.featured ? 1 : 0);
+  const quitar = (clave: string, valor?: string) => {
+    if (clave === 'precio') {
+      const s = new URLSearchParams(params);
+      s.delete('minPrice');
+      s.delete('maxPrice');
+      s.delete('page');
+      setParams(s);
+      return;
+    }
+    if (valor) alternar(clave as 'need' | 'brand', valor);
+    else poner(clave, null);
+  };
 
-  const title = filters.q
-    ? `Resultados para “${filters.q}”`
-    : taxonomy?.animals.find((a) => a.slug === filters.animal)?.name ??
-      taxonomy?.categories.find((c) => c.slug === filters.category)?.name ??
-      'Toda la tienda';
+  const limpiar = () => setParams(new URLSearchParams());
 
   return (
-    <div className="container-page py-8">
-      <div className="mb-6">
-        <h1 className="font-display text-3xl font-bold text-ink sm:text-4xl">{title}</h1>
-        {(() => {
-          const desc = (filters.category && SECTION_DESC[filters.category]) || (filters.animal && SECTION_DESC[filters.animal]);
-          return desc ? <p className="mt-2 max-w-2xl text-brand-900/60">{desc}</p> : null;
-        })()}
-        <p className="mt-1 text-sm text-content-subtle">{data?.total ?? '—'} productos</p>
-      </div>
+    <div className="container-page py-6 sm:py-8">
+      <Migas migas={migas} />
 
-      <div className="flex items-center justify-between gap-3 lg:hidden">
-        <button onClick={() => setMobileFilters(true)} className="btn-ghost py-2.5">
-          <SlidersHorizontal className="h-4 w-4" /> Filtros {activeCount > 0 && `(${activeCount})`}
+      <header className="mt-4">
+        <h1 className="font-display text-display font-extrabold tracking-tight text-content">{titulo}</h1>
+        <p className="mt-1 text-body-sm text-content-muted" aria-live="polite">
+          {loading && !data
+            ? 'Buscando…'
+            : `${data?.total ?? 0} ${data?.total === 1 ? 'producto' : 'productos'}`}
+        </p>
+      </header>
+
+      {puestos.length > 0 && (
+        <FiltrosPuestos puestos={puestos} onQuitar={quitar} onLimpiar={limpiar} />
+      )}
+
+      {/* Barra de control en móvil: filtrar y ordenar, siempre a mano. */}
+      <div className="mt-5 flex items-center gap-3 lg:hidden">
+        {/*
+          El nombre accesible se escribe entero: la insignia pegada al texto se
+          leía «Filtrar1», que no significa nada dicho en voz alta.
+        */}
+        <button
+          type="button"
+          onClick={() => setCajonAbierto(true)}
+          aria-label={
+            nFiltros > 0
+              ? `Filtrar. ${nFiltros} ${nFiltros === 1 ? 'filtro puesto' : 'filtros puestos'}`
+              : 'Filtrar'
+          }
+          className="btn btn-md btn-ghost flex-1 justify-center"
+        >
+          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+          <span aria-hidden="true">Filtrar</span>
+          {nFiltros > 0 && (
+            <span
+              aria-hidden="true"
+              className="ml-1 rounded-pill bg-brand-700 px-2 py-0.5 text-caption font-bold text-cream"
+            >
+              {nFiltros}
+            </span>
+          )}
         </button>
-        <SortSelect value={filters.sort ?? 'relevance'} onChange={(v) => patch('sort', v)} />
+        <Orden valor={filtros.sort ?? 'relevance'} onChange={(v) => poner('sort', v)} className="flex-1" />
       </div>
 
       <div className="mt-6 flex gap-8">
-        {/* Sidebar desktop */}
-        <aside className="hidden w-64 shrink-0 lg:block">
-          <FilterPanel
-            taxonomy={taxonomy}
-            filters={filters}
-            patch={patch}
-            toggleMulti={toggleMulti}
-            onClear={() => setParams(new URLSearchParams())}
-            activeCount={activeCount}
-          />
+        <aside className="hidden w-60 shrink-0 lg:block" aria-label="Filtros">
+          <div className="sticky top-24">
+            <Filtros facetas={facetas} filtros={filtros} poner={poner} alternar={alternar} />
+          </div>
         </aside>
 
-        <div className="flex-1">
-          <div className="mb-5 hidden items-center justify-between lg:flex">
-            <p className="text-sm text-brand-900/60">
-              Mostrando {data?.items.length ?? 0} de {data?.total ?? 0}
+        <div className="min-w-0 flex-1">
+          <div className="mb-5 hidden items-center justify-between gap-4 lg:flex">
+            <p className="text-body-sm text-content-muted">
+              {data ? `Mostrando ${data.items.length} de ${data.total}` : ' '}
             </p>
-            <SortSelect value={filters.sort ?? 'relevance'} onChange={(v) => patch('sort', v)} />
+            <Orden valor={filtros.sort ?? 'relevance'} onChange={(v) => poner('sort', v)} className="w-56 shrink-0" />
           </div>
 
           {error ? (
             <ErrorState message={error} onRetry={refetch} />
           ) : loading ? (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-              {Array.from({ length: 9 }).map((_, i) => <ProductCardSkeleton key={i} />)}
-            </div>
+            <ul className="grid list-none grid-cols-2 gap-4 p-0 sm:grid-cols-3 xl:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <li key={i}>
+                  <ProductCardSkeleton />
+                </li>
+              ))}
+            </ul>
           ) : data && data.items.length > 0 ? (
             <>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                {data.items.map((p) => <ProductCard key={p.id} product={p} />)}
-              </div>
+              <ul className="grid list-none grid-cols-2 gap-4 p-0 sm:grid-cols-3 xl:grid-cols-4">
+                {data.items.map((p) => (
+                  <li key={p.id}>
+                    <ProductCard product={p} />
+                  </li>
+                ))}
+              </ul>
               {data.totalPages > 1 && (
-                <Pagination page={data.page} totalPages={data.totalPages} onPage={(n) => patch('page', String(n))} />
+                <Paginacion
+                  pagina={data.page}
+                  total={data.totalPages}
+                  onIr={(n) => poner('page', String(n))}
+                />
               )}
             </>
           ) : (
-            <div className="card flex flex-col items-center gap-3 rounded-4xl py-16 text-center">
-              <SearchX className="h-10 w-10 text-content-muted" aria-hidden="true" />
-              <p className="font-display text-lg font-semibold text-ink">Sin resultados</p>
-              <p className="text-brand-900/60">Prueba a quitar algún filtro.</p>
-              <button onClick={() => setParams(new URLSearchParams())} className="btn-ghost mt-2">Limpiar filtros</button>
-            </div>
+            <SinResultados busqueda={filtros.q} hayFiltros={nFiltros > 0} onLimpiar={limpiar} />
           )}
         </div>
       </div>
 
-      {/* Sheet móvil */}
-      {mobileFilters && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" onClick={() => setMobileFilters(false)} />
-          <div className="absolute bottom-0 left-0 right-0 max-h-[85vh] overflow-y-auto rounded-t-4xl bg-cream p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-display text-xl font-bold">Filtros</h2>
-              <button onClick={() => setMobileFilters(false)} className="rounded-full p-2 hover:bg-brand-900/5"><X className="h-5 w-5" /></button>
-            </div>
-            <FilterPanel
-              taxonomy={taxonomy}
-              filters={filters}
-              patch={patch}
-              toggleMulti={toggleMulti}
-              onClear={() => setParams(new URLSearchParams())}
-              activeCount={activeCount}
-            />
-            <button onClick={() => setMobileFilters(false)} className="btn-primary mt-6 w-full py-3">
-              Ver {data?.total ?? 0} productos
-            </button>
-          </div>
-        </div>
+      {cajonAbierto && (
+        <CajonFiltros
+          onCerrar={() => setCajonAbierto(false)}
+          onLimpiar={limpiar}
+          nFiltros={nFiltros}
+          total={data?.total ?? 0}
+        >
+          <Filtros facetas={facetas} filtros={filtros} poner={poner} alternar={alternar} />
+        </CajonFiltros>
       )}
     </div>
   );
 }
 
-function SortSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+/* ══════════════════════════════════════════════════════════════════════ */
+
+function Migas({ migas }: { migas: { etiqueta: string; href?: string }[] }) {
   return (
-    /*
-     * El desplegable no tenía NOMBRE. Se veía «Más vendidos» y se entendía por
-     * el sitio que ocupa, pero un lector de pantalla anunciaba «menú
-     * desplegable, más vendidos» sin decir de qué: ordenar, filtrar, elegir
-     * envío. axe lo marca como fallo crítico y con razón —es el control que
-     * decide en qué orden se ve la tienda—. La etiqueta va oculta a la vista
-     * porque el contexto sí es evidente MIRANDO; lo que faltaba era el nombre.
-     */
-    <label>
+    <nav aria-label="Migas de pan">
+      <ol className="flex list-none flex-wrap items-center gap-1 p-0 text-body-sm text-content-muted">
+        {migas.map((m, i) => (
+          <li key={`${m.etiqueta}-${i}`} className="flex items-center gap-1">
+            {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-content-subtle" aria-hidden="true" />}
+            {m.href ? (
+              <Link to={m.href} className="hover:text-brand-700 hover:underline">
+                {m.etiqueta}
+              </Link>
+            ) : (
+              // El último es dónde se está: se marca, y no se enlaza a sí mismo.
+              <span aria-current="page" className="font-semibold text-content">
+                {m.etiqueta}
+              </span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
+}
+
+function FiltrosPuestos({
+  puestos,
+  onQuitar,
+  onLimpiar,
+}: {
+  puestos: { clave: string; valor?: string; etiqueta: string }[];
+  onQuitar: (clave: string, valor?: string) => void;
+  onLimpiar: () => void;
+}) {
+  return (
+    <div className="mt-4 flex flex-wrap items-center gap-2">
+      <span className="text-body-sm text-content-muted">Filtrando por</span>
+      {puestos.map((p) => (
+        <button
+          key={`${p.clave}-${p.valor ?? ''}`}
+          type="button"
+          onClick={() => onQuitar(p.clave, p.valor)}
+          className="inline-flex min-h-8 items-center gap-1.5 rounded-pill border border-brand-200 bg-brand-50 px-3 text-body-sm font-semibold text-brand-700 transition-colors hover:border-brand-400 hover:bg-brand-100"
+        >
+          {p.etiqueta}
+          <X className="h-3.5 w-3.5" aria-hidden="true" />
+          <span className="sr-only">Quitar este filtro</span>
+        </button>
+      ))}
+      {puestos.length > 1 && (
+        <button type="button" onClick={onLimpiar} className="btn-link text-body-sm">
+          Quitar todos
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * El selector de orden.
+ *
+ * `min-w-0` no es decorativo: la opción más larga —«Precio: de menor a
+ * mayor—» estira el `<select>` hasta 218 px, y con `shrink-0` al lado del
+ * botón de filtrar la fila medía 388 px dentro de una pantalla de 320: el
+ * catálogo entero se desplazaba en horizontal. Ahora se encoge y recorta.
+ */
+function Orden({ valor, onChange, className = '' }: { valor: string; onChange: (v: string) => void; className?: string }) {
+  return (
+    <label className={`min-w-0 ${className}`}>
       <span className="sr-only">Ordenar los productos</span>
       <select
-        value={value}
+        value={valor}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-full border border-brand-900/10 bg-white px-4 py-2.5 text-sm font-semibold text-brand-900 outline-none focus:border-brand-500"
+        className="h-11 w-full max-w-full truncate rounded-control border border-edge bg-surface px-3 text-body-sm font-semibold text-content outline-none focus-visible:border-brand-400"
       >
-        {SORTS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+        {ORDENES.map(([v, etiqueta]) => (
+          <option key={v} value={v}>
+            {etiqueta}
+          </option>
+        ))}
       </select>
     </label>
   );
 }
 
-type PanelProps = {
-  taxonomy: import('@/lib/types').Taxonomy | null;
-  filters: ProductFilters;
-  patch: (k: string, v: string | null) => void;
-  toggleMulti: (k: 'need' | 'brand', slug: string) => void;
-  onClear: () => void;
-  activeCount: number;
-};
+/**
+ * El cajón de filtros del móvil.
+ *
+ * Es un diálogo de verdad —rol, nombre, foco atrapado, Escape, fondo
+ * bloqueado—, reutilizando el mismo `useOverlay` que el carrito y el menú.
+ * Antes era un panel suelto: el tabulador se escapaba a la página de detrás y
+ * Escape no hacía nada.
+ *
+ * Los filtros se aplican AL INSTANTE, no al pulsar «Aplicar». El recuento del
+ * botón de abajo va cambiando mientras se marcan opciones, así que se ve el
+ * efecto antes de cerrar; y como el estado vive en la URL, el botón de atrás
+ * deshace filtro a filtro.
+ */
+function CajonFiltros({
+  children,
+  onCerrar,
+  onLimpiar,
+  nFiltros,
+  total,
+}: {
+  children: React.ReactNode;
+  onCerrar: () => void;
+  onLimpiar: () => void;
+  nFiltros: number;
+  total: number;
+}) {
+  const panel = useOverlay(true, onCerrar);
 
-function FilterPanel({ taxonomy, filters, patch, toggleMulti, onClear, activeCount }: PanelProps) {
-  if (!taxonomy) return null;
   return (
-    <div className="space-y-6">
-      {activeCount > 0 && (
-        <button onClick={onClear} className="text-sm font-semibold text-brand-700 hover:text-brand-800">
-          Limpiar todo ({activeCount})
-        </button>
-      )}
-
-      <FilterGroup title="Animal">
-        <div className="flex flex-wrap gap-2">
-          {taxonomy.animals.map((a) => (
-            <button
-              key={a.slug}
-              onClick={() => patch('animal', filters.animal === a.slug ? null : a.slug)}
-              className={cn('chip', filters.animal === a.slug && 'chip-active')}
-            >
-              <span>{a.emoji}</span> {a.name}
-            </button>
-          ))}
-        </div>
-      </FilterGroup>
-
-      <FilterGroup title="Tipo de producto">
-        <div className="space-y-1">
-          {taxonomy.categories.map((c) => (
-            <button
-              key={c.slug}
-              onClick={() => patch('category', filters.category === c.slug ? null : c.slug)}
-              className={cn(
-                'block w-full rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors',
-                filters.category === c.slug ? 'bg-brand-600 text-cream' : 'text-brand-900/70 hover:bg-brand-900/5',
-              )}
-            >
-              {c.name}
-            </button>
-          ))}
-        </div>
-      </FilterGroup>
-
-      <FilterGroup title="Necesidades">
-        <div className="flex flex-wrap gap-2">
-          {taxonomy.needs.map((n) => (
-            <button
-              key={n.slug}
-              onClick={() => toggleMulti('need', n.slug)}
-              className={cn('chip', filters.need?.includes(n.slug) && 'chip-active')}
-            >
-              {n.name}
-            </button>
-          ))}
-        </div>
-      </FilterGroup>
-
-      <FilterGroup title="Marcas">
-        <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
-          {taxonomy.brands.map((b) => (
-            <label key={b.slug} className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-brand-900/5">
-              <input
-                type="checkbox"
-                checked={filters.brand?.includes(b.slug) ?? false}
-                onChange={() => toggleMulti('brand', b.slug)}
-                className="h-4 w-4 rounded border-brand-900/20 text-brand-600 focus:ring-brand-500"
-              />
-              <span className="text-sm text-brand-900/80">{b.name}</span>
-            </label>
-          ))}
-        </div>
-      </FilterGroup>
-    </div>
-  );
-}
-
-function FilterGroup({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <h3 className="mb-3 font-display text-sm font-bold uppercase tracking-wide text-content-subtle">{title}</h3>
-      {children}
-    </div>
-  );
-}
-
-function Pagination({ page, totalPages, onPage }: { page: number; totalPages: number; onPage: (n: number) => void }) {
-  return (
-    <div className="mt-10 flex items-center justify-center gap-2">
-      {Array.from({ length: totalPages }).map((_, i) => {
-        const n = i + 1;
-        return (
-          <button
-            key={n}
-            onClick={() => onPage(n)}
-            className={cn(
-              'h-10 w-10 rounded-full text-sm font-semibold transition-colors',
-              n === page ? 'bg-brand-600 text-cream' : 'bg-white text-brand-900/70 hover:bg-brand-900/5',
-            )}
-          >
-            {n}
+    <div className="fixed inset-0 z-50 lg:hidden">
+      <div className="absolute inset-0 bg-ink/40" onClick={onCerrar} aria-hidden="true" />
+      <div
+        ref={panel}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Filtros del catálogo"
+        className="absolute bottom-0 left-0 right-0 flex max-h-[88vh] animate-slide-up flex-col rounded-t-card bg-cream"
+      >
+        <div className="flex shrink-0 items-center justify-between border-b border-edge-subtle px-5 py-4">
+          <h2 className="font-display text-heading font-bold text-content">Filtros</h2>
+          <button type="button" onClick={onCerrar} className="btn-icon" aria-label="Cerrar los filtros">
+            <X className="h-5 w-5" aria-hidden="true" />
           </button>
-        );
-      })}
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4">{children}</div>
+
+        <div className="flex shrink-0 items-center gap-3 border-t border-edge-subtle bg-surface px-5 py-4">
+          <button
+            type="button"
+            onClick={onLimpiar}
+            disabled={nFiltros === 0}
+            className="btn btn-md btn-ghost flex-1 justify-center disabled:opacity-40"
+          >
+            Limpiar
+          </button>
+          <button type="button" onClick={onCerrar} className="btn btn-md btn-primary flex-[1.4] justify-center">
+            Ver {total} {total === 1 ? 'producto' : 'productos'}
+          </button>
+        </div>
+      </div>
     </div>
+  );
+}
+
+function SinResultados({
+  busqueda,
+  hayFiltros,
+  onLimpiar,
+}: {
+  busqueda?: string;
+  hayFiltros: boolean;
+  onLimpiar: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-card border border-edge bg-surface px-6 py-16 text-center">
+      <SearchX className="h-10 w-10 text-content-subtle" aria-hidden="true" />
+      <p className="font-display text-heading font-bold text-content">
+        {busqueda ? `No hay resultados para «${busqueda}»` : 'No hay productos con estos filtros'}
+      </p>
+      <p className="max-w-sm text-body-sm text-content-muted">
+        {busqueda
+          ? 'Prueba con el nombre de la marca, el tipo de producto o para qué animal es.'
+          : 'Prueba a quitar alguno para ver más.'}
+      </p>
+      <div className="mt-2 flex flex-wrap justify-center gap-2">
+        {hayFiltros && (
+          <button type="button" onClick={onLimpiar} className="btn btn-md btn-ghost">
+            Quitar los filtros
+          </button>
+        )}
+        <Link to="/tienda" className="btn btn-md btn-primary">
+          Ver todo el catálogo
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function Paginacion({
+  pagina,
+  total,
+  onIr,
+}: {
+  pagina: number;
+  total: number;
+  onIr: (n: number) => void;
+}) {
+  const paginas = Array.from({ length: total }, (_, i) => i + 1);
+  return (
+    <nav aria-label="Paginación" className="mt-8 flex justify-center">
+      <ul className="flex list-none items-center gap-1.5 p-0">
+        {paginas.map((n) => (
+          <li key={n}>
+            <button
+              type="button"
+              onClick={() => onIr(n)}
+              aria-current={n === pagina ? 'page' : undefined}
+              aria-label={`Página ${n}`}
+              className={`flex h-10 min-w-10 items-center justify-center rounded-control px-3 text-body-sm font-semibold transition-colors ${
+                n === pagina
+                  ? 'bg-brand-700 text-cream'
+                  : 'border border-edge bg-surface text-content hover:border-brand-300 hover:bg-brand-50'
+              }`}
+            >
+              {n}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </nav>
   );
 }

@@ -11,6 +11,21 @@ export function ProductCard({ product }: { product: Product }) {
   const price = cheapest?.price ?? product.price;
   const hasDiscount = product.compareAt != null && product.compareAt > price;
 
+  /*
+   * Disponibilidad, sólo cuando es fiable y sólo cuando dice algo.
+   *
+   * Se anuncia Únicamente el caso negativo —no queda ninguna unidad de ninguna
+   * variante—, porque es el único que le cambia la decisión a quien mira. Nada
+   * de «¡sólo quedan 3!»: el stock de la semilla es alto y uniforme, y crear
+   * urgencia con él sería inventarse una escasez que no existe.
+   *
+   * Y esto es INFORMATIVO: quien decide de verdad si se puede comprar es el
+   * servidor, en la reserva de la Fase 1. Aquí sólo se evita el paseo.
+   */
+  const sinExistencias = product.variants.length > 0 && product.variants.every((v) => v.stock <= 0);
+  /* Los formatos disponibles: «2 kg · 11,4 kg» dice más que «desde 34,50 €» solo. */
+  const formatos = product.variants.map((v) => v.label);
+
   const quickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     add({
@@ -59,16 +74,19 @@ export function ProductCard({ product }: { product: Product }) {
               </span>
             )}
             {/*
-              Decía «Top ventas», y no lo sostiene ningún dato: `bestseller` es una
-              marca que se pone a mano, no un recuento de pedidos. Contrastado
-              contra los pedidos pagados, los siete productos marcados suman
-              MENOS unidades que el resto del catálogo, así que la etiqueta decía
-              justo lo contrario de lo que pasa.
-              «Recomendado» sí es cierto: es lo que la tienda elige destacar.
+              Aquí ponía «Top ventas» sobre un dato que dice lo contrario —en los
+              pedidos pagados, los marcados venden MENOS que el resto—, y en la
+              2B pasó a «Recomendado». En la 2C se retira del listado del todo:
+              siete de veintiocho productos la llevan, así que en una rejilla
+              aparecía en una de cada cuatro tarjetas y dejaba de distinguir
+              nada. Lo que la tienda destaca ya tiene su sitio en la portada.
+
+              En la tarjeta se queda SÓLO el descuento, que es un dato duro y
+              cambia la decisión de compra.
             */}
-            {product.bestseller && (
-              <span className="rounded-full bg-brand-900 px-2.5 py-1 text-xs font-semibold text-cream">
-                Recomendado
+            {sinExistencias && (
+              <span className="rounded-full bg-content px-2.5 py-1 text-xs font-semibold text-cream">
+                Sin stock
               </span>
             )}
           </div>
@@ -81,6 +99,7 @@ export function ProductCard({ product }: { product: Product }) {
             Ahora se ve siempre por debajo de `sm` —donde no hay puntero— y
             aparece al enfocarlo con el teclado.
           */}
+          {!sinExistencias && (
           <button
             onClick={quickAdd}
             aria-label={`Añadir ${product.name} al carrito`}
@@ -88,6 +107,7 @@ export function ProductCard({ product }: { product: Product }) {
           >
             <Plus className="h-5 w-5" />
           </button>
+          )}
         </div>
 
         <div className="flex flex-1 flex-col gap-2 p-4">
@@ -97,6 +117,9 @@ export function ProductCard({ product }: { product: Product }) {
           <h3 className="line-clamp-2 font-display text-[0.98rem] font-semibold leading-snug text-ink">
             {product.name}
           </h3>
+          {formatos.length > 1 && (
+            <p className="text-caption text-content-subtle">{formatos.join(' · ')}</p>
+          )}
           <div className="flex items-baseline gap-2 pt-1">
             <span className="font-display text-lg font-bold text-brand-800">
               {cheapest && product.variants.length > 1 && (

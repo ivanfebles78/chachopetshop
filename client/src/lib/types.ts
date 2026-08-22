@@ -24,11 +24,33 @@ export type Product = {
   variants: Variant[];
 };
 
+/** Un producto relacionado, con la razón por la que se enseña. */
+export type Relacionado = Product & { motivo?: 'categoria' | 'animal' | 'marca' };
+
 export type Taxonomy = {
   animals: Animal[];
   categories: Category[];
   needs: Need[];
   brands: Brand[];
+};
+
+/** Una opción de filtro, con cuántos productos hay detrás. */
+export type Faceta = { slug: string; nombre: string; total: number };
+
+/**
+ * Recuentos por dimensión, que el servidor devuelve con `?facets=1`.
+ *
+ * Vienen TAMBIÉN las facetas que valen 0: hace falta saberlo para poder
+ * esconderlas con criterio, en vez de adivinar si una falta porque no existe o
+ * porque se quedó fuera de esta página de resultados.
+ */
+export type Facetas = {
+  animals: Faceta[];
+  categories: Faceta[];
+  needs: Faceta[];
+  brands: Faceta[];
+  ofertas: number;
+  precio: { min: number; max: number } | null;
 };
 
 export type ProductListResponse = {
@@ -37,6 +59,7 @@ export type ProductListResponse = {
   pageSize: number;
   total: number;
   totalPages: number;
+  facets?: Facetas;
 };
 
 export type OrderItem = {
