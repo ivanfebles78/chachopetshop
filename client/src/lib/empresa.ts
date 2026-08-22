@@ -1,24 +1,17 @@
 /**
  * DATOS DE LA EMPRESA — EL ÚNICO SITIO DONDE SE CONFIGURAN.
  *
- * Antes estaban escritos dos veces, inventados y publicados: la cabecera y la
- * página de contacto anunciaban el teléfono «922 00 00 00», y contacto añadía
- * la dirección «Calle Ejemplo, 1», un horario y un correo. Un teléfono que no
- * contesta es peor que no dar teléfono: quien lo marca se lleva la impresión de
- * que la tienda no funciona, y ya no vuelve.
+ * Todo lo que valga `null` NO SE PINTA en ninguna pantalla: ni en el pie, ni en
+ * contacto, ni en la portada. No hay que tocar ningún componente, ni queda
+ * ningún hueco descuadrado, ni aparece nada falso mientras tanto.
  *
- * Ahora hay un solo sitio. Todo lo que valga `null` NO SE PINTA en ninguna
- * pantalla: ni en el pie, ni en contacto. No hay que tocar ningún componente,
- * ni queda ningún hueco descuadrado, ni aparece nada falso mientras tanto.
- *
- * ─────────────────────────────────────────────────────────────────────────
- * PARA IVAN: rellenar aquí, y aparece solo en el pie y en /contacto.
- * ─────────────────────────────────────────────────────────────────────────
- *
- * `razonSocial` y `nif` no son un detalle estético: la LSSI obliga a que sean
- * accesibles en una tienda que vende. Se dejan marcados en lugar de fingirlos.
+ * Antes había aquí un teléfono de relleno («922 00 00 00»), una dirección
+ * («Calle Ejemplo, 1»), un horario y un correo, los tres inventados y los tres
+ * publicados. Ya no: lo que hay debajo es lo que Ivan ha confirmado, y lo que
+ * no ha confirmado sigue en `null`.
  */
 export const EMPRESA: {
+  nombreComercial: string;
   telefono: string | null;
   telefonoE164: string | null;
   email: string | null;
@@ -27,13 +20,27 @@ export const EMPRESA: {
   razonSocial: string | null;
   nif: string | null;
 } = {
-  telefono: null,      // TODO(Ivan): teléfono de atención al cliente, p. ej. '922 12 34 56'
-  telefonoE164: null,  // TODO(Ivan): el mismo, para el enlace `tel:`, p. ej. '+34922123456'
-  email: null,         // TODO(Ivan): correo de contacto real y atendido
-  direccion: null,     // TODO(Ivan): domicilio de la tienda
+  nombreComercial: 'Chacho Pet Shop',
+  telefono: '628 013 933',
+  telefonoE164: '+34628013933',
+  email: 'chachopetshop@gmail.com',
+
+  direccion: null,     // TODO(Ivan): domicilio de la tienda, si hay local a pie de calle
   horario: null,       // TODO(Ivan): horario de atención
-  razonSocial: null,   // TODO(Ivan): razón social (obligatorio, LSSI)
-  nif: null,           // TODO(Ivan): NIF (obligatorio, LSSI)
+
+  /*
+   * OBLIGATORIOS POR LA LSSI, Y SIGUEN SIN ESTAR.
+   *
+   * `razonSocial` no es lo mismo que el nombre comercial: la ley pide el nombre
+   * del titular —persona física o sociedad—, que puede no ser «Chacho Pet
+   * Shop». Poner el comercial en su hueco sería rellenarlo con algo que no se
+   * ha confirmado, así que se deja marcado.
+   *
+   * El NIF está pendiente de que Ivan lo facilite. En cuanto los dos existan,
+   * salen solos en el pie: el hueco ya está montado y probado.
+   */
+  razonSocial: null,   // TODO(Ivan): titular legal (puede no coincidir con el nombre comercial)
+  nif: null,           // TODO(Ivan): NIF
 };
 
 /**

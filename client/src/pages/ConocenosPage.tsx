@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Award, Heart, Leaf, ShieldCheck, Truck } from 'lucide-react';
 import { Reveal } from '@/components/Reveal';
+import { useNavegacion } from '@/lib/useNavegacion';
 
 const FEATURES = [
   { icon: Award, title: 'Expertos en nutrición', text: 'Te asesoramos para acertar con cada mascota.' },
@@ -15,14 +16,30 @@ const VALUES = [
   { icon: ShieldCheck, title: 'Confianza', text: 'Pago seguro, devoluciones sencillas y un equipo que responde de verdad.' },
 ];
 
-const STATS = [
-  ['+12.000', 'Mascotas felices'],
-  ['+40', 'Marcas premium'],
-  ['24-48h', 'Entrega en Canarias'],
-  ['4.8★', 'Valoración media'],
-];
+/*
+ * CIFRAS QUE SE PUEDEN SOSTENER.
+ *
+ * Aquí había cuatro, y tres eran inventadas: «+12.000 mascotas felices» (nadie
+ * las ha contado), «+40 marcas premium» (el catálogo tiene 12) y «4.8★ de
+ * valoración media», que además de falsa es una práctica prohibida —ver
+ * `lib/valoraciones.ts`—.
+ *
+ * Las que quedan salen del catálogo o de la configuración de la tienda, así
+ * que se mueven solas cuando la tienda crece y no hay que acordarse de nada.
+ * Prefiero tres ciertas que cuatro con relleno.
+ */
+const ENVIO_GRATIS_DESDE = 49;
 
 export function ConocenosPage() {
+  const nav = useNavegacion();
+  const marcas = nav.find((e) => e.etiqueta === 'Marcas')?.columnas?.[0]?.enlaces.length ?? 0;
+
+  const cifras: [string, string][] = [
+    ...(marcas > 0 ? ([[`${marcas}`, 'Marcas en catálogo']] as [string, string][]) : []),
+    ['24-48 h', 'Entrega en Canarias'],
+    [`${ENVIO_GRATIS_DESDE} €`, 'Envío gratis desde'],
+  ];
+
   return (
     <div className="overflow-x-clip">
       {/* Cabecera */}
@@ -60,8 +77,21 @@ export function ConocenosPage() {
       <section className="container-page py-10">
         <div className="grid items-center gap-10 lg:grid-cols-2">
           <Reveal>
+            {/*
+              Esta foto es de archivo y NO es la tienda: decía `alt="Nuestra
+              tienda"`, o sea que afirmaba serlo. Mientras no haya una foto real
+              del local, el `alt` queda vacío —es decoración, y así un lector de
+              pantalla no la anuncia como algo que no es—.
+            */}
             <div className="overflow-hidden rounded-5xl border-4 border-white shadow-lift">
-              <img src="https://picsum.photos/seed/chacho-tienda/900/700" alt="Nuestra tienda" className="h-full w-full object-cover" />
+              <img
+                src="https://picsum.photos/seed/chacho-tienda/900/700"
+                alt=""
+                width={900}
+                height={700}
+                loading="lazy"
+                className="h-full w-full object-cover"
+              />
             </div>
           </Reveal>
           <Reveal delay={0.1}>
@@ -85,10 +115,10 @@ export function ConocenosPage() {
         </div>
       </section>
 
-      {/* Stats */}
+      {/* Cifras */}
       <section className="container-page py-6">
-        <div className="grid grid-cols-2 gap-3 rounded-5xl bg-brand-800 p-6 text-center text-cream sm:grid-cols-4 sm:p-8">
-          {STATS.map(([num, label]) => (
+        <div className="grid grid-cols-2 gap-3 rounded-5xl bg-brand-800 p-6 text-center text-cream sm:grid-cols-3 sm:p-8">
+          {cifras.map(([num, label]) => (
             <div key={label}>
               <p className="font-display text-3xl font-extrabold text-amber-400 sm:text-4xl">{num}</p>
               <p className="mt-1 text-sm text-cream/70">{label}</p>

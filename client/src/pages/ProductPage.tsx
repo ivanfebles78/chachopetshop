@@ -169,7 +169,7 @@ export function ProductPage() {
         <section className="mt-20">
           <h2 className="mb-6 font-display text-2xl font-bold text-ink sm:text-3xl">También te puede gustar</h2>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {related.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
+            {related.map((p) => <ProductCard key={p.id} product={p} />)}
           </div>
         </section>
       )}

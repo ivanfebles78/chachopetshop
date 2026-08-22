@@ -16,14 +16,14 @@
 import { describe, it, expect } from 'vitest';
 
 /* Cada módulo en crudo. Se excluyen las pruebas: hablan de lo prohibido. */
-const TODAS = import.meta.glob('./**/*.{ts,tsx}', {
+const TODAS = import.meta.glob(['./**/*.{ts,tsx}', '../tailwind.config.ts'], {
   query: '?raw',
   eager: true,
   import: 'default',
 }) as Record<string, string>;
 
 const FUENTES: [string, string][] = Object.entries(TODAS)
-  .filter(([ruta]) => !ruta.includes('.test.'))
+  .filter(([ruta]) => !ruta.includes('.test.') && !ruta.includes('tailwind.config'))
   .map(([ruta, texto]) => [ruta, texto]);
 
 /**
@@ -101,11 +101,10 @@ describe('emoji como icono', () => {
    * falla y obliga a quitarlo de la lista. Un aviso que nadie mira no sirve.
    */
   const PENDIENTES = [
-    'HomePage.tsx',        // la 2B la rehace entera; tocarla ahora es trabajo tirado
-    'AnalyticsDashboard.tsx', // panel de administración, no lo ve ningún cliente
-    'ConocenosPage.tsx',   // la estrella forma parte de un «4.8 de valoración
-                           // media» que nadie ha medido: es una decisión de
-                           // contenido, no un cambio de icono. Ver informe 2A.
+    // La portada salió de esta lista en la 2B, al rehacerla. Queda el panel de
+    // administración, que no ve ningún cliente y va con la deuda de estilos en
+    // línea de sus gráficas.
+    'AnalyticsDashboard.tsx',
   ];
   const EMOJI = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/u;
 
@@ -113,5 +112,106 @@ describe('emoji como icono', () => {
     const conEmoji = FUENTES.filter(([, f]) => EMOJI.test(codigo(f)))
       .map(([r]) => r.split('/').pop() as string);
     expect([...conEmoji].sort()).toEqual([...PENDIENTES].sort());
+  });
+});
+
+/* ══ Nada que no se pueda sostener ═════════════════════════════════════ */
+
+describe('ninguna afirmación sin respaldo', () => {
+  it('no se publica ninguna nota de valoración', () => {
+    /*
+     * «4.8★ · Valoración media» estuvo publicado en «Conócenos». Nadie había
+     * medido esa cifra: no hay tabla de reseñas ni perfil conectado. La Fase 1
+     * ya había quitado por lo mismo el `rating` de cada producto, pero esta se
+     * quedó en otra página, que es lo que pasa cuando la comprobación mira
+     * ficheros sueltos en vez de todo.
+     *
+     * Además de engañar a quien compra, afirmar valoraciones que no vienen de
+     * compradores reales es una práctica prohibida por la Directiva Ómnibus
+     * (UE) 2019/2161 — RDL 24/2021 en España.
+     *
+     * El hueco sigue montado en `lib/valoraciones.ts`: en cuanto haya una
+     * fuente verificable, la nota sale sola.
+     */
+    for (const [ruta, fuente] of FUENTES) {
+      if (ruta.includes('valoraciones')) continue;
+      const c = codigo(fuente);
+      expect(c, ruta).not.toMatch(/[0-9][.,][0-9]\s*(?:★|estrellas)/i);
+      expect(c, ruta).not.toMatch(/valoración\s+media/i);
+    }
+  });
+
+  it('no se inventan recuentos de clientes ni de catálogo', () => {
+    // «+12.000 mascotas felices» (nadie las contó) y «+40 marcas premium»
+    // (el catálogo tiene 12). Las cifras que quedan salen de los datos.
+    for (const [ruta, fuente] of FUENTES) {
+      const c = codigo(fuente);
+      expect(c, ruta).not.toMatch(/\+\s?\d{1,3}[.,]\d{3}/);
+      expect(c, ruta).not.toMatch(/mascotas felices/i);
+      expect(c, ruta).not.toMatch(/\+\s?\d+\s*(?:marcas|años|clientes)/i);
+    }
+  });
+
+  it('no se promete ningún descuento que nadie pueda aplicar', () => {
+    /*
+     * La portada ofrecía «un 10% en tu primer pedido» dentro de un formulario
+     * de suscripción cuyo `onSubmit` era `e.preventDefault()`: no había
+     * infraestructura de newsletter, ni endpoint, ni forma de canjear nada.
+     * El correo del cliente se tiraba en silencio.
+     */
+    for (const [ruta, fuente] of FUENTES) {
+      const c = codigo(fuente);
+      expect(c, ruta).not.toMatch(/\d+\s?%\s+(?:de\s+)?(?:descuento|dto)/i);
+      expect(c, ruta).not.toMatch(/en tu primer pedido/i);
+    }
+  });
+
+  it('los datos de contacto salen del módulo, no escritos a mano', () => {
+    for (const [ruta, fuente] of FUENTES) {
+      if (ruta.includes('empresa')) continue;
+      const c = codigo(fuente);
+      // Un correo o un `tel:` literal en una página es un dato duplicado que
+      // el día que cambie se quedará atrás en algún sitio.
+      expect(c, ruta).not.toMatch(/href=["'](?:mailto|tel):[^"'{]/);
+    }
+  });
+});
+
+/* ══ Una animación no puede esconder contenido ═════════════════════════ */
+
+describe('el movimiento nunca oculta nada', () => {
+  const config = (TODAS['../tailwind.config.ts'] ?? TODAS['./../tailwind.config.ts']) as string | undefined;
+
+  it('la animación de entrada del contenido no toca la opacidad', () => {
+    /*
+     * Regla ganada a base de encontrarse lo mismo tres veces.
+     *
+     * 1. `framer-motion` con `initial={{opacity:0}}` + `whileInView`: tarjetas
+     *    de producto a plena vista y con opacidad 0, para siempre.
+     * 2. Al pasarlo a CSS con `fill-mode: both`: el primer fotograma se queda
+     *    fijo mientras la animación no arranca.
+     * 3. Y arrancar no basta: el reloj de las animaciones sólo avanza mientras
+     *    el documento se pinta. En una pestaña en segundo plano se queda en 0,
+     *    aplicando el primer fotograma. Catorce elementos de «Conócenos» —el
+     *    titular incluido— salían a opacidad 0.
+     *
+     * De ahí la regla: `slide-up`, que es la que envuelve CONTENIDO, anima
+     * sólo la posición. Lo peor que puede pasar es que algo aparezca sin
+     * deslizarse.
+     */
+    const fuente = config ?? '';
+    expect(fuente, 'no se ha podido leer tailwind.config.ts').not.toBe('');
+
+    const bloque = /'slide-up':\s*\{[\s\S]*?\n\s{8}\},/.exec(fuente)?.[0] ?? '';
+    expect(bloque, 'no se encuentra el keyframe slide-up').not.toBe('');
+    expect(bloque).not.toMatch(/opacity/);
+  });
+
+  it('lo que envuelve contenido usa `slide-up`, no `fade-in`', () => {
+    // `fade-in` sí anima opacidad, y por eso queda reservada al velo del
+    // carrito, que es decoración: si no se atenúa, no se pierde nada.
+    const reveal = FUENTES.find(([r]) => r.endsWith('Reveal.tsx'))?.[1] ?? '';
+    expect(reveal).toMatch(/animate-slide-up/);
+    expect(reveal).not.toMatch(/animate-fade-in/);
   });
 });
