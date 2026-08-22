@@ -5,6 +5,7 @@ import type {
   Order,
   Product,
   ProductListResponse,
+  Relacionado,
   Taxonomy,
 } from './types';
 
@@ -60,6 +61,8 @@ export type ProductFilters = {
    * vivo en producción porque se comprobó la API y no la página.
    */
   oferta?: boolean;
+  /** Pide los recuentos por faceta. Sólo el catálogo los necesita. */
+  facets?: boolean;
 };
 
 function toQuery(f: ProductFilters): string {
@@ -77,6 +80,7 @@ function toQuery(f: ProductFilters): string {
   if (f.featured) p.set('featured', 'true');
   if (f.bestseller) p.set('bestseller', 'true');
   if (f.oferta) p.set('oferta', '1');
+  if (f.facets) p.set('facets', '1');
   const s = p.toString();
   return s ? `?${s}` : '';
 }
@@ -84,7 +88,14 @@ function toQuery(f: ProductFilters): string {
 export const api = {
   taxonomy: () => request<Taxonomy>('/taxonomy'),
   products: (f: ProductFilters = {}) => request<ProductListResponse>(`/products${toQuery(f)}`),
-  product: (slug: string) => request<{ product: Product; related: Product[] }>(`/products/${slug}`),
+  product: (slug: string) =>
+    /*
+     * Cada relacionado viene con el MOTIVO por el que lo es —misma categoría y
+     * animal, mismo animal, misma marca—. Antes era un «misma marca O mismo
+     * animal» de golpe: salían cuatro productos y no había forma de decir qué
+     * pintaban ahí.
+     */
+    request<{ product: Product; related: Relacionado[] }>(`/products/${slug}`),
 
   register: (data: { email: string; password: string; name?: string }) =>
     request<{ user: AuthUser }>('/auth/register', { method: 'POST', body: JSON.stringify(data) }),
