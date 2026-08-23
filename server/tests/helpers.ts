@@ -9,6 +9,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import { createHmac } from 'node:crypto';
 
 export const prisma = new PrismaClient();
 
@@ -92,3 +93,97 @@ export const DIRECCION_CANARIA = {
   city: 'La Laguna',
   zip: '38201',
 } as const;
+
+/* ── Webhooks de Stripe ─────────────────────────────────────────────────── */
+
+/**
+ * El secreto con el que se firman los eventos en las pruebas.
+ *
+ * Vive aquí y no copiado en cada fichero: desde la Fase 2E son tres suites las
+ * que necesitan mandar un webhook firmado, y tener tres copias del mecanismo es
+ * la forma de que dos se queden atrás cuando cambie.
+ */
+export const SECRETO_WEBHOOK = 'whsec_secreto_solo_de_pruebas';
+
+/** Firma un cuerpo igual que lo hace Stripe, para poder probar el camino real. */
+export function firmarWebhook(
+  cuerpo: string,
+  secreto = SECRETO_WEBHOOK,
+  ts = Math.floor(Date.now() / 1000),
+) {
+  const firma = createHmac('sha256', secreto).update(`${ts}.${cuerpo}`).digest('hex');
+  return `t=${ts},v1=${firma}`;
+}
+
+/** Un evento de Stripe tal y como llega en el cuerpo de la petición. */
+export const eventoStripe = (id: string, type: string, datos: Record<string, unknown>) =>
+  JSON.stringify({ id, type, data: { object: datos } });
+
+/**
+ * Un pedido PENDIENTE con su stock ya reservado, como lo deja el checkout.
+ *
+ * `reservedUntil` se puede fijar en el pasado para simular una reserva vencida
+ * sin esperar media hora de verdad.
+ */
+export async function crearPedidoPendiente(opciones: {
+  cantidad?: number;
+  stock?: number;
+  reservedUntil?: Date | null;
+  email?: string;
+  userId?: string;
+} = {}) {
+  const cantidad = opciones.cantidad ?? 1;
+  const { producto, variante } = await crearProducto({ stock: opciones.stock ?? 10 });
+
+  const pedido = await prisma.order.create({
+    data: {
+      email: opciones.email ?? 'cliente@ejemplo.test',
+      userId: opciones.userId,
+      subtotal: 20 * cantidad,
+      shipping: 4.95,
+      total: 20 * cantidad + 4.95,
+      status: 'PENDING',
+      stockCommitted: true,
+      reservedUntil:
+        opciones.reservedUntil === undefined
+          ? new Date(Date.now() + 30 * 60_000)
+          : opciones.reservedUntil,
+      accessToken: unico('tok'),
+      shippingName: DIRECCION_CANARIA.name,
+      shippingAddress: DIRECCION_CANARIA.address,
+      shippingCity: DIRECCION_CANARIA.city,
+      shippingZip: DIRECCION_CANARIA.zip,
+      items: {
+        create: {
+          productId: producto.id,
+          variantId: variante.id,
+          name: producto.name,
+          variantLabel: variante.label,
+          unitPrice: 20,
+          quantity: cantidad,
+        },
+      },
+    },
+  });
+
+  // El stock ya estaría descontado: se refleja para que el estado sea real.
+  await prisma.productVariant.update({
+    where: { id: variante.id },
+    data: { stock: { decrement: cantidad } },
+  });
+
+  return { pedido, producto, variante, cantidad };
+}
+
+/** Un proveedor de correo de mentira: cuenta lo que se le manda y no sale a la red. */
+export function proveedorFalso(opciones: { falla?: boolean } = {}) {
+  const enviados: { para: string; asunto: string; html: string; texto: string }[] = [];
+  return {
+    nombre: 'falso',
+    enviados,
+    async enviar(mensaje: { para: string; asunto: string; html: string; texto: string }) {
+      if (opciones.falla) throw new Error('El proveedor de correo ha fallado');
+      enviados.push(mensaje);
+    },
+  };
+}

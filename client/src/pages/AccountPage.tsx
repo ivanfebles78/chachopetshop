@@ -6,7 +6,8 @@ import { useFetch } from '@/lib/useFetch';
 import { eur } from '@/lib/cn';
 import { useAuth } from '@/store/auth';
 import { useSeo } from '@/lib/useSeo';
-import { ESTADO, referenciaDePedido, unidadesDe } from '@/lib/pedidos';
+import { estadoDePedido, referenciaDePedido, unidadesDe } from '@/lib/pedidos';
+import { EMPRESA } from '@/lib/empresa';
 import type { Order } from '@/lib/types';
 
 /**
@@ -126,7 +127,8 @@ export function AccountPage() {
  */
 function Pedido({ pedido }: { pedido: Order }) {
   const [abierto, setAbierto] = useState(false);
-  const estado = ESTADO[pedido.status];
+  const estado = estadoDePedido(pedido);
+  const Icono = estado.icono;
   const unidades = unidadesDe(pedido);
   const fecha = new Date(pedido.createdAt).toLocaleDateString('es-ES', {
     day: 'numeric',
@@ -144,7 +146,15 @@ function Pedido({ pedido }: { pedido: Order }) {
         <span className="font-mono text-body-sm font-bold text-content">
           {referenciaDePedido(pedido.id)}
         </span>
-        <span className={`chip-estado ${estado.clase}`}>{estado.etiqueta}</span>
+        {/*
+          Palabra, color e icono. El color nunca informa solo: quien no
+          distingue el verde del verde azulado, o quien escucha la página en vez
+          de verla, se queda con lo mismo que los demás.
+        */}
+        <span className={`chip-estado gap-1.5 ${estado.clase}`}>
+          <Icono className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          {estado.etiqueta}
+        </span>
         <span className="text-body-sm text-content-muted">{fecha}</span>
         <span className="ml-auto flex items-center gap-3">
           <span className="font-display text-body font-bold tabular-nums text-content">
@@ -231,6 +241,28 @@ function Pedido({ pedido }: { pedido: Order }) {
             </address>
           </div>
         )}
+
+        {/*
+          AYUDA, NO UN PROCESO DE DEVOLUCIÓN.
+          Las condiciones de devolución todavía no están decididas, así que aquí
+          no hay ningún botón de «solicitar devolución» ni ningún plazo: eso
+          sería inventarse un derecho y un procedimiento que no existen. Lo que
+          sí existe es un teléfono y un correo, y son reales.
+        */}
+        <div className="mt-4 border-t border-edge-subtle pt-4">
+          <h3 className="text-body-sm font-bold text-content">¿Necesitas ayuda con tu pedido?</h3>
+          <p className="mt-1 text-body-sm text-content-muted">
+            Escríbenos a{' '}
+            <a href={`mailto:${EMPRESA.email}`} className="btn-link">
+              {EMPRESA.email}
+            </a>{' '}
+            o llámanos al{' '}
+            <a href={`tel:${EMPRESA.telefonoE164}`} className="btn-link">
+              {EMPRESA.telefono}
+            </a>
+            .
+          </p>
+        </div>
       </div>
     </details>
   );

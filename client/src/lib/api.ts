@@ -155,10 +155,16 @@ export const api = {
     request<{ ok: boolean }>(`/admin/messages/${id}`, { method: 'DELETE' }),
   adminProducts: () => request<{ products: Product[] }>('/admin/products'),
   adminDeleteProduct: (id: string) => request<{ ok: boolean }>(`/admin/products/${id}`, { method: 'DELETE' }),
-  adminOrders: () => request<{ orders: Order[] }>('/admin/orders'),
-  adminUpdateOrder: (id: string, status: Order['status']) =>
-    request<{ ok: boolean; status: string }>(`/admin/orders/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ status }),
-    }),
+  adminOrders: () => request<{ orders: (Order & { siguientes: string[] })[] }>('/admin/orders'),
+  /*
+   * SÓLO el estado OPERATIVO. El estado de PAGO no se toca desde el panel: lo
+   * escribe únicamente el webhook firmado de Stripe, y el servidor rechaza un
+   * `status` en el cuerpo. Antes este endpoint aceptaba los dos, así que se
+   * podía devolver a «pendiente» un pedido cobrado desde un desplegable.
+   */
+  adminUpdateOrder: (id: string, fulfillment: NonNullable<Order['fulfillment']>) =>
+    request<{ ok: boolean; fulfillment: string; status: string; siguientes: string[] }>(
+      `/admin/orders/${id}`,
+      { method: 'PATCH', body: JSON.stringify({ fulfillment }) },
+    ),
 };

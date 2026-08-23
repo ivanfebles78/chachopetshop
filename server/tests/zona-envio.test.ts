@@ -25,7 +25,12 @@ import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import request from 'supertest';
 
 import { prisma, limpiar, crearProducto, stockDe } from './helpers.js';
-import { esCodigoPostalDeCanarias, FUERA_DE_ZONA, ZONA_DE_ENVIO } from '../src/lib/envio.js';
+import {
+  esCodigoPostalDeCanarias,
+  FUERA_DE_ZONA,
+  paisAdmitido,
+  ZONA_DE_ENVIO,
+} from '../src/lib/envio.js';
 
 async function app() {
   const { createApp } = await import('../src/app.js');
@@ -295,5 +300,94 @@ describe('/api/config publica la zona', () => {
     for (const prohibido of ['secret', 'key', 'token', 'password', 'database', 'sk_']) {
       expect(texto).not.toContain(prohibido);
     }
+  });
+});
+
+/* ══ 5. El punto ciego de los cinco dígitos ═══════════════════════════════ */
+
+describe('el país, cuando llega', () => {
+  /*
+   * Los códigos postales franceses también son de cinco cifras, y **35000 es
+   * Rennes y 38000 es Grenoble**. Comprobar sólo el número deja pasar una
+   * dirección francesa.
+   *
+   * El formulario no pide el país —se entrega sólo en Canarias—, así que ese
+   * hueco lo cierra hoy una persona al leer la ciudad antes de enviar. Lo que
+   * sí se cierra por código: si el país VIENE en la petición, tiene que ser
+   * España.
+   */
+  it('si no viene, no estorba: el formulario no lo pide', () => {
+    expect(paisAdmitido(undefined)).toBe(true);
+    expect(paisAdmitido(null)).toBe(true);
+    expect(paisAdmitido('')).toBe(true);
+  });
+
+  it('España, escrita como la escriba quien sea', () => {
+    for (const p of ['ES', 'es', 'España', 'espana', 'Spain', ' es ']) {
+      expect(paisAdmitido(p)).toBe(true);
+    }
+  });
+
+  it('cualquier otro país, no', () => {
+    for (const p of ['FR', 'Francia', 'PT', 'Portugal', 'MA', 'DE', 'United Kingdom']) {
+      expect(paisAdmitido(p)).toBe(false);
+    }
+  });
+
+  it('y lo que ni siquiera es texto, tampoco', () => {
+    for (const p of [34, {}, [], true]) expect(paisAdmitido(p)).toBe(false);
+  });
+
+  it('RENNES 35000 con país Francia se rechaza en el servidor', async () => {
+    const { producto, variante } = await crearProducto({ stock: 5, precio: 20 });
+    const res = await request(await app())
+      .post('/api/checkout')
+      .send({
+        email: 'cliente@ejemplo.test',
+        items: [{ productId: producto.id, variantId: variante.id, quantity: 1 }],
+        shipping: {
+          name: 'Jean Dupont',
+          address: '1 rue de la Paix',
+          city: 'Rennes',
+          zip: '35000',
+          country: 'FR',
+        },
+      });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe(FUERA_DE_ZONA);
+    expect(await prisma.order.count()).toBe(0);
+    expect((await prisma.productVariant.findUnique({ where: { id: variante.id } }))?.stock).toBe(5);
+  });
+
+  it('Grenoble 38000 con país Francia, igual', async () => {
+    const { producto, variante } = await crearProducto({ stock: 5, precio: 20 });
+    const res = await request(await app())
+      .post('/api/checkout')
+      .send({
+        email: 'cliente@ejemplo.test',
+        items: [{ productId: producto.id, variantId: variante.id, quantity: 1 }],
+        shipping: { name: 'X', address: 'Y', city: 'Grenoble', zip: '38000', country: 'Francia' },
+      });
+    expect(res.status).toBe(400);
+    expect(await prisma.order.count()).toBe(0);
+  });
+
+  it('y una dirección canaria diciendo España sigue pasando', async () => {
+    const { producto, variante } = await crearProducto({ stock: 5, precio: 20 });
+    const res = await request(await app())
+      .post('/api/checkout')
+      .send({
+        email: 'cliente@ejemplo.test',
+        items: [{ productId: producto.id, variantId: variante.id, quantity: 1 }],
+        shipping: {
+          name: 'Ana',
+          address: 'Calle Real 1',
+          city: 'Arucas',
+          zip: '35400',
+          country: 'España',
+        },
+      });
+    expect(res.status).not.toBe(400);
+    expect(await prisma.order.count()).toBe(1);
   });
 });

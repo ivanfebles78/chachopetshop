@@ -31,7 +31,6 @@ enum CategoryType {
 
 /**
  * Estados de un pedido.
- *
  * PENDING es «creado, esperando el pago»; PAID sólo lo escribe un webhook de
  * Stripe con firma válida y pago confirmado. FAILED y CANCELLED se separan
  * porque significan cosas distintas para el stock y para el cliente: un pago
@@ -56,12 +55,12 @@ model Brand {
 }
 
 model Animal {
-  id       String    @id @default(cuid())
-  name     String    @unique
-  slug     String    @unique
-  emoji    String?
-  sortOrder Int      @default(0)
-  products Product[]  @relation("ProductAnimals")
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  emoji     String?
+  sortOrder Int       @default(0)
+  products  Product[] @relation("ProductAnimals")
 }
 
 model Category {
@@ -77,7 +76,7 @@ model Need {
   id       String    @id @default(cuid())
   name     String    @unique
   slug     String    @unique
-  products Product[]  @relation("ProductNeeds")
+  products Product[] @relation("ProductNeeds")
 }
 
 model Product {
@@ -91,7 +90,7 @@ model Product {
   compareAt   Decimal?         @db.Decimal(10, 2)
   image       String
   gallery     String[]
-  /*
+  /**
    * Reservados para un sistema de reseñas REAL. Hasta que exista, quedan
    * vacíos y no se publican: `@default(4.6)` convertía en «4,6 estrellas» a
    * cualquier producto recién creado, sin que nadie hubiese opinado.
@@ -132,6 +131,68 @@ model User {
   createdAt    DateTime @default(now())
 }
 
+/**
+ * ESTADO OPERATIVO del pedido — separado del estado de PAGO a propósito.
+ * `OrderStatus` dice qué ha pasado con el DINERO. Esto dice qué ha pasado con
+ * la CAJA: si se está preparando, si ha salido, si ha llegado.
+ * Meterlo todo en un solo campo parece más simple y no lo es. En cuanto un
+ * pedido pasa a «preparando» se habría perdido el rastro de que el pago está
+ * confirmado, y «cancelado» borraría que se cobró — que es justo el dato que
+ * hace falta para saber si hay que devolver dinero. Con dos campos, cancelar un
+ * pedido no puede insinuar un reembolso que nadie ha hecho.
+ * Nulo significa «pagado y nada más todavía», que es como nace un pedido en
+ * cuanto Stripe confirma.
+ */
+enum OrderFulfillment {
+  PREPARING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+/**
+ * Qué correo es. Uno de cada por pedido, y lo garantiza un índice único.
+ */
+enum NotificationKind {
+  ORDER_CONFIRMATION
+  INTERNAL_NEW_ORDER
+}
+
+enum NotificationStatus {
+  SENDING
+  SENT
+  FAILED
+}
+
+/**
+ * UN CORREO POR PEDIDO Y TIPO — y la prueba de que se mandó.
+ * Stripe reintenta los webhooks por diseño, así que un pedido puede confirmarse
+ * varias veces. Sin esto, cada reintento sería otro correo al cliente.
+ * El mecanismo es el mismo que ya usa `StripeEvent` y por el mismo motivo: la
+ * unicidad la impone la BASE DE DATOS, no una comprobación en memoria que se
+ * pierde al reiniciar y que no vale nada con dos instancias. Crear la fila ES
+ * pedir el turno: si la creación choca contra el índice único, otro va ya.
+ * La fila se queda aunque el envío falle, con el error y el número de intentos.
+ * Así un reintento posterior sabe qué quedó pendiente sin arriesgar duplicados.
+ */
+model OrderNotification {
+  id        String             @id @default(cuid())
+  order     Order              @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  kind      NotificationKind
+  status    NotificationStatus @default(SENDING)
+  attempts  Int                @default(0)
+  /**
+   * Para diagnosticar. NUNCA se le enseña a quien compra.
+   */
+  lastError String?
+  createdAt DateTime           @default(now())
+  sentAt    DateTime?
+
+  @@unique([orderId, kind])
+  @@index([status])
+}
+
 model Order {
   id              String      @id @default(cuid())
   user            User?       @relation(fields: [userId], references: [id])
@@ -139,41 +200,65 @@ model Order {
   email           String
   status          OrderStatus @default(PENDING)
   subtotal        Decimal     @db.Decimal(10, 2)
-  shipping        Decimal     @db.Decimal(10, 2) @default(0)
+  shipping        Decimal     @default(0) @db.Decimal(10, 2)
   total           Decimal     @db.Decimal(10, 2)
   stripeSessionId String?     @unique
 
-  /*
+  /**
    * Secreto de acceso al pedido, para que quien compra sin cuenta pueda ver su
    * confirmación. NO es el identificador: el id va en la URL y acaba en el
    * historial y en la cabecera Referer; esto son 32 bytes aleatorios que sólo
    * conoce quien completó la compra.
    */
-  /*
+  /**
+   * /*
    * Nullable a propósito. Los pedidos que ya existen en producción no tienen
    * token, y añadir una columna NOT NULL UNIQUE a una tabla con filas falla al
    * desplegar. Un pedido sin token simplemente no se puede consultar con token:
    * se consulta autenticado, que es lo que ya hacía antes de esta fase.
    */
-  accessToken     String?     @unique
+  accessToken String? @unique
 
-  /*
+  /**
    * Si las existencias de este pedido siguen retenidas. El stock se descuenta al
    * crear la sesión de pago para que dos personas no puedan comprar la misma
    * última unidad, y se devuelve si el pago falla, se cancela o caduca. El
    * booleano hace que devolverlo sea idempotente: un webhook repetido no puede
    * reponer el stock dos veces.
    */
-  stockCommitted  Boolean     @default(false)
+  stockCommitted Boolean @default(false)
+
+  /**
+   * HASTA CUÁNDO están retenidas esas existencias.
+   * Sin esto, un carrito abandonado en la pasarela de Stripe retenía el stock
+   * hasta que Stripe daba la sesión por caducada — y su valor por defecto es de
+   * VEINTICUATRO HORAS. Con dos o tres sacos de cada formato, eso es la tienda
+   * agotada por gente que no llegó a pagar.
+   * La política es de 30 minutos. La fecha se guarda en la fila, no en un
+   * temporizador en memoria: así sobrevive a un reinicio y la ve cualquier
+   * instancia.
+   */
+  reservedUntil DateTime?
+
+  /**
+   * Estado OPERATIVO. Nulo mientras no haya nada que contar más allá del pago.
+   * Ver el comentario de `OrderFulfillment`.
+   */
+  fulfillment OrderFulfillment?
 
   shippingName    String?
   shippingAddress String?
   shippingCity    String?
   shippingZip     String?
   items           OrderItem[]
-  createdAt       DateTime    @default(now())
+  notifications   OrderNotification[]
+  createdAt       DateTime            @default(now())
 
   @@index([userId])
+  /**
+   * La consulta de la limpieza: reservas vencidas que siguen reteniendo stock.
+   */
+  @@index([status, stockCommitted, reservedUntil])
 }
 
 model OrderItem {
@@ -193,7 +278,6 @@ model OrderItem {
 
 /**
  * Eventos de Stripe ya procesados.
- *
  * Stripe reintenta los webhooks por diseño, así que llegan duplicados de forma
  * rutinaria. Sin este registro, un reintento volvería a aplicar los efectos:
  * reponer stock, cambiar estados, disparar correos. La clave única sobre el id

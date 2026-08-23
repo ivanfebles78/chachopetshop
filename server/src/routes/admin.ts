@@ -1,6 +1,11 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { prisma } from '../db.js';
+import {
+  admiteCambioOperativo,
+  siguientesEstados,
+  transicionValida,
+} from '../lib/estados.js';
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { serializeProduct, toNumber } from '../lib/serialize.js';
 import { computeAnalytics } from '../lib/analytics.js';
@@ -128,6 +133,9 @@ adminRouter.get('/orders', async (_req, res, next) => {
         subtotal: toNumber(o.subtotal),
         shipping: toNumber(o.shipping),
         total: toNumber(o.total),
+        // Qué botones tiene sentido enseñar. Que lo decida el servidor evita que
+        // el panel ofrezca un cambio que luego se rechaza.
+        siguientes: admiteCambioOperativo(o.status) ? siguientesEstados(o.fulfillment) : [],
       })),
     });
   } catch (err) {
@@ -135,13 +143,65 @@ adminRouter.get('/orders', async (_req, res, next) => {
   }
 });
 
+/**
+ * PATCH /api/admin/orders/:id — mover el estado OPERATIVO de un pedido.
+ *
+ * Lo que este endpoint hacía antes: aceptar cualquiera de cuatro estados y
+ * escribirlo encima. Sin comprobar nada. Se podía devolver un pedido cobrado a
+ * `PENDING` —«no pagado»— con una petición, y desde el panel, sin querer.
+ *
+ * Ahora:
+ *
+ *   · Sólo se toca `fulfillment`, el eje OPERATIVO. El estado de PAGO lo
+ *     escribe únicamente el webhook firmado de Stripe. Esa garantía es de la
+ *     Fase 1 y este endpoint ya no puede saltársela ni por error.
+ *   · Sólo sobre pedidos cobrados. Marcar «preparando» algo cuyo pago no consta
+ *     es prometer trabajo sobre dinero que no ha llegado.
+ *   · Sólo transiciones que tienen sentido. De «enviado» no se vuelve a
+ *     «preparando», y de «entregado» no se sale.
+ *
+ * CANCELAR NO DEVUELVE EL DINERO. No llama a Stripe, no emite ningún reembolso
+ * y no toca el estado de pago: un pedido cobrado y cancelado sigue constando
+ * como cobrado, porque el dinero sigue estando. Un reembolso es una decisión de
+ * negocio con consecuencias contables y hoy no existe ni la política ni la
+ * pantalla para tomarla.
+ */
 adminRouter.patch('/orders/:id', async (req, res, next) => {
   try {
-    const { status } = z
-      .object({ status: z.enum(['PENDING', 'PAID', 'FULFILLED', 'CANCELLED']) })
+    const { fulfillment } = z
+      .object({ fulfillment: z.enum(['PREPARING', 'SHIPPED', 'DELIVERED', 'CANCELLED']) })
       .parse(req.body);
-    const order = await prisma.order.update({ where: { id: req.params.id }, data: { status } });
-    res.json({ ok: true, status: order.status });
+
+    const pedido = await prisma.order.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, status: true, fulfillment: true },
+    });
+    if (!pedido) return res.status(404).json({ error: 'Pedido no encontrado' });
+
+    if (!admiteCambioOperativo(pedido.status)) {
+      return res.status(409).json({
+        error: 'Este pedido todavía no consta como cobrado, así que no se puede preparar ni enviar.',
+      });
+    }
+
+    if (!transicionValida(pedido.fulfillment, fulfillment)) {
+      return res.status(409).json({
+        error: 'Ese cambio de estado no es posible desde el estado actual del pedido.',
+        siguientes: siguientesEstados(pedido.fulfillment),
+      });
+    }
+
+    const actualizado = await prisma.order.update({
+      where: { id: pedido.id },
+      data: { fulfillment },
+      select: { fulfillment: true, status: true },
+    });
+    res.json({
+      ok: true,
+      fulfillment: actualizado.fulfillment,
+      status: actualizado.status,
+      siguientes: siguientesEstados(actualizado.fulfillment),
+    });
   } catch (err) {
     next(err);
   }

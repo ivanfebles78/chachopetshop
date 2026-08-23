@@ -101,6 +101,16 @@ export default {
         warning: { DEFAULT: '#8d6207', subtle: '#fdf4e0', border: '#eccb85' }, // 4.94 (antes 4.28)
         danger: { DEFAULT: '#a32723', subtle: '#fbeceb', border: '#e8b4b1' },  // 6.37
         info: { DEFAULT: '#146fa8', subtle: '#e7f3fb', border: '#a6d5ef' },    // 4.81 (antes 3.80)
+        /*
+         * «En camino». Entra en la Fase 2E con el ciclo de vida del pedido:
+         * hacían falta seis estados distinguibles y sólo había cuatro tonos.
+         *
+         * Verde azulado y no verde a secas, para que «enviado» y «entregado» no
+         * se confundan de un vistazo. Medido: 4.84 sobre su fondo tenue, por
+         * encima del 4.5 que exige AA. Aun así el color nunca informa solo: cada
+         * estado lleva su palabra y su icono.
+         */
+        transito: { DEFAULT: '#0f766e', subtle: '#e6f4f2', border: '#9fd3cd' },  // 4.84
       },
 
       /*

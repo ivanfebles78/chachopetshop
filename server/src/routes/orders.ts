@@ -6,13 +6,42 @@ import { toNumber } from '../lib/serialize.js';
 
 export const ordersRouter = Router();
 
+/**
+ * LO QUE SALE HACIA FUERA, Y LO QUE NO.
+ *
+ * Se listan los campos que se OCULTAN y no los que se enseñan, a propósito: así
+ * una columna nueva en el modelo no se publica sola. Cada uno está aquí por un
+ * motivo:
+ *
+ *   · `accessToken` — es el secreto que abre el pedido. Quien pregunta ya lo
+ *     tiene; devolvérselo sólo sirve para que acabe en más sitios.
+ *   · `stripeSessionId` — identificador interno del proveedor de pago. No le
+ *     dice nada a quien compra y es un detalle de implementación que no tiene
+ *     por qué viajar. Lo cazó una prueba de la Fase 2E: se estaba enviando.
+ *   · `stockCommitted` y `reservedUntil` — maquinaria de inventario. Contarle a
+ *     un cliente que sus existencias están «retenidas hasta las 12:04» es
+ *     ruido, y encima invita a preguntas que nadie quiere responder.
+ *   · `userId` — a quien lo consulta no le aporta nada.
+ */
 const serializeOrder = <
   T extends { subtotal: unknown; shipping: unknown; total: unknown; items?: { unitPrice: unknown }[] },
 >(
   o: T,
 ) => {
-  // El token de acceso nunca sale en la respuesta: ya lo tiene quien pregunta.
-  const { accessToken: _oculto, ...resto } = o as T & { accessToken?: string };
+  const {
+    accessToken: _token,
+    stripeSessionId: _sesion,
+    stockCommitted: _reservado,
+    reservedUntil: _hasta,
+    userId: _usuario,
+    ...resto
+  } = o as T & {
+    accessToken?: string;
+    stripeSessionId?: string;
+    stockCommitted?: boolean;
+    reservedUntil?: Date;
+    userId?: string;
+  };
   return {
     ...resto,
     subtotal: toNumber(o.subtotal as never),

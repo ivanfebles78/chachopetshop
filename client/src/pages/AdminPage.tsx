@@ -6,11 +6,12 @@ import { useFetch } from '@/lib/useFetch';
 import { cn, eur } from '@/lib/cn';
 import { useAuth } from '@/store/auth';
 import { toast } from '@/store/toast';
+import { avisoDeCambio, estadoDePedido, ETIQUETA_OPERATIVA } from '@/lib/pedidos';
 import type { Order } from '@/lib/types';
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
 import { ErrorState } from '@/components/ErrorState';
 
-const STATUSES: Order['status'][] = ['PENDING', 'PAID', 'FULFILLED', 'CANCELLED'];
+
 
 export function AdminPage() {
   const { user, loading } = useAuth();
@@ -45,13 +46,24 @@ export function AdminPage() {
       toast.error((err as Error).message);
     }
   };
-  const updateOrder = async (id: string, status: Order['status']) => {
+  /**
+   * Mover el estado OPERATIVO de un pedido.
+   *
+   * Se confirma antes de los cambios que no se pueden deshacer —cancelar y
+   * marcar como entregado—, porque esto es un desplegable en una lista y un
+   * clic de más no puede cerrar un pedido para siempre.
+   *
+   * El estado de PAGO no aparece por ninguna parte: lo escribe únicamente el
+   * webhook firmado de Stripe.
+   */
+  const updateOrder = async (id: string, fulfillment: NonNullable<Order['fulfillment']>) => {
+    const aviso = avisoDeCambio(fulfillment);
+    if (aviso && !window.confirm(aviso)) return;
     try {
-      await api.adminUpdateOrder(id, status);
-      toast.success('Pedido actualizado');
+      await api.adminUpdateOrder(id, fulfillment);
       setNonce((n) => n + 1);
-    } catch (err) {
-      toast.error((err as Error).message);
+    } catch (e) {
+      toast.error((e as Error).message);
     }
   };
   const markMessage = async (id: string, read: boolean) => {
@@ -146,13 +158,40 @@ export function AdminPage() {
                   <p className="text-xs text-content-subtle">{o.email} · {new Date(o.createdAt).toLocaleString('es-ES')}</p>
                 </div>
                 <span className="font-display font-bold text-ink">{eur(o.total)}</span>
-                <select
-                  value={o.status}
-                  onChange={(e) => updateOrder(o.id, e.target.value as Order['status'])}
-                  className="rounded-full border border-brand-900/10 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-brand-500"
-                >
-                  {STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
+
+                {/* Estado del PAGO: se enseña, no se toca. */}
+                <EstadoDelPedido pedido={o} />
+
+                {/*
+                  Y el cambio operativo, con las ÚNICAS opciones que el servidor
+                  aceptaría desde el estado actual. Las manda él, así que el
+                  panel no puede ofrecer un cambio que luego se rechaza.
+                */}
+                {o.siguientes.length > 0 ? (
+                  <label className="flex items-center gap-2 text-sm">
+                    <span className="sr-only">
+                      Cambiar el estado del pedido {o.id.slice(-8).toUpperCase()}
+                    </span>
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        const destino = e.target.value;
+                        e.currentTarget.value = '';
+                        if (destino) updateOrder(o.id, destino as NonNullable<Order['fulfillment']>);
+                      }}
+                      className="rounded-full border border-brand-900/10 bg-white px-3 py-2 text-sm font-semibold outline-none focus:border-brand-500"
+                    >
+                      <option value="">Cambiar estado…</option>
+                      {o.siguientes.map((s) => (
+                        <option key={s} value={s}>
+                          {ETIQUETA_OPERATIVA[s] ?? s}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <span className="text-sm text-content-subtle">Sin cambios posibles</span>
+                )}
               </div>
             ))
           )}
@@ -208,5 +247,24 @@ function TabBtn({ active, onClick, icon, children }: { active: boolean; onClick:
     >
       {icon} {children}
     </button>
+  );
+}
+
+
+/**
+ * El estado del pedido tal y como lo ve también el cliente.
+ *
+ * Se reutiliza `estadoDePedido` a propósito: si el panel tuviera su propia
+ * tabla de etiquetas, Ivan y quien compró acabarían leyendo cosas distintas del
+ * mismo pedido.
+ */
+function EstadoDelPedido({ pedido }: { pedido: Order }) {
+  const estado = estadoDePedido(pedido);
+  const Icono = estado.icono;
+  return (
+    <span className={`chip-estado gap-1.5 ${estado.clase}`}>
+      <Icono className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      {estado.etiqueta}
+    </span>
   );
 }

@@ -8,7 +8,7 @@ import { useAuth } from '@/store/auth';
 import { useCart } from '@/store/cart';
 import { useSeo } from '@/lib/useSeo';
 import { EMPRESA } from '@/lib/empresa';
-import { referenciaDePedido, ESTADO } from '@/lib/pedidos';
+import { referenciaDePedido, estadoDePedido } from '@/lib/pedidos';
 
 /**
  * VUELTA DE STRIPE.
@@ -56,7 +56,7 @@ export function CheckoutResultPage({ kind }: { kind: 'success' | 'cancel' }) {
 
   if (kind === 'cancel') return <Cancelado />;
 
-  const estado = pedido ? ESTADO[pedido.status] : null;
+  const estado = pedido ? estadoDePedido(pedido) : null;
 
   return (
     <div className="container-page py-10 sm:py-14">

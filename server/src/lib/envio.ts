@@ -102,3 +102,33 @@ export function esCodigoPostalDeCanarias(cp: unknown): cp is string {
   if (!/^\d{5}$/.test(limpio)) return false;
   return ZONA_DE_ENVIO.PREFIJOS.some((prefijo) => limpio.startsWith(prefijo));
 }
+
+/**
+ * ¿ES ESPAÑA?
+ *
+ * La comprobación del código postal, sola, tiene un punto ciego real: los
+ * códigos franceses también son de cinco cifras, y **35000 es Rennes y 38000 es
+ * Grenoble**. Una dirección francesa con uno de esos códigos pasaría el filtro.
+ *
+ * Hoy el formulario no pide el país —se entrega sólo en Canarias y decirlo en
+ * un desplegable de un solo valor sería ruido—, así que este punto ciego lo
+ * atrapa una persona al leer la ciudad antes de enviar. Pero **si el país llega
+ * en la petición, tiene que ser España**: quien mande una dirección con
+ * `country: 'FR'` no puede colarse por la puerta de atrás.
+ *
+ * Queda anotado como deuda: un campo de país de verdad cerraría el hueco entero.
+ */
+const ESPANA = new Set([
+  'es',
+  'esp',
+  'espana',
+  'españa',
+  'spain',
+]);
+
+export function paisAdmitido(pais: unknown): boolean {
+  // Que no venga es lo normal: el formulario no lo pide.
+  if (pais === undefined || pais === null || pais === '') return true;
+  if (typeof pais !== 'string') return false;
+  return ESPANA.has(pais.trim().toLowerCase());
+}
