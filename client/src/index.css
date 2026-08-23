@@ -207,10 +207,12 @@
   .chip-estado {
     @apply inline-flex items-center rounded-pill px-3 py-1 text-caption font-bold;
   }
-  .estado-ok      { @apply bg-success-subtle text-success; }
-  .estado-espera  { @apply bg-info-subtle text-info; }
-  .estado-aviso   { @apply bg-warning-subtle text-warning; }
-  .estado-neutro  { @apply bg-surface-sunken text-content-muted; }
+  .estado-ok       { @apply bg-success-subtle text-success; }
+  .estado-espera   { @apply bg-info-subtle text-info; }
+  .estado-proceso  { @apply bg-warning-subtle text-warning; }
+  .estado-transito { @apply bg-transito-subtle text-transito; }
+  .estado-aviso    { @apply bg-danger-subtle text-danger; }
+  .estado-neutro   { @apply bg-surface-sunken text-content-muted; }
 
   .skip-link {
     @apply sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50

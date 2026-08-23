@@ -79,7 +79,16 @@ export type Order = {
    * devuelve; el cliente no lo contemplaba, así que un pago rechazado se
    * quedaba sin etiqueta que enseñar.
    */
+  /** Qué ha pasado con el DINERO. Lo escribe el webhook firmado de Stripe. */
   status: 'PENDING' | 'PAID' | 'FAILED' | 'FULFILLED' | 'CANCELLED';
+  /**
+   * Qué ha pasado con la CAJA. Lo escribe Ivan desde el panel.
+   *
+   * `null` = pagado y aún sin preparar. Va aparte del estado de pago para que
+   * avanzar el pedido no borre el rastro de que está cobrado — y para que
+   * cancelarlo no insinúe un reembolso que nadie ha hecho.
+   */
+  fulfillment?: 'PREPARING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | null;
   subtotal: number;
   shipping: number;
   total: number;

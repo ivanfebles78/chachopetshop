@@ -10,7 +10,15 @@ import {
   esCodigoPostalDeCanarias,
   FUERA_DE_ZONA,
   normalizarCodigoPostal,
+  paisAdmitido,
 } from '../lib/envio.js';
+import {
+  caducidadDesde,
+  expiraEnStripe,
+  liberarReservasVencidas,
+  liberarStockDelPedido,
+} from '../lib/reservas.js';
+import { notificarPedidoPagado } from '../lib/correo/notificar.js';
 
 export const checkoutRouter = Router();
 
@@ -58,6 +66,8 @@ const checkoutBody = z.object({
       name: z.string().max(160).optional(),
       address: z.string().max(240).optional(),
       city: z.string().max(120).optional(),
+      /* No lo pide el formulario, pero si llega se comprueba. Ver `paisAdmitido`. */
+      country: z.string().max(60).optional(),
       zip: z.string().max(20).optional(),
     })
     .optional(),
@@ -172,27 +182,12 @@ async function devolver(reservadas: { variantId: string; quantity: number }[]) {
   }
 }
 
-/**
- * Devuelve el stock de un pedido UNA sola vez.
- *
- * `stockCommitted` se pone a false con la misma condición en el WHERE, así que
- * dos webhooks simultáneos no pueden reponer dos veces: el segundo actualiza 0
- * filas y no hace nada.
+/*
+ * `liberarStockDelPedido` y la caducidad de las reservas viven ahora en
+ * `lib/reservas.ts`. Se movieron en la Fase 2E porque dejaron de ser cosa sólo
+ * del checkout: la limpieza periódica las necesita, y tener dos copias de algo
+ * que devuelve inventario es la mejor forma de devolverlo dos veces.
  */
-async function liberarStockDelPedido(orderId: string) {
-  const { count } = await prisma.order.updateMany({
-    where: { id: orderId, stockCommitted: true },
-    data: { stockCommitted: false },
-  });
-  if (count === 0) return;
-
-  const items = await prisma.orderItem.findMany({ where: { orderId } });
-  await devolver(
-    items
-      .filter((i) => i.variantId)
-      .map((i) => ({ variantId: i.variantId as string, quantity: i.quantity })),
-  );
-}
 
 checkoutRouter.post('/', async (req, res, next) => {
   let reservadas: { variantId: string; quantity: number }[] = [];
@@ -233,12 +228,36 @@ checkoutRouter.post('/', async (req, res, next) => {
      * de Canarias.
      */
     const cp = input.shipping?.zip;
-    if (!esCodigoPostalDeCanarias(cp)) {
+    if (!esCodigoPostalDeCanarias(cp) || !paisAdmitido(input.shipping?.country)) {
       throw errorDeCliente(FUERA_DE_ZONA, 400);
     }
     const zipNormalizado = normalizarCodigoPostal(cp);
 
     const { lineas, subtotal, shipping, total } = await construirLineas(input);
+
+    /*
+     * Una sola lectura del reloj para el pedido y para Stripe. Si cada uno
+     * llamara a `new Date()` por su cuenta, la reserva y la pasarela caducarían
+     * con unos milisegundos de diferencia — y Stripe rechaza la sesión si
+     * `expires_at` se queda por debajo del mínimo de 30 minutos.
+     */
+    const ahora = new Date();
+
+    /*
+     * LIMPIEZA PEREZOSA, justo antes de reservar.
+     *
+     * Es el momento exacto en que importa: si hay existencias retenidas por
+     * carritos abandonados hace más de media hora, quien está comprando AHORA
+     * es quien merece esas unidades. Hacerlo aquí significa que el caso que más
+     * duele —«agotado» por culpa de gente que no pagó— se corrige solo en el
+     * instante en que alguien lo sufriría.
+     *
+     * No sustituye a la limpieza periódica: la complementa. Una tienda sin
+     * visitas no ejecutaría nunca esto.
+     */
+    await liberarReservasVencidas().catch(() => {
+      /* Que la limpieza falle no puede impedir una compra. Se reintenta sola. */
+    });
 
     // Reservar ANTES de crear nada en Stripe: si no hay stock, el cliente no
     // llega a ver una pasarela de pago por algo que no podemos servir.
@@ -253,6 +272,13 @@ checkoutRouter.post('/', async (req, res, next) => {
         total,
         status: 'PENDING',
         stockCommitted: true,
+        /*
+         * Hasta cuándo se retienen esas existencias. Ver `lib/reservas.ts`: sin
+         * esta fecha, un carrito abandonado en la pasarela retenía el stock
+         * hasta que Stripe daba la sesión por caducada, y su valor por defecto
+         * son VEINTICUATRO HORAS.
+         */
+        reservedUntil: caducidadDesde(ahora),
         accessToken: randomBytes(32).toString('hex'),
         shippingName: input.shipping?.name,
         shippingAddress: input.shipping?.address,
@@ -299,6 +325,18 @@ checkoutRouter.post('/', async (req, res, next) => {
       customer_email: input.email,
       line_items,
       metadata: { orderId: pedido.id },
+      /*
+       * LA PASARELA CADUCA A LA VEZ QUE LA RESERVA.
+       *
+       * Por defecto Stripe da 24 HORAS —comprobado en la definición del SDK
+       * instalado, no supuesto—, así que sin esto la pasarela seguiría
+       * aceptando el pago mucho después de que hubiéramos devuelto el stock al
+       * catálogo: alguien pagaría por algo ya vendido a otro.
+       *
+       * 30 minutos es además el mínimo que Stripe admite, así que las dos
+       * caducidades coinciden exactamente y no queda ninguna ventana.
+       */
+      expires_at: expiraEnStripe(ahora),
       // El token va en la URL de retorno: es lo que deja ver la confirmación a
       // quien compra sin cuenta, sin abrir el pedido a cualquiera con el id.
       success_url: `${base}/checkout/success?order=${pedido.id}&t=${pedido.accessToken ?? ''}`,
@@ -385,10 +423,39 @@ export async function stripeWebhookHandler(req: Request, res: Response) {
      * dinero está cobrado. Una sesión completada con pago pendiente existe.
      */
     if (orderId && sesion.payment_status === 'paid') {
-      await prisma.order.updateMany({
+      /*
+       * LA TRANSICIÓN A PAGADO, y sólo una vez.
+       *
+       * `count` es lo que distingue «este evento acaba de cobrar el pedido» de
+       * «este evento llega tarde y ya estaba cobrado». Sólo la primera vez vale
+       * 1, y sólo entonces se mandan los correos. Es la segunda barrera contra
+       * duplicados —la primera es el índice único de `OrderNotification`— y las
+       * dos son baratas.
+       *
+       * `reservedUntil` se pone a nulo: estas existencias ya no están
+       * reservadas, están VENDIDAS. Aunque la limpieza nunca mira los pedidos
+       * pagados, dejar la fecha ahí sería guardar un dato que ya no significa
+       * nada.
+       */
+      const { count } = await prisma.order.updateMany({
         where: { id: orderId, status: 'PENDING' },
-        data: { status: 'PAID' },
+        data: { status: 'PAID', reservedUntil: null },
       });
+
+      if (count === 1) {
+        /*
+         * Los correos NO pueden tocar el pedido.
+         *
+         * Van con su propio `catch` y sin nada que pueda propagar un error
+         * hasta aquí: si el proveedor de correo está caído, Stripe recibiría un
+         * 500, reintentaría el evento, y tendríamos un webhook rebotando contra
+         * un pedido que ya está perfectamente cobrado. El correo es la
+         * consecuencia de la venta, nunca su condición.
+         */
+        await notificarPedidoPagado(orderId).catch((error) => {
+          console.error('[correo] fallo al notificar el pedido', orderId, error);
+        });
+      }
     }
   } else if (
     event.type === 'checkout.session.expired' ||
