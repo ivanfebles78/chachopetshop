@@ -17,7 +17,7 @@ import request from 'supertest';
 import { createHmac } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 
-import { prisma, limpiar, crearProducto, stockDe } from './helpers.js';
+import { prisma, limpiar, crearProducto, stockDe, DIRECCION_CANARIA } from './helpers.js';
 
 const SECRETO = 'whsec_secreto_solo_de_pruebas';
 
@@ -68,6 +68,7 @@ describe('A · un cliente autenticado ve su pedido', () => {
       .post('/api/checkout')
       .set('Cookie', cookies)
       .send({
+        shipping: DIRECCION_CANARIA,
         email: 'ana@ejemplo.test',
         items: [{ productId: producto.id, variantId: variante.id, quantity: 1 }],
       });
@@ -86,6 +87,7 @@ describe('A · un cliente autenticado ve su pedido', () => {
       .post('/api/checkout')
       .set('Cookie', cookies)
       .send({
+        shipping: DIRECCION_CANARIA,
         email: 'ana2@ejemplo.test',
         items: [{ productId: producto.id, variantId: variante.id, quantity: 1 }],
       });
@@ -110,6 +112,7 @@ describe('B · otro cliente no lo ve', () => {
       .post('/api/checkout')
       .set('Cookie', a.cookies)
       .send({
+        shipping: DIRECCION_CANARIA,
         email: 'duenio@ejemplo.test',
         items: [{ productId: producto.id, variantId: variante.id, quantity: 1 }],
       });
@@ -134,6 +137,7 @@ describe('D · un pedido de invitado no se le cuelga a nadie', () => {
     await request(servidor)
       .post('/api/checkout')
       .send({
+        shipping: DIRECCION_CANARIA,
         email: 'invitado@ejemplo.test',
         items: [{ productId: producto.id, variantId: variante.id, quantity: 1 }],
       });
@@ -161,6 +165,7 @@ describe('C · el panel ve todos los pedidos', () => {
       .post('/api/checkout')
       .set('Cookie', cookies)
       .send({
+        shipping: DIRECCION_CANARIA,
         email: 'compra@ejemplo.test',
         items: [{ productId: producto.id, variantId: variante.id, quantity: 1 }],
       });
@@ -290,6 +295,7 @@ describe('sesión rota: el pedido NO puede quedarse sin dueño en silencio', () 
       .post('/api/checkout')
       .set('Cookie', [`token=${cookieDeOtroSecreto()}`])
       .send({
+        shipping: DIRECCION_CANARIA,
         email: 'cliente@ejemplo.test',
         items: [{ productId: producto.id, variantId: variante.id, quantity: 1 }],
       });
@@ -331,6 +337,7 @@ describe('sesión rota: el pedido NO puede quedarse sin dueño en silencio', () 
     const res = await request(servidor)
       .post('/api/checkout')
       .send({
+        shipping: DIRECCION_CANARIA,
         email: 'invitado@ejemplo.test',
         items: [{ productId: producto.id, variantId: variante.id, quantity: 1 }],
       });

@@ -19,7 +19,7 @@
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import request from 'supertest';
 
-import { prisma, limpiar, crearProducto, stockDe } from './helpers.js';
+import { prisma, limpiar, crearProducto, stockDe, DIRECCION_CANARIA } from './helpers.js';
 
 async function app() {
   const { createApp } = await import('../src/app.js');
@@ -45,6 +45,7 @@ describe('sin configuración de Stripe', () => {
     const res = await request(await app())
       .post('/api/checkout')
       .send({
+        shipping: DIRECCION_CANARIA,
         email: 'cliente@ejemplo.test',
         items: [{ productId: producto.id, variantId: variante.id, quantity: 1 }],
       });
@@ -61,6 +62,7 @@ describe('sin configuración de Stripe', () => {
     await request(await app())
       .post('/api/checkout')
       .send({
+        shipping: DIRECCION_CANARIA,
         email: 'cliente@ejemplo.test',
         items: [{ productId: producto.id, variantId: variante.id, quantity: 1 }],
       });
@@ -76,6 +78,7 @@ describe('sin configuración de Stripe', () => {
     await request(await app())
       .post('/api/checkout')
       .send({
+        shipping: DIRECCION_CANARIA,
         email: 'cliente@ejemplo.test',
         items: [{ productId: producto.id, variantId: variante.id, quantity: 3 }],
       });
@@ -94,6 +97,7 @@ describe('el cliente no manda sobre la verdad comercial', () => {
     await request(await app())
       .post('/api/checkout')
       .send({
+        shipping: DIRECCION_CANARIA,
         email: 'cliente@ejemplo.test',
         status: 'PAID',
         paid: true,
@@ -110,6 +114,7 @@ describe('el cliente no manda sobre la verdad comercial', () => {
     await request(await app())
       .post('/api/checkout')
       .send({
+        shipping: DIRECCION_CANARIA,
         email: 'cliente@ejemplo.test',
         items: [{ productId: producto.id, variantId: variante.id, quantity: 1, unitPrice: 0.01, price: 0.01 }],
       });
@@ -133,6 +138,7 @@ describe('cuando Stripe falla', () => {
     const res = await request(await app())
       .post('/api/checkout')
       .send({
+        shipping: DIRECCION_CANARIA,
         email: 'cliente@ejemplo.test',
         items: [{ productId: producto.id, variantId: variante.id, quantity: 1 }],
       });

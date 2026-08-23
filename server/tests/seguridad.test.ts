@@ -15,7 +15,7 @@ import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 
-import { prisma, limpiar, crearProducto, crearUsuario } from './helpers.js';
+import { prisma, limpiar, crearProducto, crearUsuario, DIRECCION_CANARIA } from './helpers.js';
 
 async function app() {
   process.env.STRIPE_SECRET_KEY = 'sk_test_clave_de_pruebas';
@@ -150,6 +150,7 @@ describe('integridad de precios', () => {
     await request(await app())
       .post('/api/checkout')
       .send({
+        shipping: DIRECCION_CANARIA,
         email: 'cliente@ejemplo.test',
         subtotal: 0.01,
         total: 0.01,
@@ -198,7 +199,7 @@ describe('integridad de precios', () => {
       .post('/api/checkout')
       .send({
         email: 'cliente@ejemplo.test',
-        shipping: { name: 'X' },
+        shipping: DIRECCION_CANARIA,
         items: [{ productId: producto.id, variantId: variante.id, quantity: 1 }],
       });
 
@@ -219,6 +220,7 @@ describe('integridad de precios', () => {
     const res = await request(await app())
       .post('/api/checkout')
       .send({
+        shipping: DIRECCION_CANARIA,
         email: 'cliente@ejemplo.test',
         items: [
           { productId: producto.id, variantId: variante.id, quantity: 1 },

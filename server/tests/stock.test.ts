@@ -18,7 +18,7 @@
 import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import request from 'supertest';
 
-import { prisma, limpiar, crearProducto, stockDe } from './helpers.js';
+import { prisma, limpiar, crearProducto, stockDe, DIRECCION_CANARIA } from './helpers.js';
 
 async function app() {
   const { createApp } = await import('../src/app.js');
@@ -31,6 +31,7 @@ async function comprar(productId: string, variantId: string | undefined, quantit
   return request(await app())
     .post('/api/checkout')
     .send({
+      shipping: DIRECCION_CANARIA,
       email: 'cliente@ejemplo.test',
       items: [{ productId, variantId, quantity }],
     });
@@ -142,6 +143,7 @@ describe('dos compradores por la última unidad', () => {
       request(servidor)
         .post('/api/checkout')
         .send({
+          shipping: DIRECCION_CANARIA,
           email: 'cliente@ejemplo.test',
           items: [{ productId: producto.id, variantId: variante.id, quantity: 1 }],
         });
@@ -168,6 +170,7 @@ describe('dos compradores por la última unidad', () => {
         request(servidor)
           .post('/api/checkout')
           .send({
+            shipping: DIRECCION_CANARIA,
             email: 'cliente@ejemplo.test',
             items: [{ productId: producto.id, variantId: variante.id, quantity: 1 }],
           }),

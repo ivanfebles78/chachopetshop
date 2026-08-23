@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { ENVIO } from '../lib/envio.js';
+import { ENVIO, FUERA_DE_ZONA, ZONA_DE_ENVIO } from '../lib/envio.js';
 
 export const configRouter = Router();
 
@@ -24,6 +24,18 @@ configRouter.get('/', (_req, res) => {
       tarifa: ENVIO.TARIFA,
       zona: ENVIO.ZONA,
       plazo: ENVIO.PLAZO,
+      /*
+       * La zona de entrega, para que el formulario avise ANTES de pedir la
+       * tarjeta en lugar de dejar que el servidor rechace el pedido. El
+       * formulario no es la garantía —esa está en el checkout del servidor y no
+       * se puede saltar—, pero sí es la diferencia entre un aviso y un viaje
+       * perdido.
+       *
+       * Se publican en vez de repetirse en el cliente por lo mismo de siempre:
+       * el día que Ivan añada la Península, cambia un fichero y no seis.
+       */
+      prefijosCp: [...ZONA_DE_ENVIO.PREFIJOS],
+      fueraDeZona: FUERA_DE_ZONA,
     },
   });
 });

@@ -36,7 +36,14 @@ vi.mock('@/store/auth', () => ({
 
 import { api } from '@/lib/api';
 
-const ENVIO = { gratisDesde: 49, tarifa: 4.95, zona: 'Canarias', plazo: '24-48 h' };
+const ENVIO = {
+  gratisDesde: 49,
+  tarifa: 4.95,
+  zona: 'Canarias',
+  plazo: '24-48 h',
+  prefijosCp: ['35', '38'],
+  fueraDeZona: 'Actualmente solo realizamos envíos a las Islas Canarias.',
+};
 
 const linea = (o: Record<string, unknown> = {}) => ({
   productId: 'p1',
@@ -187,6 +194,7 @@ describe('la página de pago', () => {
     expect(useCart.getState().lines).toHaveLength(1);
   });
 
+
   it('el cliente NO manda importes: sólo identificadores y cantidad', async () => {
     const user = userEvent.setup();
     conCarrito([linea({ quantity: 2 })], false);
@@ -248,6 +256,111 @@ describe('la página de pago', () => {
     // 20 € < 49 € → se cobra la tarifa, y el total la incluye.
     expect(await screen.findByText('4,95 €')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /pagar 24,95/i })).toBeInTheDocument();
+  });
+});
+
+/* ══ 2b. Sólo se entrega en Canarias ═══════════════════════════════════ */
+
+describe('la zona de entrega, en el formulario', () => {
+  const pintar = () =>
+    render(
+      <MemoryRouter initialEntries={['/checkout']}>
+        <Routes><Route path="/checkout" element={<CheckoutPage />} /></Routes>
+      </MemoryRouter>,
+    );
+
+  const rellenar = async (user: ReturnType<typeof userEvent.setup>, cp: string) => {
+    await user.type(await screen.findByLabelText(/email/i), 'ana@ejemplo.test');
+    await user.type(screen.getByLabelText(/nombre y apellidos/i), 'Ana');
+    await user.type(screen.getByLabelText(/dirección/i), 'Calle 1');
+    await user.type(screen.getByLabelText(/ciudad/i), 'Madrid');
+    await user.type(screen.getByLabelText(/código postal/i), cp);
+    await user.click(screen.getByRole('button', { name: /pagar/i }));
+  };
+
+  const MENSAJE = /solo realizamos envíos a las islas canarias/i;
+
+  it('un código postal de fuera NI SIQUIERA llega al servidor', async () => {
+    /*
+     * Lo importante no es el mensaje: es que `api.checkout` no se llame. Quien
+     * escribe un CP de Madrid no debe ver la pasarela de pago ni un pedido
+     * creado a medias.
+     */
+    const user = userEvent.setup();
+    conCarrito([linea()], false);
+    pintar();
+
+    await rellenar(user, '28001');
+
+    expect(vi.mocked(api.checkout)).not.toHaveBeenCalled();
+    expect(await screen.findByRole('alert')).toHaveTextContent(MENSAJE);
+  });
+
+  it('lo dice con las palabras exactas', async () => {
+    const user = userEvent.setup();
+    conCarrito([linea()], false);
+    pintar();
+    await rellenar(user, '07001');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Actualmente solo realizamos envíos a las Islas Canarias.',
+    );
+  });
+
+  it('marca el campo del código postal, no el formulario entero', async () => {
+    // Quien navega con lector de pantalla tiene que saber QUÉ campo corregir.
+    const user = userEvent.setup();
+    conCarrito([linea()], false);
+    pintar();
+    await rellenar(user, '28001');
+
+    const cp = screen.getByLabelText(/código postal/i);
+    expect(cp).toHaveAttribute('aria-invalid', 'true');
+    expect(cp).toHaveFocus();
+  });
+
+  it('corregirlo retira el aviso', async () => {
+    const user = userEvent.setup();
+    conCarrito([linea()], false);
+    pintar();
+    await rellenar(user, '28001');
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+
+    await user.clear(screen.getByLabelText(/código postal/i));
+    await user.type(screen.getByLabelText(/código postal/i), '38201');
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/código postal/i)).not.toHaveAttribute('aria-invalid');
+  });
+
+  it('Ceuta y Melilla tampoco pasan', async () => {
+    for (const cp of ['51001', '52001']) {
+      const user = userEvent.setup();
+      conCarrito([linea()], false);
+      const { unmount } = pintar();
+      await rellenar(user, cp);
+      expect(vi.mocked(api.checkout)).not.toHaveBeenCalled();
+      unmount();
+    }
+  });
+
+  it('un código postal canario SÍ pasa', async () => {
+    const user = userEvent.setup();
+    conCarrito([linea()], false);
+    vi.mocked(api.checkout).mockResolvedValue({ orderId: 'o1', url: 'https://stripe.test/x' } as never);
+    pintar();
+
+    await rellenar(user, '38201');
+
+    expect(vi.mocked(api.checkout)).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('el formulario dice a dónde se entrega ANTES de que se escriba nada', async () => {
+    // Enterarse al pulsar «Pagar» es enterarse tarde.
+    conCarrito([linea()], false);
+    pintar();
+    expect(await screen.findByText(/solo en Canarias/i)).toBeInTheDocument();
+    expect(screen.getByText(/35xxx y 38xxx/i)).toBeInTheDocument();
   });
 });
 

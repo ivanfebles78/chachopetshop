@@ -6,7 +6,7 @@ import { eur } from '@/lib/cn';
 import { lineKey, selectSubtotal, useCart } from '@/store/cart';
 import { useAuth } from '@/store/auth';
 import { useSeo } from '@/lib/useSeo';
-import { envioPara, useEnvio } from '@/lib/useEnvio';
+import { envioPara, esCodigoPostalEnZona, useEnvio } from '@/lib/useEnvio';
 import { EMPRESA } from '@/lib/empresa';
 import { toast } from '@/store/toast';
 
@@ -38,7 +38,9 @@ export function CheckoutPage() {
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ email: '', name: '', address: '', city: '', zip: '' });
+  const [zipFueraDeZona, setZipFueraDeZona] = useState(false);
   const yaRellenado = useRef(false);
+  const campoCp = useRef<HTMLInputElement>(null);
 
   useSeo({ titulo: 'Finalizar compra', noIndexar: true });
 
@@ -102,6 +104,27 @@ export function CheckoutPage() {
     // Doble clic: el guardia de verdad está en el servidor, pero evitar la
     // segunda petición ahorra un pedido PENDING huérfano y stock retenido.
     if (enviando) return;
+
+    /*
+     * SÓLO SE ENTREGA EN CANARIAS.
+     *
+     * Esto NO es la garantía —está en el servidor, y ahí tiene sus pruebas—,
+     * pero sí es la diferencia entre avisar ahora y hacer que alguien rellene
+     * toda la dirección para que se lo rechacen al final. Se comprueba antes de
+     * la petición, así que quien escribe un código postal de fuera ni siquiera
+     * llega a ver la pasarela.
+     */
+    if (!esCodigoPostalEnZona(form.zip, envio)) {
+      setError(envio.fueraDeZona);
+      setZipFueraDeZona(true);
+      toast.error(envio.fueraDeZona);
+      // El foco va al campo que hay que corregir: si no, quien no ve la
+      // pantalla oye el error y no sabe dónde está el problema.
+      campoCp.current?.focus();
+      return;
+    }
+    setZipFueraDeZona(false);
+
     setEnviando(true);
     setError(null);
     try {
@@ -137,18 +160,56 @@ export function CheckoutPage() {
   const campo = (
     clave: keyof typeof form,
     etiqueta: string,
-    opciones: { type?: string; autoComplete?: string; required?: boolean } = {},
+    opciones: {
+      type?: string;
+      autoComplete?: string;
+      required?: boolean;
+      inputMode?: 'text' | 'numeric';
+      ref?: React.RefObject<HTMLInputElement>;
+      invalido?: boolean;
+      describedBy?: string;
+      ayuda?: string;
+    } = {},
   ) => (
     <label className="block">
       <span className="field-label">{etiqueta}</span>
       <input
+        ref={opciones.ref}
         type={opciones.type ?? 'text'}
+        inputMode={opciones.inputMode}
         autoComplete={opciones.autoComplete}
         required={opciones.required ?? true}
+        aria-invalid={opciones.invalido || undefined}
+        aria-describedby={opciones.describedBy}
         value={form[clave]}
-        onChange={(e) => setForm({ ...form, [clave]: e.target.value })}
-        className="field w-full"
+        onChange={(e) => {
+          /*
+           * Actualizador FUNCIONAL, no `{ ...form }`.
+           *
+           * Con el spread se copia el `form` del render actual. Hoy no se
+           * pierde nada —React vacía los eventos discretos como `input` uno a
+           * uno, así que entre dos cambios siempre hay un render, incluso con
+           * el autorrelleno del navegador—, pero eso es una garantía de React,
+           * no de este componente: en cuanto un cambio venga de un sitio que sí
+           * se agrupe, el spread se quedaría con la copia vieja y sólo
+           * sobreviviría el último campo. Esta forma no depende de ello.
+           */
+          const valor = e.target.value;
+          setForm((f) => ({ ...f, [clave]: valor }));
+          // Corregir el campo retira el aviso: dejarlo puesto mientras se
+          // escribe el código postal bueno es contarle al cliente algo falso.
+          if (clave === 'zip') {
+            setZipFueraDeZona(false);
+            setError((previo) => (previo === envio.fueraDeZona ? null : previo));
+          }
+        }}
+        className={`field w-full ${opciones.invalido ? 'border-danger-border' : ''}`}
       />
+      {opciones.ayuda && (
+        <span id={opciones.describedBy} className="mt-1 block text-caption text-content-subtle">
+          {opciones.ayuda}
+        </span>
+      )}
     </label>
   );
 
@@ -184,14 +245,21 @@ export function CheckoutPage() {
               Dónde lo llevamos
             </h2>
             <p className="mb-4 text-body-sm text-content-muted">
-              Entregamos en {envio.zona} en {envio.plazo}.
+              Entregamos <strong>solo en {envio.zona}</strong>, en {envio.plazo}.
             </p>
             <div className="space-y-4">
               {campo('name', 'Nombre y apellidos', { autoComplete: 'name' })}
               {campo('address', 'Dirección', { autoComplete: 'street-address' })}
               <div className="grid gap-4 sm:grid-cols-2">
                 {campo('city', 'Ciudad', { autoComplete: 'address-level2' })}
-                {campo('zip', 'Código postal', { autoComplete: 'postal-code' })}
+                {campo('zip', 'Código postal', {
+                  autoComplete: 'postal-code',
+                  inputMode: 'numeric',
+                  ref: campoCp,
+                  invalido: zipFueraDeZona,
+                  describedBy: 'ayuda-cp',
+                  ayuda: `Solo ${envio.prefijosCp.join('xxx y ')}xxx`,
+                })}
               </div>
             </div>
           </section>
