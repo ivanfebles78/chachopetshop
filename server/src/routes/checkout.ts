@@ -5,7 +5,12 @@ import Stripe from 'stripe';
 import { prisma } from '../db.js';
 import { env, origenesPermitidos } from '../env.js';
 import { toNumber } from '../lib/serialize.js';
-import { envioPara } from '../lib/envio.js';
+import {
+  envioPara,
+  esCodigoPostalDeCanarias,
+  FUERA_DE_ZONA,
+  normalizarCodigoPostal,
+} from '../lib/envio.js';
 
 export const checkoutRouter = Router();
 
@@ -211,6 +216,28 @@ checkoutRouter.post('/', async (req, res, next) => {
       );
     }
 
+    /*
+     * SÓLO SE ENTREGA EN CANARIAS.
+     *
+     * Va aquí, y no en el esquema de Zod, por dos motivos. Uno: un error de
+     * validación de Zod se devuelve como «Datos inválidos» con el detalle
+     * dentro, y esto tiene que llegar a quien compra con su propio texto. Dos:
+     * así una dirección ausente, una vacía y una de Madrid dan exactamente la
+     * misma respuesta, en lugar de tres distintas.
+     *
+     * La comprobación es «que VENGA y que sea canario», no «si viene, que sea
+     * canario»: lo segundo se saltaría sin más que omitir el campo.
+     *
+     * Y va ANTES de reservar. Si estuviese después, cada intento desde fuera de
+     * la zona retendría existencias de algo que sí se le puede vender a alguien
+     * de Canarias.
+     */
+    const cp = input.shipping?.zip;
+    if (!esCodigoPostalDeCanarias(cp)) {
+      throw errorDeCliente(FUERA_DE_ZONA, 400);
+    }
+    const zipNormalizado = normalizarCodigoPostal(cp);
+
     const { lineas, subtotal, shipping, total } = await construirLineas(input);
 
     // Reservar ANTES de crear nada en Stripe: si no hay stock, el cliente no
@@ -230,7 +257,7 @@ checkoutRouter.post('/', async (req, res, next) => {
         shippingName: input.shipping?.name,
         shippingAddress: input.shipping?.address,
         shippingCity: input.shipping?.city,
-        shippingZip: input.shipping?.zip,
+        shippingZip: zipNormalizado,
         items: { create: lineas },
       },
     });

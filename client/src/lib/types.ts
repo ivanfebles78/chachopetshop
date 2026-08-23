@@ -135,3 +135,20 @@ export type Analytics = {
     byProduct: { name: string; stock: number }[];
   };
 };
+
+/**
+ * Las reglas de envío que publica el servidor en `/api/config`.
+ *
+ * Viven aquí y no en `useEnvio.ts` porque `api.ts` las necesita para tipar la
+ * respuesta, y `useEnvio.ts` importa `api`: tenerlo al revés sería un ciclo.
+ */
+export type Envio = {
+  gratisDesde: number;
+  tarifa: number;
+  zona: string;
+  plazo: string;
+  /** Las dos primeras cifras de los códigos postales a los que se entrega. */
+  prefijosCp: string[];
+  /** Qué decirle a quien escribe una dirección fuera de la zona. */
+  fueraDeZona: string;
+};

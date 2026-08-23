@@ -2,6 +2,7 @@ import type {
   Analytics,
   AuthUser,
   ContactMessage,
+  Envio,
   Order,
   Product,
   ProductListResponse,
@@ -89,7 +90,7 @@ export const api = {
   taxonomy: () => request<Taxonomy>('/taxonomy'),
   /* Las reglas comerciales que la tienda anuncia, para que lo que se enseña y
      lo que se cobra no puedan separarse. */
-  config: () => request<{ envio: { gratisDesde: number; tarifa: number; zona: string; plazo: string } }>('/config'),
+  config: () => request<{ envio: Envio }>('/config'),
   products: (f: ProductFilters = {}) => request<ProductListResponse>(`/products${toQuery(f)}`),
   product: (slug: string) =>
     /*

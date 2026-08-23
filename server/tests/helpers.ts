@@ -74,3 +74,21 @@ export async function crearUsuario(rol: 'CUSTOMER' | 'ADMIN' = 'CUSTOMER') {
     },
   });
 }
+
+/**
+ * Una dirección de entrega VÁLIDA para las pruebas.
+ *
+ * Desde la Fase 2D el checkout exige un código postal canario, así que toda
+ * prueba que quiera llegar más allá de esa comprobación necesita una dirección
+ * de verdad. Está aquí y no copiada en cada fichero para que el día que cambie
+ * la zona no haya que buscarla en veintiún sitios.
+ *
+ * Las pruebas de la propia regla viven en `zona-envio.test.ts` y usan sus
+ * propias direcciones, buenas y malas.
+ */
+export const DIRECCION_CANARIA = {
+  name: 'Nombre Apellido',
+  address: 'Calle Real 1',
+  city: 'La Laguna',
+  zip: '38201',
+} as const;
