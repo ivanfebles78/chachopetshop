@@ -136,10 +136,21 @@ function Desplegable({ entrada }: { entrada: EntradaNav }) {
                     <li key={enlace.href}>
                       <Link to={enlace.href} className="menu-link" onClick={() => setAbierto(false)}>
                         <span>{enlace.etiqueta}</span>
-                        {/* El recuento es informativo: el nombre ya lleva el significado. */}
-                        <span className="text-caption text-content-subtle" aria-hidden="true">
-                          {enlace.total}
-                        </span>
+                        {/*
+                          El recuento sólo aparece si hay algo que contar.
+
+                          Desde la Fase 2I el menú enseña la estructura comercial
+                          completa, y muchas categorías todavía están vacías
+                          porque la mercancía entra después. Un «0» junto a cada
+                          nombre se lee como un error de la tienda, no como «aún
+                          no hay». El nombre ya lleva el significado; el número
+                          sólo aporta cuando es mayor que cero.
+                        */}
+                        {enlace.total > 0 && (
+                          <span className="text-caption text-content-subtle" aria-hidden="true">
+                            {enlace.total}
+                          </span>
+                        )}
                       </Link>
                     </li>
                   ))}

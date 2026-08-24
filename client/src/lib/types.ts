@@ -1,5 +1,21 @@
 export type Animal = { id: string; name: string; slug: string; emoji: string | null; sortOrder: number };
-export type Category = { id: string; name: string; slug: string; type: string; sortOrder: number };
+export type Category = {
+  id: string;
+  name: string;
+  slug: string;
+  type: string;
+  sortOrder: number;
+  /**
+   * JERARQUÍA. La estructura comercial real tiene tres niveles: animal →
+   * categoría → línea de marca. Las de primer nivel llevan `animalId` y las
+   * líneas de marca llevan `parentId`.
+   *
+   * Los dos son opcionales porque las categorías anteriores a la Fase 2I no los
+   * tienen, y siguen siendo válidas.
+   */
+  parentId?: string | null;
+  animalId?: string | null;
+};
 export type Need = { id: string; name: string; slug: string };
 export type Brand = { id: string; name: string; slug: string; logoUrl: string | null; featured: boolean };
 

@@ -81,6 +81,71 @@ function columna(
 }
 
 /**
+ * El menú de un animal a partir de la JERARQUÍA de categorías.
+ *
+ * Una columna por categoría de primer nivel, y dentro sus líneas de marca. Es
+ * la estructura que se ve en una tienda de verdad: primero qué tipo de producto
+ * y luego de qué marca.
+ *
+ * Devuelve `null` si este animal todavía no tiene estructura cargada, y
+ * entonces el menú cae al agrupado anterior. Así los animales que aún no se han
+ * migrado —gatos, aves, roedores, peces— siguen funcionando igual.
+ */
+function entradaDesdeJerarquia(
+  animalSlug: string,
+  etiqueta: string,
+  tax: Taxonomy,
+  productos: Product[],
+): EntradaNav | null {
+  const animal = tax.animals.find((a) => a.slug === animalSlug);
+  if (!animal) return null;
+
+  const raices = tax.categories
+    .filter((c) => c.animalId === animal.id && !c.parentId)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  if (raices.length === 0) return null;
+
+  const columnas: ColumnaNav[] = raices.map((raiz) => {
+    const hijas = tax.categories
+      .filter((c) => c.parentId === raiz.id)
+      .sort((a, b) => a.sortOrder - b.sortOrder);
+
+    /*
+     * El primer enlace de cada columna es la categoría madre entera. Sin él, la
+     * única forma de ver «toda la alimentación seca» sería entrar marca por
+     * marca.
+     */
+    const enlaces: EnlaceNav[] = [
+      {
+        etiqueta: `Todo en ${raiz.name.toLowerCase()}`,
+        href: rutaCatalogo({ animal: animalSlug, category: raiz.slug }),
+        total: contar(productos, { animal: animalSlug, category: raiz.slug }),
+      },
+      ...hijas.map((h) => ({
+        etiqueta: h.name,
+        href: rutaCatalogo({ animal: animalSlug, category: h.slug }),
+        total: contar(productos, { animal: animalSlug, category: h.slug }),
+      })),
+    ];
+
+    return { titulo: raiz.name, enlaces };
+  });
+
+  const total = contar(productos, { animal: animalSlug });
+  return {
+    etiqueta,
+    href: rutaCatalogo({ animal: animalSlug }),
+    total,
+    columnas,
+    verTodo: {
+      etiqueta: `Ver todo para ${etiqueta.toLowerCase()}`,
+      href: rutaCatalogo({ animal: animalSlug }),
+      total,
+    },
+  };
+}
+
+/**
  * Menú de un animal: alimentación, salud (por necesidad) y cuidado.
  *
  * El agrupado es fijo porque responde a cómo compra la gente —primero qué come,
@@ -90,6 +155,27 @@ function columna(
  */
 function entradaDeAnimal(animalSlug: string, etiqueta: string, tax: Taxonomy, productos: Product[]): EntradaNav | null {
   const total = contar(productos, { animal: animalSlug });
+
+  /*
+   * LA JERARQUÍA MANDA CUANDO EXISTE.
+   *
+   * Desde la Fase 2I el catálogo tiene estructura de verdad —animal → categoría
+   * → línea de marca— y se carga ANTES que la mercancía. Si este animal la
+   * tiene, el menú sale de ella y no del agrupado fijo de más abajo.
+   *
+   * Y aquí cambia una regla anterior a propósito: estas categorías se enseñan
+   * AUNQUE tengan cero productos. En la Fase 2A se ocultaba lo vacío porque era
+   * una faceta derivada de los datos y una faceta vacía no llevaba a ninguna
+   * parte. Ahora no es una faceta derivada: es la estructura comercial que Ivan
+   * ha decidido, y ocultar «Alimentación semihúmeda» hasta que entre el primer
+   * producto haría que el menú cambiara de forma solo, sin que nadie lo tocara.
+   *
+   * A cambio, el catálogo tiene que recibir bien a quien llegue a una vacía:
+   * eso lo resuelve el estado vacío de la tienda, no el menú.
+   */
+  const jerarquia = entradaDesdeJerarquia(animalSlug, etiqueta, tax, productos);
+  if (jerarquia) return jerarquia;
+
   if (total === 0) return null;
 
   const cat = (slug: string) => tax.categories.find((c) => c.slug === slug);

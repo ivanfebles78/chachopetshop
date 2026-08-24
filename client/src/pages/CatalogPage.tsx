@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ChevronRight, SearchX, SlidersHorizontal, X } from 'lucide-react';
+import { ChevronRight, PackageOpen, SearchX, SlidersHorizontal, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import {
@@ -185,7 +185,22 @@ export function CatalogPage() {
               )}
             </>
           ) : (
-            <SinResultados busqueda={filtros.q} hayFiltros={nFiltros > 0} onLimpiar={limpiar} />
+            <SinResultados
+              busqueda={filtros.q}
+              hayFiltros={nFiltros > 0}
+              onLimpiar={limpiar}
+              /*
+                Es «categoría vacía» sólo si el ÚNICO filtro relevante es la
+                categoría y ésa existe de verdad en el catálogo. Con más filtros
+                encima, el vacío puede venir de la combinación y el mensaje
+                correcto sigue siendo el de siempre.
+              */
+              categoriaVacia={
+                filtros.category && !filtros.q
+                  ? facetas?.categories?.find((c) => c.slug === filtros.category)?.nombre
+                  : undefined
+              }
+            />
           )}
         </div>
       </div>
@@ -359,11 +374,49 @@ function SinResultados({
   busqueda,
   hayFiltros,
   onLimpiar,
+  categoriaVacia,
 }: {
   busqueda?: string;
   hayFiltros: boolean;
   onLimpiar: () => void;
+  /**
+   * El nombre de la categoría cuando se ha llegado a una que EXISTE en el
+   * catálogo pero todavía no tiene mercancía.
+   */
+  categoriaVacia?: string;
 }) {
+  /*
+   * DOS VACÍOS DISTINTOS, Y NO SE PUEDEN CONTAR IGUAL.
+   *
+   * «No hay productos con estos filtros» está bien cuando alguien ha combinado
+   * cuatro filtros y no queda nada: la salida es quitar filtros.
+   *
+   * Pero desde la Fase 2I el menú enseña la estructura comercial completa, y
+   * muchas categorías están vacías porque la mercancía entra después. Ahí ese
+   * mensaje miente por partida doble: no hay filtros que quitar, y suena a que
+   * la tienda está rota. Lo que pasa es que ese apartado todavía no tiene
+   * productos, que es una situación normal en una tienda que está creciendo.
+   */
+  if (categoriaVacia) {
+    return (
+      <div className="flex flex-col items-center gap-3 rounded-card border border-edge bg-surface px-6 py-16 text-center">
+        <PackageOpen className="h-10 w-10 text-brand-400" aria-hidden="true" />
+        <p className="font-display text-heading font-bold text-content">
+          Próximamente encontrarás productos en esta categoría
+        </p>
+        <p className="max-w-sm text-body-sm text-content-muted">
+          Estamos preparando la selección de {categoriaVacia.toLowerCase()}. Mientras
+          tanto puedes ver el resto del catálogo.
+        </p>
+        <div className="mt-2 flex flex-wrap justify-center gap-2">
+          <Link to="/tienda" className="btn btn-md btn-primary">
+            Ver todo el catálogo
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center gap-3 rounded-card border border-edge bg-surface px-6 py-16 text-center">
       <SearchX className="h-10 w-10 text-content-subtle" aria-hidden="true" />
