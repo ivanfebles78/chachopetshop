@@ -90,7 +90,10 @@ export function MobileNav({ entradas, conSesion, onClose }: Props) {
                           className="flex min-h-12 items-center justify-between gap-2 rounded-control px-3 text-body text-content"
                         >
                           <span>{enlace.etiqueta}</span>
-                          <span className="text-caption text-content-subtle" aria-hidden="true">{enlace.total}</span>
+                          {/* Ver la nota en `Navbar`: un «0» se lee como error. */}
+                          {enlace.total > 0 && (
+                            <span className="text-caption text-content-subtle" aria-hidden="true">{enlace.total}</span>
+                          )}
                         </Link>
                       </li>
                     ))}

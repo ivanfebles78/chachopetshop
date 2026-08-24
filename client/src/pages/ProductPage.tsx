@@ -8,6 +8,8 @@ import { useSeo } from '@/lib/useSeo';
 import { fichaTecnica, datosEstructuradosProducto, motivoRelacionado } from '@/lib/producto';
 import { Galeria } from '@/components/producto/Galeria';
 import { tipoDeProducto } from '@/lib/imagenes';
+import { leerContenido } from '@/lib/contenido';
+import { ContenidoFicha } from '@/components/producto/ContenidoFicha';
 import { ProductCard } from '@/components/ProductCard';
 import { ErrorState } from '@/components/ErrorState';
 import { useCart } from '@/store/cart';
@@ -113,7 +115,17 @@ export function ProductPage() {
   const { related } = data!;
   const galeria = producto.gallery.length ? producto.gallery : [producto.image];
   const ficha = fichaTecnica(producto);
+  // Puede venir corrupto o ausente: `leerContenido` devuelve `null` y no se pinta.
+  const contenido = leerContenido(producto.contenido);
   const categoria = producto.categories[0];
+  /*
+   * De general a concreta: primero las que no tienen padre y después las que
+   * cuelgan de ellas. Con una sola categoría —los 27 productos anteriores— sale
+   * exactamente lo de siempre.
+   */
+  const cadenaDeCategorias = [...producto.categories].sort(
+    (a, b) => Number(Boolean(a.parentId)) - Number(Boolean(b.parentId)),
+  );
   const animal = producto.animals[0];
 
   const anadir = () => {
@@ -151,6 +163,29 @@ export function ProductPage() {
               </Link>
             </li>
           )}
+          {/*
+            LA CADENA DE CATEGORÍAS, no sólo una.
+
+            Desde la Fase 2I el catálogo tiene tres niveles y un producto cuelga
+            de su línea de marca Y de la categoría madre. Enseñar sólo una
+            rompía el camino de vuelta: desde «Alpha Spirit alimentación perro»
+            no había forma de subir a «Alimentación seca perros» sin volver al
+            menú.
+
+            Se ordenan de más general a más concreta —la madre no tiene padre y
+            la línea sí—, que es como se ha llegado hasta aquí navegando.
+          */}
+          {cadenaDeCategorias.map((c) => (
+            <li key={c.id} className="flex items-center gap-1">
+              <ChevronRight className="h-3.5 w-3.5 text-content-subtle" aria-hidden="true" />
+              <Link
+                to={`/tienda?${animal ? `animal=${animal.slug}&` : ''}category=${c.slug}`}
+                className="hover:text-brand-700 hover:underline"
+              >
+                {c.name}
+              </Link>
+            </li>
+          ))}
           <li className="flex items-center gap-1">
             <ChevronRight className="h-3.5 w-3.5 text-content-subtle" aria-hidden="true" />
             <span aria-current="page" className="font-semibold text-content">{producto.name}</span>
@@ -178,8 +213,23 @@ export function ProductPage() {
             de verdad, no un borde dibujado— para que se lea como «precio
             anterior» y no como el que se paga.
           */}
+          {/*
+            UN PRECIO SIN FIJAR NO SE ENSEÑA COMO «0,00 €».
+            Los productos reales llegan del fabricante con su documentación pero
+            sin PVP: eso lo decide la tienda. Mientras no esté puesto, «0,00 €»
+            sería un precio anunciado, y anunciar un precio que no es el que se
+            va a cobrar es lo peor que puede hacer una ficha.
+            Se dice lo que pasa. Y como estos productos entran con cero
+            unidades, no hay forma de que un precio pendiente acabe en un cobro.
+          */}
           <p className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className="font-display text-title font-extrabold text-content">{eur(precio)}</span>
+            {precio > 0 ? (
+              <span className="font-display text-title font-extrabold text-content">{eur(precio)}</span>
+            ) : (
+              <span className="font-display text-heading font-bold text-content-muted">
+                Precio pendiente
+              </span>
+            )}
             {rebajado && (
               <>
                 <s className="text-body-lg text-content-subtle">{eur(producto.compareAt)}</s>
@@ -221,7 +271,7 @@ export function ProductPage() {
               ) : (
                 <>
                   <ShoppingBag className="h-5 w-5" aria-hidden="true" />
-                  {hayExistencias ? `Añadir · ${eur(precio * cantidad)}` : 'Sin existencias'}
+                  {!hayExistencias ? 'Sin existencias' : precio > 0 ? `Añadir · ${eur(precio * cantidad)}` : 'Añadir al carrito'}
                 </>
               )}
             </button>
@@ -258,6 +308,21 @@ export function ProductPage() {
           </ul>
         </div>
       </div>
+
+      {/* ── Contenido del fabricante ───────────────────────────────────── */}
+      {/*
+        Va ANTES de «Detalles». Es el contenido real —descripción, composición,
+        análisis, raciones— y quien entra a una ficha de pienso viene a leer
+        eso; «Detalles» son cuatro pares de metadatos del catálogo.
+
+        Se pinta sólo si el producto lo trae: los 27 productos que todavía no
+        tienen documentación no muestran secciones vacías.
+      */}
+      {contenido && (
+        <div className="max-w-3xl">
+          <ContenidoFicha contenido={contenido} />
+        </div>
+      )}
 
       {/* ── Ficha técnica ─────────────────────────────────────────────── */}
       {ficha.length > 0 && (

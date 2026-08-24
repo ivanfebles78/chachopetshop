@@ -97,6 +97,23 @@ export function motivoRelacionado(
  * `InStock` por costumbre. Y el precio es el más bajo comprable, que es el que
  * se enseña como «desde».
  */
+/**
+ * ¿Es este código un EAN-13 de verdad?
+ *
+ * Trece dígitos y, sobre todo, dígito de control correcto. Sin comprobarlo,
+ * cualquier cadena de trece cifras pasaría por código de barras — y un GTIN
+ * inventado en datos estructurados es información falsa entregada a un buscador,
+ * que además puede acabar en una ficha de producto de Google.
+ */
+export function esEan13(codigo: string | undefined): boolean {
+  if (!codigo || !/^\d{13}$/.test(codigo)) return false;
+  const suma = codigo
+    .slice(0, 12)
+    .split('')
+    .reduce((s, d, i) => s + Number(d) * (i % 2 === 0 ? 1 : 3), 0);
+  return (10 - (suma % 10)) % 10 === Number(codigo[12]);
+}
+
 export function datosEstructuradosProducto(p: Product, origen: string): Record<string, unknown> {
   const comprables = p.variants.filter((v) => v.stock > 0);
   const hayStock = p.variants.length === 0 || comprables.length > 0;
@@ -110,17 +127,36 @@ export function datosEstructuradosProducto(p: Product, origen: string): Record<s
     description: p.description,
     image: (p.gallery.length ? p.gallery : [p.image]).filter(Boolean),
     sku: p.variants[0]?.sku ?? undefined,
+    /*
+     * GTIN sólo cuando el SKU ES un código de barras válido.
+     *
+     * Los SKU del catálogo de demostración son internos («ROY-STE-2»), y
+     * publicarlos como GTIN sería declararle a Google un código de barras que no
+     * existe. Los reales sí lo son: el de Alpha Spirit es un EAN-13 con dígito
+     * de control correcto y prefijo GS1 español.
+     *
+     * Se comprueba, no se supone. Ver `esEan13`.
+     */
+    ...(esEan13(p.variants[0]?.sku) ? { gtin13: p.variants[0]!.sku } : {}),
     brand: { '@type': 'Brand', name: p.brand.name },
     category: p.categories[0]?.name,
-    offers: {
-      '@type': 'Offer',
-      url: `${origen}/producto/${p.slug}`,
-      priceCurrency: 'EUR',
-      price: precio.toFixed(2),
-      availability: hayStock
-        ? 'https://schema.org/InStock'
-        : 'https://schema.org/OutOfStock',
-      itemCondition: 'https://schema.org/NewCondition',
-    },
+    /*
+     * Sin precio fijado no hay oferta que declarar. Publicar `price: "0.00"`
+     * le diría a Google que este producto es gratis.
+     */
+    ...(precio > 0
+      ? {
+          offers: {
+            '@type': 'Offer',
+            url: `${origen}/producto/${p.slug}`,
+            priceCurrency: 'EUR',
+            price: precio.toFixed(2),
+            availability: hayStock
+              ? 'https://schema.org/InStock'
+              : 'https://schema.org/OutOfStock',
+            itemCondition: 'https://schema.org/NewCondition',
+          },
+        }
+      : {}),
   };
 }
