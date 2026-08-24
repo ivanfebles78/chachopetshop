@@ -55,12 +55,16 @@ model Brand {
 }
 
 model Animal {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  slug      String    @unique
-  emoji     String?
-  sortOrder Int       @default(0)
-  products  Product[] @relation("ProductAnimals")
+  id         String     @id @default(cuid())
+  name       String     @unique
+  slug       String     @unique
+  emoji      String?
+  sortOrder  Int        @default(0)
+  products   Product[]  @relation("ProductAnimals")
+  /**
+   * Las ramas del catálogo que cuelgan de este animal. Ver `Category`.
+   */
+  categories Category[]
 }
 
 model Category {
@@ -70,6 +74,33 @@ model Category {
   type      CategoryType
   sortOrder Int          @default(0)
   products  Product[]    @relation("ProductCategories")
+
+  /**
+   * JERARQUÍA DE CATÁLOGO.
+   * La estructura comercial real tiene tres niveles: animal → categoría →
+   * línea de marca. «Perros → Alimentación seca perros → Alpha Spirit
+   * alimentación perro». Hasta ahora `Category` era plana y el menú agrupaba
+   * las categorías en tres columnas fijas escritas a mano, así que no había
+   * forma de representar la línea de marca ni de que el menú creciera solo.
+   * Se resuelve con una relación consigo misma en vez de con una tabla nueva:
+   * es un árbol, y un árbol de dos niveles no justifica un modelo aparte.
+   */
+  parent   Category?  @relation("CategoriaPadre", fields: [parentId], references: [id])
+  parentId String?
+  children Category[] @relation("CategoriaPadre")
+
+  /**
+   * A qué animal pertenece esta rama del catálogo.
+   * Hace falta porque una categoría puede existir SIN productos —la estructura
+   * se carga antes que la mercancía— y entonces no hay ningún producto del que
+   * deducir si es de perros o de gatos. Las subcategorías lo heredan de su
+   * padre y lo dejan nulo.
+   */
+  animal   Animal? @relation(fields: [animalId], references: [id])
+  animalId String?
+
+  @@index([parentId])
+  @@index([animalId])
 }
 
 model Need {
@@ -104,7 +135,24 @@ model Product {
   categories  Category[]       @relation("ProductCategories")
   needs       Need[]           @relation("ProductNeeds")
   variants    ProductVariant[]
-  createdAt   DateTime         @default(now())
+
+  /**
+   * CONTENIDO ENRIQUECIDO DE FICHA.
+   * Composición, composición analítica, características, proceso de
+   * fabricación, recomendaciones de uso y tabla de alimentación. Todo eso llega
+   * como documentación del fabricante y su forma varía entre productos: un
+   * pienso trae tabla de raciones y un transportín no.
+   * Una columna JSON en vez de ocho columnas nuevas y tres tablas. El motivo es
+   * que este contenido NO se consulta ni se filtra —sólo se pinta en la ficha—,
+   * así que normalizarlo no compra nada y sí cuesta una migración por cada
+   * campo que aparezca. La forma la valida el cliente al leerla, y los productos
+   * que no lo tengan siguen funcionando: es opcional.
+   * Si algún día hace falta filtrar por «sin cereales», ESE dato sí subirá a
+   * columna propia. Hoy sería adivinar qué se va a necesitar.
+   */
+  contenido Json?
+
+  createdAt DateTime @default(now())
 
   @@index([brandId])
 }
@@ -211,6 +259,7 @@ model Order {
    * conoce quien completó la compra.
    */
   /**
+   * /**
    * /*
    * Nullable a propósito. Los pedidos que ya existen en producción no tienen
    * token, y añadir una columna NOT NULL UNIQUE a una tabla con filas falla al
