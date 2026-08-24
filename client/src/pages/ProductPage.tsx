@@ -7,6 +7,7 @@ import { eur } from '@/lib/cn';
 import { useSeo } from '@/lib/useSeo';
 import { fichaTecnica, datosEstructuradosProducto, motivoRelacionado } from '@/lib/producto';
 import { Galeria } from '@/components/producto/Galeria';
+import { tipoDeProducto } from '@/lib/imagenes';
 import { ProductCard } from '@/components/ProductCard';
 import { ErrorState } from '@/components/ErrorState';
 import { useCart } from '@/store/cart';
@@ -158,7 +159,7 @@ export function ProductPage() {
       </nav>
 
       <div className="mt-5 grid gap-8 lg:grid-cols-[minmax(0,1fr)_26rem] lg:gap-12">
-        <Galeria imagenes={galeria} nombre={producto.name} />
+        <Galeria imagenes={galeria} nombre={producto.name} tipoArte={tipoDeProducto(producto)} />
 
         {/* ── Compra ─────────────────────────────────────────────────── */}
         <div className="lg:sticky lg:top-24 lg:self-start">

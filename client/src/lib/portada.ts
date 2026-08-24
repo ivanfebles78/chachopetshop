@@ -15,14 +15,24 @@ import { estaRebajado, rutaCatalogo } from './navigation';
  * portada. Sin que nadie edite nada.
  */
 
-export type Faceta = { slug: string; nombre: string; total: number; href: string };
+export type Faceta = {
+  slug: string;
+  nombre: string;
+  total: number;
+  href: string;
+  /**
+   * El tipo de categoría, cuando la faceta es una categoría. Sirve para dibujar
+   * su ilustración en la portada; las facetas de animal no lo llevan.
+   */
+  tipo?: string;
+};
 
 /**
  * Cuántos productos hay tras cada faceta, en orden descendente y sin vacías.
  * Enseñar una faceta vacía es prometer un sitio al que no se puede llegar.
  */
 function facetas(
-  lista: { slug: string; name: string }[],
+  lista: { slug: string; name: string; type?: string }[],
   productos: Product[],
   clave: 'animals' | 'categories',
   parametro: 'animal' | 'category',
@@ -33,6 +43,8 @@ function facetas(
       nombre: x.name,
       total: productos.filter((p) => p[clave].some((f) => f.slug === x.slug)).length,
       href: rutaCatalogo({ [parametro]: x.slug }),
+      // Sólo las categorías traen `type`; las de animal quedan sin él.
+      tipo: x.type,
     }))
     .filter((f) => f.total > 0)
     .sort((a, b) => b.total - a.total);
