@@ -6,6 +6,8 @@ import { categorias, mascotas, ofertas, porcentajeAhorro, seleccion, type Faceta
 import { rutaCatalogo } from '@/lib/navigation';
 import { EMPRESA } from '@/lib/empresa';
 import { ProductCard, ProductCardSkeleton } from '@/components/ProductCard';
+import { ArteCategoria } from '@/components/ArteCategoria';
+import { tipoDeCategoria } from '@/lib/imagenes';
 import type { Product } from '@/lib/types';
 
 /**
@@ -357,13 +359,29 @@ function PorCategoria({ categorias: lista }: { categorias: Faceta[] }) {
 
         {/* Las demás, en rejilla. Ocho entran exactas en cuatro columnas. */}
         <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {/*
+            CADA CATEGORÍA CON SU DIBUJO.
+
+            Eran ocho filas de texto idénticas: para encontrar «Camas» había que
+            leerlas todas. Con la silueta de la categoría se distinguen de un
+            vistazo, y de paso la portada deja de comunicar sólo bolsas de
+            pienso — que era el otro problema: se venden camas, transportines,
+            comederos y rascadores, y no se veía ni uno.
+
+            El dibujo es el MISMO sistema que el del catálogo, así que no entra
+            una identidad visual nueva ni un solo byte de red.
+          */}
           {resto.map((c) => (
             <Link
               key={c.slug}
               to={c.href}
-              className="group flex items-center justify-between gap-3 rounded-card border border-edge bg-surface px-5 py-4 transition-colors hover:border-brand-300 hover:bg-brand-50"
+              className="group flex items-center gap-4 rounded-card border border-edge bg-surface py-3 pl-3 pr-5 transition-colors hover:border-brand-300 hover:bg-brand-50"
             >
-              <span className="font-semibold text-content">{c.nombre}</span>
+              <ArteCategoria
+                tipo={tipoDeCategoria(c.tipo)}
+                className="h-14 w-14 shrink-0 transition-transform duration-300 group-hover:scale-105"
+              />
+              <span className="min-w-0 flex-1 font-semibold text-content">{c.nombre}</span>
               <span className="shrink-0 text-body-sm text-content-subtle">{c.total}</span>
             </Link>
           ))}

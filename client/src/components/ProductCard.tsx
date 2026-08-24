@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import { cn, eur } from '@/lib/cn';
 import { useCart } from '@/store/cart';
+import { ImagenProducto } from './ImagenProducto';
 import { toast } from '@/store/toast';
 
 export function ProductCard({ product }: { product: Product }) {
@@ -57,15 +58,23 @@ export function ProductCard({ product }: { product: Product }) {
         to={`/producto/${product.slug}`}
         className="group relative flex h-full flex-col overflow-hidden rounded-4xl border border-brand-900/[0.06] bg-white/80 shadow-soft backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-lift"
       >
-        <div className="relative aspect-square overflow-hidden bg-cream-200">
-          <img
-            src={product.image}
-            alt={product.name}
-            width={800}
-            height={800}
-            loading="lazy"
-            decoding="async"
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+        {/*
+          CONTENER, NO RECORTAR.
+
+          Estaba en `object-cover`, que llena el cuadrado recortando lo que
+          sobra. Para una foto de paisaje da igual; para el envase de un producto
+          es justo lo que no se puede hacer: recorta el saco, corta la etiqueta y
+          se lleva por delante la parte por la que alguien reconoce lo que está
+          comprando.
+
+          Con `object-contain` y un poco de aire alrededor, el envase entero se
+          ve siempre. La rejilla no se descuadra porque el marco sigue siendo un
+          cuadrado fijo.
+        */}
+        <div className="relative aspect-square overflow-hidden bg-cream-200 p-4 sm:p-5">
+          <ImagenProducto
+            product={product}
+            className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.04]"
           />
           <div className="absolute left-3 top-3 flex flex-col gap-1.5">
             {hasDiscount && (

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { esImagenAleatoria, type TipoArte } from '@/lib/imagenes';
+import { ArteCategoria } from '@/components/ArteCategoria';
 
 /**
  * GALERÍA DE PRODUCTO.
@@ -22,16 +24,31 @@ import { useEffect, useRef, useState } from 'react';
 
 type Props = {
   imagenes: string[];
+  /**
+   * El tipo de categoría, para dibujar la ilustración cuando no hay fotografía.
+   * Ver `lib/imagenes.ts`.
+   */
+  tipoArte: TipoArte;
   /** Para el texto alternativo y los nombres de los controles. */
   nombre: string;
   /** Se marca la primera como prioritaria: es el elemento grande de la ficha. */
   prioritaria?: boolean;
 };
 
-export function Galeria({ imagenes, nombre, prioritaria = true }: Props) {
+export function Galeria({ imagenes, nombre, tipoArte, prioritaria = true }: Props) {
+  /*
+   * NI UNA VISTA FALSA.
+   *
+   * `gallery` trae varias URL de archivo aleatorias. Pintarlas como galería
+   * daría tres miniaturas y la sensación de tres fotos del mismo artículo desde
+   * ángulos distintos — cuando son tres paisajes sin relación. Si no hay
+   * fotografía real, hay UNA ilustración de categoría y ninguna miniatura.
+   */
+  const fotos = imagenes.filter((u) => !esImagenAleatoria(u));
+  const sinFotografia = fotos.length === 0;
   const [activa, setActiva] = useState(0);
   const carril = useRef<HTMLUListElement>(null);
-  const total = imagenes.length;
+  const total = sinFotografia ? 1 : fotos.length;
 
   /* Al pasar con el dedo, la miniatura marcada tiene que seguir al carril. */
   useEffect(() => {
@@ -52,6 +69,18 @@ export function Galeria({ imagenes, nombre, prioritaria = true }: Props) {
   };
 
   if (total === 0) return null;
+
+  /*
+   * Sin fotografía real: una ilustración de categoría, a tamaño completo y sin
+   * carril ni miniaturas. No hay nada que pasar y no se finge que lo haya.
+   */
+  if (sinFotografia) {
+    return (
+      <div className="overflow-hidden rounded-card border border-edge bg-cream-200">
+        <ArteCategoria tipo={tipoArte} className="aspect-square w-full p-10 sm:p-14" />
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -76,7 +105,7 @@ export function Galeria({ imagenes, nombre, prioritaria = true }: Props) {
         {...(total > 1 ? { tabIndex: 0, 'aria-label': `Imágenes de ${nombre}` } : {})}
         className="flex snap-x snap-mandatory list-none gap-0 overflow-x-auto overscroll-x-contain rounded-card border border-edge bg-surface p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {imagenes.map((src, i) => (
+        {fotos.map((src, i) => (
           <li key={src} className="w-full shrink-0 snap-center">
             <img
               src={src}
@@ -88,7 +117,7 @@ export function Galeria({ imagenes, nombre, prioritaria = true }: Props) {
               loading={i === 0 && prioritaria ? undefined : 'lazy'}
               fetchPriority={i === 0 && prioritaria ? 'high' : undefined}
               decoding="async"
-              className="aspect-square w-full object-cover"
+              className="aspect-square w-full bg-cream-200 object-contain p-6"
             />
           </li>
         ))}
@@ -97,7 +126,7 @@ export function Galeria({ imagenes, nombre, prioritaria = true }: Props) {
       {total > 1 && (
         <>
           <ul className="mt-3 flex list-none gap-3 overflow-x-auto p-0">
-            {imagenes.map((src, i) => (
+            {fotos.map((src, i) => (
               <li key={src}>
                 <button
                   type="button"
@@ -120,7 +149,7 @@ export function Galeria({ imagenes, nombre, prioritaria = true }: Props) {
                     height={160}
                     loading="lazy"
                     decoding="async"
-                    className="h-full w-full object-cover"
+                    className="h-full w-full bg-cream-200 object-contain p-1.5"
                   />
                 </button>
               </li>

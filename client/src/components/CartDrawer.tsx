@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Minus, Plus, ShoppingBag, Trash2, Truck, X } from 'lucide-react';
+import { MiniaturaLinea } from '@/components/ImagenProducto';
 import { lineKey, selectSubtotal, useCart } from '@/store/cart';
 import { eur } from '@/lib/cn';
 import { useOverlay } from '@/lib/useOverlay';
@@ -129,15 +130,7 @@ export function CartDrawer() {
                       aria-hidden="true"
                       className="shrink-0"
                     >
-                      <img
-                        src={l.image}
-                        alt=""
-                        width={80}
-                        height={80}
-                        loading="lazy"
-                        decoding="async"
-                        className="h-20 w-20 rounded-control border border-edge object-cover"
-                      />
+                      <MiniaturaLinea src={l.image} className="h-20 w-20 rounded-control border border-edge object-cover" />
                     </Link>
 
                     <div className="flex min-w-0 flex-1 flex-col gap-1">

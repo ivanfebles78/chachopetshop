@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ChevronDown, LogOut, Package, ShieldCheck } from 'lucide-react';
+import { MiniaturaLinea } from '@/components/ImagenProducto';
 import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { eur } from '@/lib/cn';
@@ -178,15 +179,7 @@ function Pedido({ pedido }: { pedido: Order }) {
           {pedido.items.map((i) => (
             <li key={i.id} className="flex items-start gap-3">
               {i.image && (
-                <img
-                  src={i.image}
-                  alt=""
-                  width={48}
-                  height={48}
-                  loading="lazy"
-                  decoding="async"
-                  className="h-12 w-12 shrink-0 rounded-control border border-edge object-cover"
-                />
+                <MiniaturaLinea src={i.image} className="h-12 w-12 shrink-0 rounded-control border border-edge object-cover" />
               )}
               <span className="min-w-0 flex-1 text-body-sm">
                 <span className="block font-semibold text-content">{i.name}</span>

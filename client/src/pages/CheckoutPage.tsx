@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CreditCard, Lock, ShoppingBag, Truck } from 'lucide-react';
+import { MiniaturaLinea } from '@/components/ImagenProducto';
 import { api } from '@/lib/api';
 import { eur } from '@/lib/cn';
 import { lineKey, selectSubtotal, useCart } from '@/store/cart';
@@ -316,15 +317,7 @@ export function CheckoutPage() {
               {lines.map((l) => (
                 <li key={lineKey(l)} className="flex gap-3">
                   <div className="relative shrink-0">
-                    <img
-                      src={l.image}
-                      alt=""
-                      width={64}
-                      height={64}
-                      loading="lazy"
-                      decoding="async"
-                      className="h-16 w-16 rounded-control border border-edge object-cover"
-                    />
+                    <MiniaturaLinea src={l.image} className="h-16 w-16 rounded-control border border-edge object-cover" />
                     <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-pill bg-brand-600 px-1 text-caption font-bold text-cream">
                       {l.quantity}
                     </span>
