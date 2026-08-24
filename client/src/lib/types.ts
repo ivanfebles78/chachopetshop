@@ -38,6 +38,14 @@ export type Product = {
   categories: Category[];
   needs: Need[];
   variants: Variant[];
+  /**
+   * Contenido enriquecido de ficha: composición, análisis, características,
+   * proceso de fabricación, recomendaciones y tabla de raciones.
+   *
+   * `unknown` a propósito: viene de una columna JSON que el servidor no valida,
+   * así que la forma se comprueba al leerlo con `leerContenido`.
+   */
+  contenido?: unknown;
 };
 
 /** Un producto relacionado, con la razón por la que se enseña. */
