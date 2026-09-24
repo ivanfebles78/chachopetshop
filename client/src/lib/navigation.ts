@@ -46,7 +46,7 @@ export function rutaCatalogo(filtros: Record<string, string>): string {
 
 /** Un producto está REALMENTE rebajado si tiene precio anterior mayor. */
 export function estaRebajado(p: Product): boolean {
-  return typeof p.compareAt === 'number' && p.compareAt > p.price;
+  return typeof p.compareAt === 'number' && p.price != null && p.compareAt > p.price;
 }
 
 /** Cuenta cuántos productos cumplen todos los filtros a la vez. */

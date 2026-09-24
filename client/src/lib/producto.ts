@@ -117,7 +117,9 @@ export function esEan13(codigo: string | undefined): boolean {
 export function datosEstructuradosProducto(p: Product, origen: string): Record<string, unknown> {
   const comprables = p.variants.filter((v) => v.stock > 0);
   const hayStock = p.variants.length === 0 || comprables.length > 0;
-  const precios = (comprables.length ? comprables : p.variants).map((v) => v.price);
+  const precios = (comprables.length ? comprables : p.variants)
+    .map((v) => v.price)
+    .filter((x): x is number => x != null);
   const precio = precios.length ? Math.min(...precios) : p.price;
 
   return {
@@ -144,7 +146,7 @@ export function datosEstructuradosProducto(p: Product, origen: string): Record<s
      * Sin precio fijado no hay oferta que declarar. Publicar `price: "0.00"`
      * le diría a Google que este producto es gratis.
      */
-    ...(precio > 0
+    ...(precio != null && precio > 0
       ? {
           offers: {
             '@type': 'Offer',

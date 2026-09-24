@@ -19,7 +19,18 @@ export type Category = {
 export type Need = { id: string; name: string; slug: string };
 export type Brand = { id: string; name: string; slug: string; logoUrl: string | null; featured: boolean };
 
-export type Variant = { id: string; label: string; price: number; sku: string; stock: number };
+export type Variant = {
+  id: string;
+  label: string;
+  /** null = «a consultar»: el proveedor entrega el catálogo sin precios. */
+  price: number | null;
+  sku: string;
+  stock: number;
+  /** Tamaño normalizado para filtrar/ordenar. Opcionales (un accesorio no tiene gramos). */
+  quantity?: number | null;
+  unit?: string | null;
+  packUnits?: number | null;
+};
 
 export type Product = {
   id: string;
@@ -28,7 +39,8 @@ export type Product = {
   description: string;
   brand: Brand;
   brandId: string;
-  price: number;
+  /** null = «Precio a consultar» hasta que el cliente lo fije en el panel. */
+  price: number | null;
   compareAt: number | null;
   image: string;
   gallery: string[];

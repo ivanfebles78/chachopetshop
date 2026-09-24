@@ -45,13 +45,15 @@ enum OrderStatus {
 }
 
 model Brand {
-  id        String    @id @default(cuid())
-  name      String    @unique
-  slug      String    @unique
-  logoUrl   String?
-  featured  Boolean   @default(false)
-  products  Product[]
-  createdAt DateTime  @default(now())
+  id         String     @id @default(cuid())
+  name       String     @unique
+  slug       String     @unique
+  logoUrl    String?
+  featured   Boolean    @default(false)
+  products   Product[]
+  /** Nodos del árbol de categorías que representan esta marca. */
+  categories Category[]
+  createdAt  DateTime   @default(now())
 }
 
 model Animal {
@@ -99,8 +101,18 @@ model Category {
   animal   Animal? @relation(fields: [animalId], references: [id])
   animalId String?
 
+  /**
+   * MARCA del nodo, cuando este nivel del árbol ES una marca.
+   * La jerarquía comercial es categoría → marca → línea. El nivel «marca» apunta
+   * aquí a su `Brand` para poder filtrar el catálogo por marca dentro de una
+   * categoría y para heredar su logo. Nulo en los niveles que no son marca.
+   */
+  brand    Brand?  @relation(fields: [brandId], references: [id])
+  brandId  String?
+
   @@index([parentId])
   @@index([animalId])
+  @@index([brandId])
 }
 
 model Need {
@@ -117,7 +129,14 @@ model Product {
   description String
   brand       Brand            @relation(fields: [brandId], references: [id])
   brandId     String
-  price       Decimal          @db.Decimal(10, 2)
+  /**
+   * PRECIO NULLABLE = «a consultar».
+   * El catálogo real se carga desde el Excel del proveedor SIN precios: los pone
+   * el cliente en el panel cuando los tiene. Un producto sin precio se muestra
+   * («Precio a consultar») pero NO se puede comprar —lo impone el checkout—.
+   * Nulo es la verdad; un 0 sería un precio falso, como ya pasó con el rating.
+   */
+  price       Decimal?         @db.Decimal(10, 2)
   compareAt   Decimal?         @db.Decimal(10, 2)
   image       String
   gallery     String[]
@@ -162,9 +181,20 @@ model ProductVariant {
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
   label     String // p.ej. "3 kg", "12 kg", "Pack 6x400g"
-  price     Decimal @db.Decimal(10, 2)
-  sku       String  @unique
-  stock     Int     @default(0)
+  /** Nullable por lo mismo que `Product.price`: se rellena en el panel. */
+  price     Decimal? @db.Decimal(10, 2)
+  sku       String   @unique
+  stock     Int      @default(0)
+
+  /**
+   * TAMAÑO NORMALIZADO, para poder filtrar y ordenar por tamaño.
+   * `quantity` en la unidad base (`unit`: g/ml/uds) — «3 kg» → 3000 g. `packUnits`
+   * es cuántas piezas trae el formato (un pack de 6 latas → 6). Vienen del Excel
+   * del proveedor; opcionales porque un accesorio no tiene un tamaño en gramos.
+   */
+  quantity  Int?
+  unit      String?
+  packUnits Int?     @default(1)
 
   @@index([productId])
 }

@@ -64,8 +64,16 @@ export function ProductPage() {
     return producto.variants.find((v) => v.stock > 0) ?? producto.variants[0];
   }, [producto, variantId]);
 
-  const precio = variante?.price ?? producto?.price ?? 0;
-  const rebajado = producto?.compareAt != null && producto.compareAt > precio;
+  /*
+   * Precio nullable (Fase 2J): el catálogo del proveedor entra sin precios. Un
+   * producto «a consultar» se muestra pero no se puede comprar —lo impide tanto
+   * `anadir` aquí como el checkout en el servidor—. `precio` cae a 0 sólo para
+   * los cálculos; `sinPrecio` es la verdad que decide qué se pinta y qué se puede.
+   */
+  const precioReal = variante?.price ?? producto?.price ?? null;
+  const sinPrecio = precioReal === null;
+  const precio = precioReal ?? 0;
+  const rebajado = !sinPrecio && producto?.compareAt != null && producto.compareAt > precio;
   const ahorro = rebajado ? Math.round((1 - precio / (producto!.compareAt as number)) * 100) : 0;
   const hayExistencias = variante ? variante.stock > 0 : false;
   const maximo = Math.max(1, Math.min(variante?.stock ?? 1, 20));
@@ -129,7 +137,7 @@ export function ProductPage() {
   const animal = producto.animals[0];
 
   const anadir = () => {
-    if (!hayExistencias) return;
+    if (!hayExistencias || sinPrecio) return;
     add({
       productId: producto.id,
       variantId: variante?.id,
@@ -261,7 +269,7 @@ export function ProductPage() {
             <button
               type="button"
               onClick={anadir}
-              disabled={!hayExistencias}
+              disabled={!hayExistencias || sinPrecio}
               className="btn btn-lg btn-primary flex-1 justify-center disabled:cursor-not-allowed disabled:opacity-50"
             >
               {anadido ? (
@@ -401,7 +409,7 @@ function Formatos({
   elegida,
   onElegir,
 }: {
-  variantes: { id: string; label: string; price: number; stock: number }[];
+  variantes: { id: string; label: string; price: number | null; stock: number }[];
   elegida?: { id: string };
   onElegir: (id: string) => void;
 }) {
@@ -440,7 +448,9 @@ function Formatos({
                 className="sr-only"
               />
               <span>{v.label}</span>
-              <span className={marcada ? 'text-brand-700' : 'text-content-muted'}>{eur(v.price)}</span>
+              <span className={marcada ? 'text-brand-700' : 'text-content-muted'}>
+                {v.price == null ? 'Consultar' : eur(v.price)}
+              </span>
               {agotada && <span className="text-caption text-content-subtle">· agotado</span>}
             </label>
           );

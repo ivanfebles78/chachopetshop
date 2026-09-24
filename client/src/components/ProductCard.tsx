@@ -9,8 +9,11 @@ import { toast } from '@/store/toast';
 export function ProductCard({ product }: { product: Product }) {
   const add = useCart((s) => s.add);
   const cheapest = product.variants[0];
+  // Precio nullable (Fase 2J): null = «a consultar». Se muestra pero no se compra.
   const price = cheapest?.price ?? product.price;
-  const hasDiscount = product.compareAt != null && product.compareAt > price;
+  const sinPrecio = price == null;
+  const hasDiscount = product.compareAt != null && price != null && product.compareAt > price;
+  const descuento = hasDiscount && price != null ? Math.round((1 - price / product.compareAt!) * 100) : 0;
 
   /*
    * Disponibilidad, sólo cuando es fiable y sólo cuando dice algo.
@@ -29,6 +32,7 @@ export function ProductCard({ product }: { product: Product }) {
 
   const quickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
+    if (price == null) return; // sin precio no se añade; el botón tampoco se muestra
     add({
       productId: product.id,
       variantId: cheapest?.id,
@@ -79,7 +83,7 @@ export function ProductCard({ product }: { product: Product }) {
           <div className="absolute left-3 top-3 flex flex-col gap-1.5">
             {hasDiscount && (
               <span className="rounded-full bg-amber-500 px-2.5 py-1 text-xs font-bold text-ink shadow-soft">
-                -{Math.round((1 - price / product.compareAt!) * 100)}%
+                −{descuento}%
               </span>
             )}
             {/*
@@ -108,7 +112,7 @@ export function ProductCard({ product }: { product: Product }) {
             Ahora se ve siempre por debajo de `sm` —donde no hay puntero— y
             aparece al enfocarlo con el teclado.
           */}
-          {!sinExistencias && (
+          {!sinExistencias && !sinPrecio && (
           <button
             onClick={quickAdd}
             aria-label={`Añadir ${product.name} al carrito`}
@@ -130,14 +134,20 @@ export function ProductCard({ product }: { product: Product }) {
             <p className="text-caption text-content-subtle">{formatos.join(' · ')}</p>
           )}
           <div className="flex items-baseline gap-2 pt-1">
-            <span className="font-display text-lg font-bold text-brand-800">
-              {cheapest && product.variants.length > 1 && (
-                <span className="mr-1 text-xs font-medium text-content-subtle">desde</span>
-              )}
-              {eur(price)}
-            </span>
-            {hasDiscount && (
-              <span className="text-sm text-content-subtle line-through">{eur(product.compareAt)}</span>
+            {sinPrecio ? (
+              <span className="font-display text-sm font-semibold text-content-muted">Precio a consultar</span>
+            ) : (
+              <>
+                <span className="font-display text-lg font-bold text-brand-800">
+                  {cheapest && product.variants.length > 1 && (
+                    <span className="mr-1 text-xs font-medium text-content-subtle">desde</span>
+                  )}
+                  {eur(price)}
+                </span>
+                {hasDiscount && (
+                  <span className="text-sm text-content-subtle line-through">{eur(product.compareAt)}</span>
+                )}
+              </>
             )}
           </div>
         </div>

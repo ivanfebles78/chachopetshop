@@ -117,7 +117,18 @@ async function construirLineas(input: Entrada) {
       throw errorDeCliente('Debes elegir un formato del producto');
     }
 
-    const unitPrice = toNumber(variante?.price ?? producto.price) ?? 0;
+    /*
+     * SIN PRECIO NO SE VENDE.
+     *
+     * Desde la Fase 2J el precio es nullable: el catálogo del proveedor entra sin
+     * precios y el cliente los pone en el panel. Un `?? 0` aquí cobraría a 0 € un
+     * producto «a consultar» —regalar el género, el mismo fallo que el modo demo
+     * que se cerró—. Nulo es un error de negocio, no un descuento.
+     */
+    const unitPrice = toNumber(variante?.price ?? producto.price);
+    if (unitPrice === null) {
+      throw errorDeCliente('Este producto todavía no tiene precio y no se puede comprar');
+    }
     return {
       productId: producto.id,
       variantId: variante?.id ?? null,
