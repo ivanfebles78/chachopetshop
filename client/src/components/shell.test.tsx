@@ -44,6 +44,8 @@ vi.mock('@/lib/api', () => ({
   api: {
     taxonomy: vi.fn(),
     products: vi.fn(),
+    // La cabecera pide el árbol del menú al servidor (`/api/taxonomy/menu`).
+    menu: vi.fn(),
   },
 }));
 
@@ -68,10 +70,35 @@ const PRODUCTO = {
   animals: [TAX.animals[0]], categories: [TAX.categories[0]], needs: [TAX.needs[0]], variants: [],
 };
 
+/*
+ * El árbol del menú tal como lo devuelve `/api/taxonomy/menu`: sólo Perros tiene
+ * producto. Gatos NO está —el catálogo de prueba no tiene ninguno— y por eso no
+ * debe aparecer en la cabecera.
+ */
+const MENU = {
+  animales: [
+    {
+      slug: 'perro',
+      nombre: 'Perros',
+      total: 1,
+      categorias: [
+        {
+          slug: 'alimentacion-seca',
+          nombre: 'Alimentación seca',
+          sortOrder: 1,
+          total: 1,
+          marcas: [{ slug: 'ownat', nombre: 'Ownat', total: 1, lineas: [] }],
+        },
+      ],
+    },
+  ],
+};
+
 beforeEach(() => {
   _resetCacheNavegacion();
   vi.mocked(api.taxonomy).mockResolvedValue(TAX as never);
   vi.mocked(api.products).mockResolvedValue({ items: [PRODUCTO], page: 1, pageSize: 48, total: 1, totalPages: 1 } as never);
+  vi.mocked(api.menu).mockResolvedValue(MENU as never);
 });
 
 afterEach(() => vi.clearAllMocks());
@@ -221,7 +248,9 @@ describe('menú móvil', () => {
     expect(within(dialogo).queryByText(/alimentación seca/i)).not.toBeInTheDocument();
 
     await user.click(within(dialogo).getByRole('button', { name: /perros/i }));
-    expect(within(dialogo).getByText(/alimentación seca/i)).toBeInTheDocument();
+    // La categoría aparece como título de columna y como enlace «Todo en…»:
+    // con dos apariciones, `getByText` sería ambiguo, así que basta con que haya.
+    expect(within(dialogo).getAllByText(/alimentación seca/i).length).toBeGreaterThan(0);
   });
 
   it('bloquea el desplazamiento de la página de detrás', async () => {

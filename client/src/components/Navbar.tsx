@@ -134,7 +134,11 @@ function Desplegable({ entrada }: { entrada: EntradaNav }) {
                 <ul className="list-none space-y-0.5 p-0">
                   {col.enlaces.map((enlace) => (
                     <li key={enlace.href}>
-                      <Link to={enlace.href} className="menu-link" onClick={() => setAbierto(false)}>
+                      <Link
+                        to={enlace.href}
+                        className={enlace.nivel === 1 ? 'menu-link py-1 pl-5 text-body-sm text-content-muted' : 'menu-link'}
+                        onClick={() => setAbierto(false)}
+                      >
                         <span>{enlace.etiqueta}</span>
                         {/*
                           El recuento sólo aparece si hay algo que contar.

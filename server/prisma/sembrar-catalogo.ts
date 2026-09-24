@@ -3,19 +3,26 @@
  *
  * Lee `catalogo-evopet.json` —generado a partir de «excel perros y gatos
  * conjunto - por pesos.xlsx»— y lo vuelca en la base de datos. Es IDEMPOTENTE:
- * se puede ejecutar tantas veces como haga falta y sólo crea o actualiza, nunca
- * duplica. Eso importa porque el catálogo se irá reimportando cuando el
- * proveedor entregue precios, stock o productos nuevos.
+ * crea o actualiza, nunca duplica, y al final borra lo que ya no está en el
+ * Excel. Se puede reimportar cuando el proveedor entregue precios, stock o
+ * productos nuevos.
  *
- * Qué NO trae el Excel, y por eso aquí no se inventa:
- *   · PRECIO — nulo. Se muestra «Precio a consultar» y no se puede comprar hasta
- *     que el cliente lo ponga en el panel.
- *   · STOCK — 0.
- *   · DESCRIPCIÓN de ficha — vacía; el contenido enriquecido llega producto a
- *     producto (ver `producto-alpha-spirit-pato.ts`).
+ * ── Modelo ORTOGONAL (Fase 2K) ─────────────────────────────────────────────
  *
- * La estructura es la que Ivan pidió: categoría → marca → línea. Las marcas sin
- * línea real cuelgan sus productos directamente de la marca.
+ * Cada dimensión es una faceta independiente, y cada valor aparece UNA vez:
+ *   · Animal   (M2M)      perro / gato
+ *   · Categoría (5 canónicas, sin duplicar por animal)  seca, húmeda, …
+ *   · Marca    (una por producto)
+ *   · Línea    (atributo del producto, no un nodo)      «Premium Recetas»…
+ *   · Tamaño   (de cada variante: cantidad + unidad)
+ *
+ * Antes (2J) la categoría era un árbol animal→categoría→marca→línea, y eso hacía
+ * que «Alpha Spirit» saliera repetido en los filtros —una vez por cada animal y
+ * categoría en que vende—. Con marca y línea como facetas, sale una sola vez y
+ * se combina con las demás.
+ *
+ * Qué NO trae el Excel, y por eso aquí no se inventa: PRECIO (nulo, «a
+ * consultar») y STOCK (0). Los rellena el cliente en el panel.
  *
  *   npx tsx prisma/sembrar-catalogo.ts
  */
@@ -28,35 +35,22 @@ import path from 'node:path';
 const prisma = new PrismaClient();
 const aqui = path.dirname(fileURLToPath(import.meta.url));
 
-type NodoCategoria = {
-  slug: string;
-  name: string;
-  type: string;
-  animalSlug: string | null;
-  parentSlug: string | null;
-  brandSlug: string | null;
-  sortOrder: number;
-};
-type Variante = {
-  label: string;
-  sku: string;
-  quantity: number | null;
-  unit: string | null;
-  packUnits: number;
-};
+type Categoria = { slug: string; name: string; type: string; sortOrder: number };
+type Variante = { label: string; sku: string; quantity: number | null; unit: string | null; packUnits: number };
 type Producto = {
   slug: string;
   name: string;
   brandSlug: string;
+  line: string | null;
   animals: string[];
-  categorySlugs: string[];
+  categorySlug: string;
   image: string;
   variants: Variante[];
 };
 type Datos = {
   animals: { slug: string; name: string; emoji: string; sortOrder: number }[];
   brands: { slug: string; name: string }[];
-  categories: NodoCategoria[];
+  categories: Categoria[];
   products: Producto[];
 };
 
@@ -85,19 +79,15 @@ async function main() {
   const marcas = await prisma.brand.findMany();
   const idMarca = (s: string) => marcas.find((b) => b.slug === s)!.id;
 
-  // 3) Árbol de categorías. Vienen ordenadas: raíces, luego marcas, luego líneas,
-  //    así que el padre de cada nodo ya existe cuando se procesa.
+  // 3) Categorías canónicas (animal-agnósticas, planas: sin árbol, sin marca)
   for (const c of datos.categories) {
-    const padre = c.parentSlug
-      ? await prisma.category.findUnique({ where: { slug: c.parentSlug }, select: { id: true } })
-      : null;
     const comun = {
       name: c.name,
       type: c.type as CategoryType,
       sortOrder: c.sortOrder,
-      animalId: c.animalSlug ? idAnimal(c.animalSlug) : null,
-      parentId: padre?.id ?? null,
-      brandId: c.brandSlug ? idMarca(c.brandSlug) : null,
+      parentId: null,
+      animalId: null,
+      brandId: null,
     };
     await prisma.category.upsert({
       where: { slug: c.slug },
@@ -108,17 +98,18 @@ async function main() {
   const cats = await prisma.category.findMany({ select: { id: true, slug: true } });
   const idCat = (s: string) => cats.find((c) => c.slug === s)!.id;
 
-  // 4) Productos + variantes (precio nulo, stock 0)
+  // 4) Productos + variantes (precio nulo, stock 0, línea como atributo)
   let creados = 0;
   for (const p of datos.products) {
     const existe = await prisma.product.findUnique({ where: { slug: p.slug }, select: { id: true } });
     const rel = {
       name: p.name,
       brandId: idMarca(p.brandSlug),
+      line: p.line,
       image: p.image,
       active: true,
       animals: { set: p.animals.map((s) => ({ id: idAnimal(s) })) },
-      categories: { set: p.categorySlugs.map((s) => ({ id: idCat(s) })) },
+      categories: { set: [{ id: idCat(p.categorySlug) }] },
     };
     const prod = existe
       ? await prisma.product.update({ where: { slug: p.slug }, data: rel })
@@ -129,13 +120,11 @@ async function main() {
             gallery: [],
             ...rel,
             animals: { connect: p.animals.map((s) => ({ id: idAnimal(s) })) },
-            categories: { connect: p.categorySlugs.map((s) => ({ id: idCat(s) })) },
+            categories: { connect: [{ id: idCat(p.categorySlug) }] },
           },
         });
     if (!existe) creados++;
 
-    // Las variantes se reemplazan enteras: es la forma idempotente más simple y
-    // el Excel es la fuente de verdad de qué formatos existen.
     await prisma.productVariant.deleteMany({ where: { productId: prod.id } });
     await prisma.productVariant.createMany({
       data: p.variants.map((v) => ({
@@ -151,16 +140,30 @@ async function main() {
     });
   }
 
+  // 5) Limpieza: fuera lo que ya no está en el Excel —incluidos los nodos del
+  //    árbol viejo de la Fase 2J, que dejaban de tener sentido con el modelo
+  //    plano—. Los pedidos no se rompen: guardan nombre y precio propios.
+  const slugsProd = new Set(datos.products.map((p) => p.slug));
+  const slugsCat = new Set(datos.categories.map((c) => c.slug));
+  const prodViejos = await prisma.product.findMany({ select: { id: true, slug: true } });
+  const aBorrarProd = prodViejos.filter((p) => !slugsProd.has(p.slug)).map((p) => p.id);
+  if (aBorrarProd.length) {
+    await prisma.productVariant.deleteMany({ where: { productId: { in: aBorrarProd } } });
+    await prisma.product.deleteMany({ where: { id: { in: aBorrarProd } } });
+  }
+  const catBorradas = await prisma.category.deleteMany({ where: { slug: { notIn: [...slugsCat] } } });
+
   const [nCats, nProd, nVar] = await Promise.all([
     prisma.category.count(),
     prisma.product.count(),
     prisma.productVariant.count(),
   ]);
-  console.log('Catálogo importado desde el Excel del proveedor:');
+  console.log('Catálogo importado (modelo ortogonal):');
   console.log(`  marcas: ${datos.brands.length}`);
-  console.log(`  categorías (nodos del árbol): ${nCats}`);
-  console.log(`  productos: ${nProd} (${creados} nuevos)`);
+  console.log(`  categorías: ${nCats}`);
+  console.log(`  productos: ${nProd} (${creados} nuevos, ${aBorrarProd.length} retirados)`);
   console.log(`  variantes/formatos: ${nVar}`);
+  console.log(`  nodos de árbol viejos eliminados: ${catBorradas.count}`);
   console.log('  precio: sin definir (a consultar) · stock: 0 — se rellenan en el panel.');
 }
 

@@ -70,6 +70,12 @@ export type Taxonomy = {
   brands: Brand[];
 };
 
+/** El árbol del menú de cabecera que devuelve `/api/taxonomy/menu`. */
+export type MenuLinea = { nombre: string; total: number };
+export type MenuMarca = { slug: string; nombre: string; total: number; lineas: MenuLinea[] };
+export type MenuCategoria = { slug: string; nombre: string; sortOrder: number; total: number; marcas: MenuMarca[] };
+export type MenuAnimal = { slug: string; nombre: string; total: number; categorias: MenuCategoria[] };
+
 /** Una opción de filtro, con cuántos productos hay detrás. */
 export type Faceta = { slug: string; nombre: string; total: number };
 

@@ -72,7 +72,7 @@ export function CatalogPage() {
     setParams(siguiente);
   };
 
-  const alternar = (clave: 'need' | 'brand', slug: string) => {
+  const alternar = (clave: 'need' | 'brand' | 'line', slug: string) => {
     const actuales = (params.get(clave)?.split(',') ?? []).filter(Boolean);
     const siguiente = actuales.includes(slug)
       ? actuales.filter((s) => s !== slug)
@@ -89,7 +89,7 @@ export function CatalogPage() {
       setParams(s);
       return;
     }
-    if (valor) alternar(clave as 'need' | 'brand', valor);
+    if (valor) alternar(clave as 'need' | 'brand' | 'line', valor);
     else poner(clave, null);
   };
 

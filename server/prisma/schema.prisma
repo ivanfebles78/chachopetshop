@@ -130,6 +130,14 @@ model Product {
   brand       Brand            @relation(fields: [brandId], references: [id])
   brandId     String
   /**
+   * LÍNEA de marca (col C del Excel): «Premium Recetas», «Grain Free»…
+   * Es un atributo del producto, NO un nodo del árbol: así una marca aparece UNA
+   * vez en los filtros y su línea es sólo otra faceta ortogonal, en lugar de
+   * duplicar «Alpha Spirit» una vez por cada animal y categoría en que vende.
+   * Nulo cuando la marca no tiene líneas (la mayoría).
+   */
+  line        String?
+  /**
    * PRECIO NULLABLE = «a consultar».
    * El catálogo real se carga desde el Excel del proveedor SIN precios: los pone
    * el cliente en el panel cuando los tiene. Un producto sin precio se muestra

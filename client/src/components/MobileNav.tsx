@@ -87,7 +87,9 @@ export function MobileNav({ entradas, conSesion, onClose }: Props) {
                         <Link
                           to={enlace.href}
                           onClick={onClose}
-                          className="flex min-h-12 items-center justify-between gap-2 rounded-control px-3 text-body text-content"
+                          className={`flex min-h-12 items-center justify-between gap-2 rounded-control px-3 ${
+                            enlace.nivel === 1 ? 'pl-7 text-body-sm text-content-muted' : 'text-body text-content'
+                          }`}
                         >
                           <span>{enlace.etiqueta}</span>
                           {/* Ver la nota en `Navbar`: un «0» se lee como error. */}
