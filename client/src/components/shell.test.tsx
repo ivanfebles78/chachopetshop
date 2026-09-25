@@ -215,22 +215,26 @@ describe('el menú se despliega en cascada', () => {
     await user.click(await screen.findByRole('button', { name: /perros/i }));
   };
 
-  it('al abrir un animal se ven las CATEGORÍAS, y sus marcas siguen colapsadas', async () => {
+  it('el NOMBRE de la categoría es un enlace a su página; la flecha, un botón', async () => {
     const user = userEvent.setup();
     await abrirPerros(user);
-    // Las cinco categorías (aquí dos) se ven como desplegables…
-    expect(screen.getByRole('button', { name: /alimentación seca/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /alimentación húmeda/i })).toBeInTheDocument();
-    // …pero NO sus marcas: no se vuelca todo de golpe.
+    // El nombre lleva a la categoría entera (donde se filtra por marca).
+    const enlace = screen.getByRole('link', { name: /alimentación seca/i });
+    expect(enlace.getAttribute('href')).toContain('category=alimentacion-seca');
+    // La flecha es un control aparte para desplegar, no para navegar.
+    expect(screen.getByRole('button', { name: /marcas de alimentación seca/i })).toBeInTheDocument();
+    // Y sus marcas siguen colapsadas: no se vuelca todo de golpe.
     expect(screen.queryByText('AtlanticPet')).not.toBeInTheDocument();
   });
 
-  it('al pinchar una categoría salen sus marcas', async () => {
+  it('al pulsar la flecha salen sus marcas, sin un «Ver todo» redundante', async () => {
     const user = userEvent.setup();
     await abrirPerros(user);
-    await user.click(screen.getByRole('button', { name: /alimentación seca/i }));
+    await user.click(screen.getByRole('button', { name: /marcas de alimentación seca/i }));
     expect(screen.getByText('AtlanticPet')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /ownat/i })).toBeInTheDocument();
+    // El nombre de la categoría ya es el enlace, así que no hay «Ver todo».
+    expect(screen.queryByText(/ver todo/i)).not.toBeInTheDocument();
   });
 
   it('una marca SIN líneas es un enlace; una CON líneas las despliega', async () => {
