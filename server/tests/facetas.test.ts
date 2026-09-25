@@ -93,13 +93,21 @@ describe('los recuentos van a petición', () => {
     expect(res.body.total).toBe(4);
   });
 
-  it('con `facets=1` vienen las cuatro dimensiones, el precio y las ofertas', async () => {
+  it('con `facets=1` vienen las dimensiones, el tamaño, el precio y las ofertas', async () => {
     const f = await facetas();
     expect(Object.keys(f).sort()).toEqual(
-      ['animals', 'brands', 'categories', 'needs', 'ofertas', 'precio'].sort(),
+      ['animals', 'brands', 'categories', 'needs', 'sizes', 'ofertas', 'precio'].sort(),
     );
     expect(f.precio).toEqual({ min: 20, max: 30 });
     expect(f.ofertas).toBe(1);
+    // Los rangos de tamaño vienen siempre los cinco, aunque valgan cero.
+    expect(f.sizes.map((s: { slug: string }) => s.slug)).toEqual([
+      'hasta-1kg',
+      '1-3kg',
+      '3-7kg',
+      '7-15kg',
+      'mas-15kg',
+    ]);
   });
 });
 

@@ -262,7 +262,7 @@ export function ProductPage() {
             />
           )}
 
-          <Disponibilidad hay={hayExistencias} />
+          <Disponibilidad stock={variante?.stock ?? 0} />
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <Cantidad valor={cantidad} maximo={maximo} onCambiar={setCantidad} desactivado={!hayExistencias} />
@@ -447,11 +447,19 @@ function Formatos({
                 onChange={() => onElegir(v.id)}
                 className="sr-only"
               />
-              <span>{v.label}</span>
+              <span className="font-semibold">{v.label}</span>
               <span className={marcada ? 'text-brand-700' : 'text-content-muted'}>
                 {v.price == null ? 'Consultar' : eur(v.price)}
               </span>
-              {agotada && <span className="text-caption text-content-subtle">· agotado</span>}
+              {/*
+                El stock de CADA formato, tal como lo pidió Ivan. Se enseña el
+                número real (que hoy es 0 en todo el catálogo del proveedor, hasta
+                que se rellene en el panel): no es la urgencia inventada que se
+                evitaba antes, es el inventario de verdad de un formato concreto.
+              */}
+              <span className={`text-caption ${agotada ? 'text-content-subtle' : 'text-success'}`}>
+                {agotada ? '· agotado' : `· ${v.stock} en stock`}
+              </span>
             </label>
           );
         })}
@@ -460,20 +468,22 @@ function Formatos({
   );
 }
 
-function Disponibilidad({ hay }: { hay: boolean }) {
+function Disponibilidad({ stock }: { stock: number }) {
   /*
-   * Sólo dos estados, y ninguno inventa urgencia. Nada de «quedan 3»: el stock
-   * de la tienda es alto y uniforme, y fabricar escasez con él sería una
-   * presión falsa. Quien manda sobre si se puede comprar de verdad es el
-   * servidor, al reservar.
+   * La disponibilidad del formato ELEGIDO, con su número real, como pidió Ivan.
+   * Hoy es 0 en todo el catálogo del proveedor hasta que se rellene el stock en
+   * el panel. No es la urgencia inventada de antes —era el stock uniforme de la
+   * demo—: es el inventario de verdad de este formato. Quien manda sobre si se
+   * puede comprar es el servidor, al reservar.
    */
+  const hay = stock > 0;
   return (
     <p className={`mt-4 flex items-center gap-2 text-body-sm font-semibold ${hay ? 'text-success' : 'text-danger'}`}>
       <span
         aria-hidden="true"
         className={`h-2 w-2 shrink-0 rounded-pill ${hay ? 'bg-success' : 'bg-danger'}`}
       />
-      {hay ? 'Disponible' : 'Sin existencias en este formato'}
+      {hay ? `${stock} en stock` : 'Sin existencias en este formato'}
     </p>
   );
 }

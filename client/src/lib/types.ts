@@ -91,6 +91,8 @@ export type Facetas = {
   categories: Faceta[];
   needs: Faceta[];
   brands: Faceta[];
+  /** Rangos de tamaño por peso (Hasta 1 kg, 1–3 kg…). */
+  sizes: Faceta[];
   ofertas: number;
   precio: { min: number; max: number } | null;
 };

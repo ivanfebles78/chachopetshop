@@ -59,6 +59,7 @@ export function filtrosDeParams(params: URLSearchParams): ProductFilters {
     need: lista('need'),
     brand: lista('brand'),
     line: lista('line'),
+    size: lista('size'),
     q: params.get('q')?.trim() || undefined,
     minPrice: numero('minPrice'),
     maxPrice: numero('maxPrice'),
@@ -80,7 +81,8 @@ export function cuantosFiltros(f: ProductFilters): number {
     (f.minPrice !== undefined || f.maxPrice !== undefined ? 1 : 0) +
     (f.need?.length ?? 0) +
     (f.brand?.length ?? 0) +
-    (f.line?.length ?? 0)
+    (f.line?.length ?? 0) +
+    (f.size?.length ?? 0)
   );
 }
 
@@ -104,6 +106,7 @@ export function filtrosPuestos(f: ProductFilters, facetas: Facetas | undefined):
   for (const s of f.brand ?? []) puestos.push({ clave: 'brand', valor: s, etiqueta: nombre(facetas?.brands, s) });
   // La línea es un texto legible en sí mismo («Grain Free»), no un slug.
   for (const s of f.line ?? []) puestos.push({ clave: 'line', valor: s, etiqueta: s });
+  for (const s of f.size ?? []) puestos.push({ clave: 'size', valor: s, etiqueta: nombre(facetas?.sizes, s) });
   if (f.oferta) puestos.push({ clave: 'oferta', etiqueta: 'En oferta' });
   if (f.minPrice !== undefined || f.maxPrice !== undefined) {
     const desde = f.minPrice !== undefined ? `desde ${f.minPrice} €` : '';

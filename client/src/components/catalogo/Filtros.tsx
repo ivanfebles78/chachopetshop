@@ -28,8 +28,8 @@ type Props = {
   filtros: ProductFilters;
   /** Cambia un filtro de valor único (animal, categoría, oferta). */
   poner: (clave: string, valor: string | null) => void;
-  /** Marca o desmarca uno de los que admiten varios (necesidad, marca). */
-  alternar: (clave: 'need' | 'brand', slug: string) => void;
+  /** Marca o desmarca uno de los que admiten varios (necesidad, marca, tamaño). */
+  alternar: (clave: 'need' | 'brand' | 'size', slug: string) => void;
 };
 
 /** Las opciones que merecen enseñarse: con producto, o ya seleccionadas. */
@@ -114,6 +114,7 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
   const categorias = visibles(facetas.categories, filtros.category ? [filtros.category] : []);
   const necesidades = visibles(facetas.needs, filtros.need ?? []);
   const marcas = visibles(facetas.brands, filtros.brand ?? []);
+  const tamanos = visibles(facetas.sizes, filtros.size ?? []);
 
   return (
     <div className="space-y-6">
@@ -191,6 +192,27 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
                 faceta={m}
                 marcada={(filtros.brand ?? []).includes(m.slug)}
                 onChange={() => alternar('brand', m.slug)}
+              />
+            ))}
+          </div>
+        </Grupo>
+      )}
+
+      {/*
+        Tamaño por peso: rangos fijos (Hasta 1 kg, 1–3 kg…) que el servidor
+        cuenta sobre las variantes en gramos/mililitros. Un accesorio sin peso
+        no cae en ningún rango, así que no ensucia el recuento.
+      */}
+      {tamanos.length > 0 && (
+        <Grupo titulo="Tamaño">
+          <div className="-mx-2">
+            {tamanos.map((t) => (
+              <Opcion
+                key={t.slug}
+                nombre="size"
+                faceta={t}
+                marcada={(filtros.size ?? []).includes(t.slug)}
+                onChange={() => alternar('size', t.slug)}
               />
             ))}
           </div>

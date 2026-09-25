@@ -177,13 +177,13 @@ describe('formatos', () => {
     expect(screen.getByText(/sin existencias en este formato/i)).toBeInTheDocument();
   });
 
-  it('se dice si hay existencias, sin inventar urgencia', async () => {
+  it('se muestra el stock real del formato, sin lenguaje de urgencia', async () => {
     montar();
     await screen.findByRole('heading', { level: 1 });
-    expect(screen.getByText('Disponible')).toBeInTheDocument();
-    // Nada de «¡sólo quedan 3!»: el stock es alto y uniforme; fabricar escasez
-    // con él sería una presión falsa.
-    expect(document.body.textContent).not.toMatch(/quedan|últimas unidades|date prisa/i);
+    // Ivan pidió ver el stock de cada formato: se muestra el número real.
+    expect(screen.getAllByText(/en stock/i).length).toBeGreaterThan(0);
+    // Pero sin fabricar escasez: el dato es «N en stock», nunca «¡sólo quedan 3!».
+    expect(document.body.textContent).not.toMatch(/sólo quedan|últimas unidades|date prisa/i);
   });
 });
 

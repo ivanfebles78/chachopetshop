@@ -28,6 +28,7 @@ const FACETAS: Facetas = {
   categories: [{ slug: 'alimentacion-seca', nombre: 'Alimentación seca', total: 13 }],
   needs: [{ slug: 'digestivo', nombre: 'Digestivo sensible', total: 6 }],
   brands: [{ slug: 'ownat', nombre: 'Ownat', total: 3 }],
+  sizes: [{ slug: '3-7kg', nombre: '3 – 7 kg', total: 4 }],
   ofertas: 2,
   precio: { min: 1.35, max: 62.99 },
 };
