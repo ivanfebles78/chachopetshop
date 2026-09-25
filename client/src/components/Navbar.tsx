@@ -4,7 +4,8 @@ import { ChevronDown, Menu, Search, ShoppingBag, Truck, User, X } from 'lucide-r
 import { selectCount, useCart } from '@/store/cart';
 import { useAuth } from '@/store/auth';
 import { useNavegacion } from '@/lib/useNavegacion';
-import type { EntradaNav } from '@/lib/navigation';
+import type { MenuAnimal } from '@/lib/types';
+import { MenuArbol } from './MenuArbol';
 import { MobileNav } from './MobileNav';
 
 /**
@@ -48,21 +49,17 @@ function Logo() {
 }
 
 /** Un desplegable de la cabecera, con el patrón de divulgación. */
-function Desplegable({ entrada }: { entrada: EntradaNav }) {
+function Desplegable({ animal }: { animal: MenuAnimal }) {
   /*
-   * No basta con «abierto sí o no»: hace falta saber POR QUÉ está abierto.
+   * ABRE Y CIERRA CON CLIC, no con el ratón por encima.
    *
-   * El puntero abre al pasar por encima y el clic alterna, y las dos cosas se
-   * pelean, porque para pulsar hay que estar encima: al llegar al botón el
-   * ratón ya lo había abierto, así que el clic lo cerraba y ABRIR CON EL RATÓN
-   * ERA IMPOSIBLE. Con teclado no pasaba —no hay `mouseenter`—, de modo que el
-   * fallo sólo salía con el ratón, que es como entra casi todo el mundo.
-   *
-   * Distinguiendo el motivo, el clic sólo cierra lo que el propio clic abrió.
+   * El panel es un ACORDEÓN: dentro se despliegan categorías, marcas y líneas
+   * con más clics, y a veces se pone alto. Si se cerrara al salir el puntero,
+   * bastaría rozar el borde al bajar a una línea para perderlo todo. Con clic el
+   * panel se queda hasta que se pulsa fuera, se pulsa Escape o se sigue un
+   * enlace —que es justo lo que se espera de un menú que hay que recorrer—.
    */
-  const [modo, setModo] = useState<'cerrado' | 'puntero' | 'clic'>('cerrado');
-  const abierto = modo !== 'cerrado';
-  const setAbierto = (v: boolean) => setModo(v ? 'clic' : 'cerrado');
+  const [abierto, setAbierto] = useState(false);
   const contenedor = useRef<HTMLDivElement>(null);
   const disparador = useRef<HTMLButtonElement>(null);
   const panelId = useId();
@@ -92,83 +89,32 @@ function Desplegable({ entrada }: { entrada: EntradaNav }) {
     if (!e.currentTarget.contains(e.relatedTarget as Node)) setAbierto(false);
   };
 
-  if (!entrada.columnas) {
-    return (
-      <Link to={entrada.href} className="nav-link">
-        {entrada.etiqueta}
-      </Link>
-    );
-  }
-
   return (
-    <div
-      ref={contenedor}
-      className="relative"
-      /* El puntero sólo abre lo que estaba cerrado: nunca pisa un clic. */
-      onMouseEnter={() => setModo((m) => (m === 'cerrado' ? 'puntero' : m))}
-      /* Al salir se cierra, se hubiera abierto como se hubiera abierto. */
-      onMouseLeave={() => setModo('cerrado')}
-      onBlur={alPerderFoco}
-    >
+    <div ref={contenedor} className="relative" onBlur={alPerderFoco}>
       <button
         ref={disparador}
         type="button"
         className="nav-link"
         aria-expanded={abierto}
         aria-controls={panelId}
-        onClick={() => setModo((m) => (m === 'clic' ? 'cerrado' : 'clic'))}
+        onClick={() => setAbierto((v) => !v)}
       >
-        {entrada.etiqueta}
+        {animal.nombre}
         <ChevronDown className={`h-4 w-4 transition-transform ${abierto ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
 
       {abierto && (
         <div
           id={panelId}
-          className="absolute left-0 top-full z-50 w-max min-w-[34rem] max-w-[46rem] animate-slide-up rounded-card border border-edge-subtle bg-surface p-5 shadow-raised"
+          className="absolute left-0 top-full z-50 max-h-[80vh] w-80 overflow-y-auto animate-slide-up rounded-card border border-edge-subtle bg-surface p-2 shadow-raised"
         >
-          <div className="grid grid-cols-3 gap-5">
-            {entrada.columnas.map((col, i) => (
-              <div key={`${col.titulo}-${i}`}>
-                {col.titulo.trim() && <p className="menu-heading">{col.titulo}</p>}
-                <ul className="list-none space-y-0.5 p-0">
-                  {col.enlaces.map((enlace) => (
-                    <li key={enlace.href}>
-                      <Link
-                        to={enlace.href}
-                        className={enlace.nivel === 1 ? 'menu-link py-1 pl-5 text-body-sm text-content-muted' : 'menu-link'}
-                        onClick={() => setAbierto(false)}
-                      >
-                        <span>{enlace.etiqueta}</span>
-                        {/*
-                          El recuento sólo aparece si hay algo que contar.
-
-                          Desde la Fase 2I el menú enseña la estructura comercial
-                          completa, y muchas categorías todavía están vacías
-                          porque la mercancía entra después. Un «0» junto a cada
-                          nombre se lee como un error de la tienda, no como «aún
-                          no hay». El nombre ya lleva el significado; el número
-                          sólo aporta cuando es mayor que cero.
-                        */}
-                        {enlace.total > 0 && (
-                          <span className="text-caption text-content-subtle" aria-hidden="true">
-                            {enlace.total}
-                          </span>
-                        )}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          {entrada.verTodo && (
-            <div className="mt-4 border-t border-edge-subtle pt-3">
-              <Link to={entrada.verTodo.href} className="btn-link text-body-sm" onClick={() => setAbierto(false)}>
-                {entrada.verTodo.etiqueta} →
-              </Link>
-            </div>
-          )}
+          {/*
+            El menú en cascada: sólo se ven las categorías; al abrir una salen
+            sus marcas, y al abrir una marca con líneas, sus líneas. No se vuelca
+            todo de golpe. La lógica y el estado viven en `MenuArbol`, que se usa
+            igual aquí y en el cajón del móvil.
+          */}
+          <MenuArbol animal={animal} onNavegar={() => setAbierto(false)} />
         </div>
       )}
     </div>
@@ -179,7 +125,7 @@ export function Navbar() {
   const count = useCart(selectCount);
   const openCart = useCart((s) => s.open);
   const { user } = useAuth();
-  const entradas = useNavegacion();
+  const animales = useNavegacion();
   const [movilAbierto, setMovilAbierto] = useState(false);
   const [q, setQ] = useState('');
   const navigate = useNavigate();
@@ -217,8 +163,8 @@ export function Navbar() {
         <Logo />
 
         <nav aria-label="Catálogo" className="hidden items-center lg:flex">
-          {entradas.map((entrada) => (
-            <Desplegable key={entrada.etiqueta} entrada={entrada} />
+          {animales.map((animal) => (
+            <Desplegable key={animal.slug} animal={animal} />
           ))}
         </nav>
 
@@ -289,7 +235,7 @@ export function Navbar() {
 
       {movilAbierto && (
         <MobileNav
-          entradas={entradas}
+          animales={animales}
           conSesion={Boolean(user)}
           onClose={() => {
             setMovilAbierto(false);

@@ -80,12 +80,24 @@ const MENU = {
     {
       slug: 'perro',
       nombre: 'Perros',
-      total: 1,
+      total: 3,
       categorias: [
         {
           slug: 'alimentacion-seca',
           nombre: 'Alimentación seca',
           sortOrder: 1,
+          total: 3,
+          marcas: [
+            // Con líneas: es un desplegable.
+            { slug: 'atlanticpet', nombre: 'AtlanticPet', total: 2, lineas: [{ nombre: 'Grain Free', total: 2 }] },
+            // Sin líneas: es un enlace directo.
+            { slug: 'ownat', nombre: 'Ownat', total: 1, lineas: [] },
+          ],
+        },
+        {
+          slug: 'alimentacion-humeda',
+          nombre: 'Alimentación húmeda',
+          sortOrder: 2,
           total: 1,
           marcas: [{ slug: 'ownat', nombre: 'Ownat', total: 1, lineas: [] }],
         },
@@ -192,6 +204,47 @@ describe('la cabecera pinta el menú real', () => {
     await screen.findByRole('button', { name: /perros/i });
     // Gatos está en la taxonomía pero el catálogo de prueba no tiene ninguno.
     expect(screen.queryByRole('button', { name: /^gatos$/i })).not.toBeInTheDocument();
+  });
+});
+
+/* ══ 2b. El menú se despliega EN CASCADA, no todo de golpe ══════════════ */
+
+describe('el menú se despliega en cascada', () => {
+  const abrirPerros = async (user: ReturnType<typeof userEvent.setup>) => {
+    pintarCabecera();
+    await user.click(await screen.findByRole('button', { name: /perros/i }));
+  };
+
+  it('al abrir un animal se ven las CATEGORÍAS, y sus marcas siguen colapsadas', async () => {
+    const user = userEvent.setup();
+    await abrirPerros(user);
+    // Las cinco categorías (aquí dos) se ven como desplegables…
+    expect(screen.getByRole('button', { name: /alimentación seca/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /alimentación húmeda/i })).toBeInTheDocument();
+    // …pero NO sus marcas: no se vuelca todo de golpe.
+    expect(screen.queryByText('AtlanticPet')).not.toBeInTheDocument();
+  });
+
+  it('al pinchar una categoría salen sus marcas', async () => {
+    const user = userEvent.setup();
+    await abrirPerros(user);
+    await user.click(screen.getByRole('button', { name: /alimentación seca/i }));
+    expect(screen.getByText('AtlanticPet')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /ownat/i })).toBeInTheDocument();
+  });
+
+  it('una marca SIN líneas es un enlace; una CON líneas las despliega', async () => {
+    const user = userEvent.setup();
+    await abrirPerros(user);
+    await user.click(screen.getByRole('button', { name: /alimentación seca/i }));
+
+    // Ownat no tiene líneas: lleva directa a su página.
+    expect(screen.getByRole('link', { name: /ownat/i })).toBeInTheDocument();
+
+    // AtlanticPet sí: sus líneas están colapsadas hasta que se abre.
+    expect(screen.queryByRole('link', { name: /grain free/i })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /atlanticpet/i }));
+    expect(screen.getByRole('link', { name: /grain free/i })).toBeInTheDocument();
   });
 });
 
