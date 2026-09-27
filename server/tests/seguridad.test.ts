@@ -204,9 +204,9 @@ describe('integridad de precios', () => {
       });
 
     const pedido = await prisma.order.findFirst();
-    // Por debajo del umbral: 4,95 € de envío, lo diga el cliente o no.
-    expect(Number(pedido!.shipping)).toBe(4.95);
-    expect(Number(pedido!.total)).toBe(14.95);
+    // Por debajo del umbral: 5 € de envío, lo diga el cliente o no.
+    expect(Number(pedido!.shipping)).toBe(5);
+    expect(Number(pedido!.total)).toBe(15);
   });
 
   it('varias líneas del mismo producto se agrupan antes de mirar el stock', async () => {

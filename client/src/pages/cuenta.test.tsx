@@ -185,16 +185,16 @@ describe('el detalle del pedido', () => {
     await abrir();
     expect(screen.getByText('¿Necesitas ayuda con tu pedido?')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'chachopetshop@gmail.com' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '628 013 933' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: '689 73 22 67' })).toBeInTheDocument();
     expect(screen.queryByText(/solicitar devolución/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/días para devolver/i)).not.toBeInTheDocument();
   });
 
   it('el teléfono enlaza al número real, en formato marcable', async () => {
     await abrir();
-    expect(screen.getByRole('link', { name: '628 013 933' })).toHaveAttribute(
+    expect(screen.getByRole('link', { name: '689 73 22 67' })).toHaveAttribute(
       'href',
-      'tel:+34628013933',
+      'tel:+34689732267',
     );
   });
 

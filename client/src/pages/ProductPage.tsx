@@ -15,7 +15,7 @@ import { ErrorState } from '@/components/ErrorState';
 import { useCart } from '@/store/cart';
 import { toast } from '@/store/toast';
 
-const ENVIO_GRATIS_DESDE = 49;
+const ENVIO_GRATIS_DESDE = 30;
 
 /**
  * FICHA DE PRODUCTO.

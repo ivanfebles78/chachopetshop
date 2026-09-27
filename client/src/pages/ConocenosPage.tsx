@@ -28,7 +28,7 @@ const VALUES = [
  * que se mueven solas cuando la tienda crece y no hay que acordarse de nada.
  * Prefiero tres ciertas que cuatro con relleno.
  */
-const ENVIO_GRATIS_DESDE = 49;
+const ENVIO_GRATIS_DESDE = 30;
 
 export function ConocenosPage() {
   const nav = useNavegacion();

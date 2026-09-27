@@ -207,48 +207,49 @@ describe('la cabecera pinta el menú real', () => {
   });
 });
 
-/* ══ 2b. El menú se despliega EN CASCADA, no todo de golpe ══════════════ */
+/* ══ 2b. El menú de escritorio es un MEGA-MENÚ de dos paneles ═══════════ */
 
-describe('el menú se despliega en cascada', () => {
+describe('el mega-menú de escritorio abre las marcas a la derecha', () => {
   const abrirPerros = async (user: ReturnType<typeof userEvent.setup>) => {
     pintarCabecera();
     await user.click(await screen.findByRole('button', { name: /perros/i }));
   };
 
-  it('el NOMBRE de la categoría es un enlace a su página; la flecha, un botón', async () => {
+  it('el NOMBRE de la categoría es un enlace; la primera queda activa y muestra sus marcas', async () => {
     const user = userEvent.setup();
     await abrirPerros(user);
-    // El nombre lleva a la categoría entera (donde se filtra por marca).
+    // La categoría de la izquierda es un enlace a su página.
     const enlace = screen.getByRole('link', { name: /alimentación seca/i });
     expect(enlace.getAttribute('href')).toContain('category=alimentacion-seca');
-    // La flecha es un control aparte para desplegar, no para navegar.
-    expect(screen.getByRole('button', { name: /marcas de alimentación seca/i })).toBeInTheDocument();
-    // Y sus marcas siguen colapsadas: no se vuelca todo de golpe.
+    // Al abrir, la primera categoría queda activa: sus marcas ya se ven a la
+    // derecha, sin más clics. No hay que ir desplegando hacia abajo.
+    expect(screen.getByRole('link', { name: /^atlanticpet/i })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^ownat/i })).toBeInTheDocument();
+    // Y hay un «Ver todo» para ir a la categoría entera.
+    expect(screen.getByRole('link', { name: /ver todo/i })).toBeInTheDocument();
+  });
+
+  it('al posar el ratón sobre otra categoría, el panel derecho cambia', async () => {
+    const user = userEvent.setup();
+    await abrirPerros(user);
+    expect(screen.getByRole('link', { name: /^atlanticpet/i })).toBeInTheDocument();
+    // Húmeda sólo tiene Ownat: al posarse, AtlanticPet desaparece del panel.
+    await user.hover(screen.getByRole('link', { name: /alimentación húmeda/i }));
     expect(screen.queryByText('AtlanticPet')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^ownat/i })).toBeInTheDocument();
   });
 
-  it('al pulsar la flecha salen sus marcas, sin un «Ver todo» redundante', async () => {
+  it('al posar el ratón sobre una marca CON líneas, salen sus líneas a la derecha; una SIN líneas es enlace directo', async () => {
     const user = userEvent.setup();
     await abrirPerros(user);
-    await user.click(screen.getByRole('button', { name: /marcas de alimentación seca/i }));
-    expect(screen.getByText('AtlanticPet')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /ownat/i })).toBeInTheDocument();
-    // El nombre de la categoría ya es el enlace, así que no hay «Ver todo».
-    expect(screen.queryByText(/ver todo/i)).not.toBeInTheDocument();
-  });
-
-  it('una marca SIN líneas es un enlace; una CON líneas las despliega', async () => {
-    const user = userEvent.setup();
-    await abrirPerros(user);
-    await user.click(screen.getByRole('button', { name: /alimentación seca/i }));
-
-    // Ownat no tiene líneas: lleva directa a su página.
-    expect(screen.getByRole('link', { name: /ownat/i })).toBeInTheDocument();
-
-    // AtlanticPet sí: sus líneas están colapsadas hasta que se abre.
+    // Ownat no tiene líneas: es un enlace directo a su página de marca.
+    expect(screen.getByRole('link', { name: /^ownat/i }).getAttribute('href')).toContain('brand=ownat');
+    // Las líneas de AtlanticPet NO están hasta posar el ratón sobre la marca:
+    // es la tercera columna de la cascada, que sale a la derecha.
     expect(screen.queryByRole('link', { name: /grain free/i })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: /atlanticpet/i }));
-    expect(screen.getByRole('link', { name: /grain free/i })).toBeInTheDocument();
+    await user.hover(screen.getByRole('link', { name: /^atlanticpet/i }));
+    const grainFree = screen.getByRole('link', { name: /grain free/i });
+    expect(grainFree.getAttribute('href')).toContain('line=Grain');
   });
 });
 

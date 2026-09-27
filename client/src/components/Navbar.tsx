@@ -5,7 +5,7 @@ import { selectCount, useCart } from '@/store/cart';
 import { useAuth } from '@/store/auth';
 import { useNavegacion } from '@/lib/useNavegacion';
 import type { MenuAnimal } from '@/lib/types';
-import { MenuArbol } from './MenuArbol';
+import { MegaMenu } from './MegaMenu';
 import { MobileNav } from './MobileNav';
 
 /**
@@ -106,15 +106,15 @@ function Desplegable({ animal }: { animal: MenuAnimal }) {
       {abierto && (
         <div
           id={panelId}
-          className="absolute left-0 top-full z-50 max-h-[80vh] w-80 overflow-y-auto animate-slide-up rounded-card border border-edge-subtle bg-surface p-2 shadow-raised"
+          className="absolute left-0 top-full z-50 mt-1 animate-slide-up rounded-card border border-edge-subtle bg-surface p-3 shadow-raised"
         >
           {/*
-            El menú en cascada: sólo se ven las categorías; al abrir una salen
-            sus marcas, y al abrir una marca con líneas, sus líneas. No se vuelca
-            todo de golpe. La lógica y el estado viven en `MenuArbol`, que se usa
-            igual aquí y en el cajón del móvil.
+            Mega-menú de dos paneles: categorías en columna a la izquierda y, al
+            posar el ratón o el foco sobre una, sus marcas se abren a la derecha
+            en horizontal. En móvil no cabe: allí se usa `MenuArbol` (acordeón)
+            desde `MobileNav`.
           */}
-          <MenuArbol animal={animal} onNavegar={() => setAbierto(false)} />
+          <MegaMenu animal={animal} onNavegar={() => setAbierto(false)} />
         </div>
       )}
     </div>
@@ -149,7 +149,7 @@ export function Navbar() {
         <div className="container-page flex min-h-9 flex-wrap items-center justify-between gap-x-4 py-1.5 text-caption">
           <span className="flex items-center gap-2">
             <Truck className="h-4 w-4 shrink-0 text-amber-400" aria-hidden="true" />
-            Envío 24-48h en Canarias · Gratis desde 49&nbsp;€
+            Envío 24-48h en Canarias · Gratis desde 30&nbsp;€
           </span>
           <nav aria-label="Enlaces de ayuda" className="hidden items-center gap-4 sm:flex">
             <Link to="/conocenos" className="hover:text-amber-400">Conócenos</Link>

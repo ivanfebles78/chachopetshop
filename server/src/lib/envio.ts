@@ -16,9 +16,9 @@
  */
 export const ENVIO = {
   /** A partir de este importe (subtotal, en euros) el envío no se cobra. */
-  GRATIS_DESDE: 49,
+  GRATIS_DESDE: 30,
   /** Lo que se cobra por debajo del umbral. */
-  TARIFA: 4.95,
+  TARIFA: 5,
   /**
    * Dónde se entrega. Ya NO es sólo una frase de la cabecera: desde la Fase 2D
    * el checkout comprueba el código postal y rechaza lo que no se puede
