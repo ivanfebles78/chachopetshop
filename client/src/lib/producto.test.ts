@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { datosEstructuradosProducto, fichaTecnica, motivoRelacionado } from './producto';
+import { datosEstructuradosProducto, esMarcaSoloEnTienda, fichaTecnica, motivoRelacionado } from './producto';
 import type { Product } from './types';
 
 const producto = (o: Partial<Product> = {}): Product => ({
@@ -104,7 +104,9 @@ describe('los datos estructurados son ciertos', () => {
     expect(d.offers.priceCurrency).toBe('EUR');
   });
 
-  it('si el formato barato está agotado, el precio declarado es el que sí se puede comprar', () => {
+  it('el precio declarado es el del formato más barato, aunque esté agotado (se encarga)', () => {
+    // Encargo: todos los formatos son pedibles, así que el precio anunciado es
+    // el mínimo, esté o no en existencias el más barato.
     const p = producto({
       variants: [
         { id: 'v1', label: '2 kg', price: 34.5, sku: 's1', stock: 0 },
@@ -112,10 +114,10 @@ describe('los datos estructurados son ciertos', () => {
       ],
     });
     const d = datosEstructuradosProducto(p, 'https://x.test') as never as { offers: { price: string } };
-    expect(d.offers.price).toBe('112.00');
+    expect(d.offers.price).toBe('34.50');
   });
 
-  it('la disponibilidad sale del stock real, no se pone por costumbre', () => {
+  it('un producto agotado se declara BackOrder (se puede encargar), no OutOfStock', () => {
     const conStock = datosEstructuradosProducto(producto(), 'https://x.test') as never as {
       offers: { availability: string };
     };
@@ -127,7 +129,7 @@ describe('los datos estructurados son ciertos', () => {
     const sinStock = datosEstructuradosProducto(agotado, 'https://x.test') as never as {
       offers: { availability: string };
     };
-    expect(sinStock.offers.availability).toBe('https://schema.org/OutOfStock');
+    expect(sinStock.offers.availability).toBe('https://schema.org/BackOrder');
   });
 
   it('la url del ofrecimiento es la de la ficha', () => {
@@ -165,5 +167,22 @@ describe('los relacionados dicen por qué lo son', () => {
     const t = motivoRelacionado([{}], undefined, undefined);
     expect(t).toBe('También te puede servir');
     expect(t).not.toMatch(/para ti|recomendado para|personaliz/i);
+  });
+});
+
+/* ══ Marcas que sólo se venden en tienda (Gosbi) ═══════════════════════ */
+
+describe('marcas sólo en tienda', () => {
+  const conMarca = (name: string, slug: string): Product =>
+    producto({ brand: { id: 'b', name, slug, logoUrl: null, featured: false } });
+
+  it('Gosbi es sólo en tienda (por slug o por nombre)', () => {
+    expect(esMarcaSoloEnTienda(conMarca('Gosbi', 'gosbi'))).toBe(true);
+    expect(esMarcaSoloEnTienda(conMarca('GOSBI Exclusive', 'gosbi-exclusive'))).toBe(true);
+  });
+
+  it('el resto de marcas se venden online', () => {
+    expect(esMarcaSoloEnTienda(conMarca('Ownat', 'ownat'))).toBe(false);
+    expect(esMarcaSoloEnTienda(conMarca('AtlanticPet', 'atlanticpet'))).toBe(false);
   });
 });

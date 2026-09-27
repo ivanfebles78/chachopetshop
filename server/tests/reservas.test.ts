@@ -146,12 +146,13 @@ describe('mientras la reserva está viva', () => {
     expect(stockReservado).toBe(10 - cantidad);
   });
 
-  it('otro comprador no puede llevarse lo reservado', async () => {
+  it('otro comprador puede ENCARGARLO aunque no queden existencias', async () => {
     /*
-     * La reserva la sostiene un pedido PENDIENTE. Se crea directamente en la
-     * base de datos y no pasando por el checkout, porque con una clave de
-     * Stripe falsa toda compra acaba fallando y soltando lo suyo: por ese
-     * camino no se puede observar una reserva viva.
+     * MODELO DE ENCARGO. Antes, un formato agotado o ya reservado se rechazaba
+     * con 409. Ahora se puede pedir igual: la tienda lo repone. Se comprueba que
+     * el segundo comprador NO se topa con el control de stock —el pedido se crea
+     * y sólo se queda a medias en el paso de Stripe, por la clave falsa de las
+     * pruebas—, y que en ningún caso se le contesta «no hay stock».
      */
     const { producto, variante } = await crearPedidoPendiente({ cantidad: 1, stock: 1 });
     expect(await stockDe(variante.id)).toBe(0);
@@ -164,9 +165,11 @@ describe('mientras la reserva está viva', () => {
         shipping: DIRECCION_CANARIA,
       });
 
-    expect(otro.status).toBe(409);
-    expect(otro.body.error).toMatch(/stock/i);
-    expect(await stockDe(variante.id)).toBe(0);
+    // Ya no se rechaza por falta de stock.
+    expect(otro.status).not.toBe(409);
+    expect(otro.body.error ?? '').not.toMatch(/stock/i);
+    // Y el pedido llegó a crearse: el encargo pasó el control de existencias.
+    expect(await prisma.order.findFirst({ where: { email: 'dos@ejemplo.test' } })).not.toBeNull();
   });
 });
 
@@ -431,8 +434,8 @@ describe('el webhook y la limpieza no se pisan', () => {
 
 /* ══ 8. El stock nunca queda negativo ═════════════════════════════════════ */
 
-describe('el stock nunca queda negativo', () => {
-  it('ni con la última unidad disputada y la limpieza de por medio', async () => {
+describe('el encargo no se bloquea por falta de stock', () => {
+  it('dos personas pueden pedir el último formato, sin 409', async () => {
     const { producto, variante } = await crearProducto({ stock: 1, precio: 20 });
     const servidor = await app();
 
@@ -447,13 +450,9 @@ describe('el stock nunca queda negativo', () => {
 
     const [a, b] = await Promise.all([comprar('uno'), comprar('dos')]);
 
-    // Uno de los dos se queda sin stock; el otro falla en Stripe (clave falsa)
-    // y devuelve su reserva. En ningún caso el stock baja de cero.
-    expect([a.status, b.status]).toContain(409);
-    const stock = await stockDe(variante.id);
-    expect(stock).toBeGreaterThanOrEqual(0);
-
-    await liberarReservasVencidas(tras(60));
-    expect(await stockDe(variante.id)).toBeGreaterThanOrEqual(0);
+    // Encargo: a ninguna se le dice «no hay stock». Ambas pasan el control de
+    // existencias (y sólo se quedan a medias en Stripe, por la clave falsa).
+    expect(a.status).not.toBe(409);
+    expect(b.status).not.toBe(409);
   });
 });

@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Check, ChevronRight, CreditCard, Minus, Plus, ShoppingBag, Truck } from 'lucide-react';
+import { Check, ChevronRight, CreditCard, MessageCircle, Minus, Phone, Plus, ShoppingBag, Truck } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { eur } from '@/lib/cn';
+import { EMPRESA, enlaceTelefono, enlaceWhatsApp } from '@/lib/empresa';
+import { esMarcaSoloEnTienda } from '@/lib/producto';
 import { useSeo } from '@/lib/useSeo';
 import { fichaTecnica, datosEstructuradosProducto, motivoRelacionado } from '@/lib/producto';
 import { Galeria } from '@/components/producto/Galeria';
@@ -52,16 +54,13 @@ export function ProductPage() {
   const producto = data?.product;
 
   /*
-   * La variante elegida, o la primera QUE SE PUEDA COMPRAR.
-   *
-   * Empezar por `variants[0]` a secas dejaba preseleccionado un formato agotado
-   * siempre que fuera el más barato, que es justo el orden en que llegan.
+   * La variante elegida, o la primera. Ya no se prefiere «la que tenga stock»:
+   * se puede encargar cualquier formato, esté o no en existencias.
    */
   const variante = useMemo(() => {
     if (!producto) return undefined;
     const elegida = producto.variants.find((v) => v.id === variantId);
-    if (elegida) return elegida;
-    return producto.variants.find((v) => v.stock > 0) ?? producto.variants[0];
+    return elegida ?? producto.variants[0];
   }, [producto, variantId]);
 
   /*
@@ -75,8 +74,13 @@ export function ProductPage() {
   const precio = precioReal ?? 0;
   const rebajado = !sinPrecio && producto?.compareAt != null && producto.compareAt > precio;
   const ahorro = rebajado ? Math.round((1 - precio / (producto!.compareAt as number)) * 100) : 0;
-  const hayExistencias = variante ? variante.stock > 0 : false;
-  const maximo = Math.max(1, Math.min(variante?.stock ?? 1, 20));
+  /*
+   * ENCARGO: no se enseña el stock ni se bloquea la compra por él. Un formato
+   * agotado se puede pedir igual (la tienda lo repone). Lo único que impide
+   * comprar es que el precio no esté fijado todavía.
+   */
+  const soloEnTienda = producto ? esMarcaSoloEnTienda(producto) : false;
+  const MAXIMO_POR_PEDIDO = 20;
 
   useSeo({
     titulo: producto ? `${producto.name} · ${producto.brand.name}` : 'Producto',
@@ -137,7 +141,7 @@ export function ProductPage() {
   const animal = producto.animals[0];
 
   const anadir = () => {
-    if (!hayExistencias || sinPrecio) return;
+    if (sinPrecio || soloEnTienda) return;
     add({
       productId: producto.id,
       variantId: variante?.id,
@@ -262,28 +266,30 @@ export function ProductPage() {
             />
           )}
 
-          <Disponibilidad stock={variante?.stock ?? 0} />
-
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <Cantidad valor={cantidad} maximo={maximo} onCambiar={setCantidad} desactivado={!hayExistencias} />
-            <button
-              type="button"
-              onClick={anadir}
-              disabled={!hayExistencias || sinPrecio}
-              className="btn btn-lg btn-primary flex-1 justify-center disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {anadido ? (
-                <>
-                  <Check className="h-5 w-5" aria-hidden="true" /> Añadido
-                </>
-              ) : (
-                <>
-                  <ShoppingBag className="h-5 w-5" aria-hidden="true" />
-                  {!hayExistencias ? 'Sin existencias' : precio > 0 ? `Añadir · ${eur(precio * cantidad)}` : 'Añadir al carrito'}
-                </>
-              )}
-            </button>
-          </div>
+          {soloEnTienda ? (
+            <ConsultarEnTienda nombre={producto.name} />
+          ) : (
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Cantidad valor={cantidad} maximo={MAXIMO_POR_PEDIDO} onCambiar={setCantidad} desactivado={sinPrecio} />
+              <button
+                type="button"
+                onClick={anadir}
+                disabled={sinPrecio}
+                className="btn btn-lg btn-primary flex-1 justify-center disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {anadido ? (
+                  <>
+                    <Check className="h-5 w-5" aria-hidden="true" /> Añadido
+                  </>
+                ) : (
+                  <>
+                    <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+                    {sinPrecio ? 'Precio a consultar' : precio > 0 ? `Añadir · ${eur(precio * cantidad)}` : 'Añadir al carrito'}
+                  </>
+                )}
+              </button>
+            </div>
+          )}
 
           {/*
             Después de añadir NO se navega a ninguna parte: quien está mirando
@@ -401,15 +407,15 @@ export function ProductPage() {
  * recorren y el lector de pantalla dice «1 de 2». Con `<button>` habría que
  * programar todo eso a mano, y no estaba.
  *
- * Un formato agotado se ENSEÑA y se DESACTIVA. Esconderlo haría creer que no
- * existe; dejarlo pulsable lleva a un carrito que falla al pagar.
+ * Ya NO se enseña el stock ni se desactiva ningún formato: se puede encargar
+ * cualquiera. Cada formato lleva su precio, que es lo que decide la compra.
  */
 function Formatos({
   variantes,
   elegida,
   onElegir,
 }: {
-  variantes: { id: string; label: string; price: number | null; stock: number }[];
+  variantes: { id: string; label: string; price: number | null }[];
   elegida?: { id: string };
   onElegir: (id: string) => void;
 }) {
@@ -429,36 +435,25 @@ function Formatos({
       </legend>
       <div className="flex flex-wrap gap-2">
         {variantes.map((v) => {
-          const agotada = v.stock <= 0;
           const marcada = elegida?.id === v.id;
           return (
             <label
               key={v.id}
               className={`relative flex min-h-11 cursor-pointer items-center gap-2 rounded-control border px-4 text-body-sm transition-colors ${
                 marcada ? 'border-brand-600 bg-brand-50 font-bold text-brand-700' : 'border-edge bg-surface text-content hover:border-brand-300'
-              } ${agotada ? 'cursor-not-allowed opacity-45' : ''}`}
+              }`}
             >
               <input
                 type="radio"
                 name="formato"
                 value={v.id}
                 checked={marcada}
-                disabled={agotada}
                 onChange={() => onElegir(v.id)}
                 className="sr-only"
               />
               <span className="font-semibold">{v.label}</span>
               <span className={marcada ? 'text-brand-700' : 'text-content-muted'}>
                 {v.price == null ? 'Consultar' : eur(v.price)}
-              </span>
-              {/*
-                El stock de CADA formato, tal como lo pidió Ivan. Se enseña el
-                número real (que hoy es 0 en todo el catálogo del proveedor, hasta
-                que se rellene en el panel): no es la urgencia inventada que se
-                evitaba antes, es el inventario de verdad de un formato concreto.
-              */}
-              <span className={`text-caption ${agotada ? 'text-content-subtle' : 'text-success'}`}>
-                {agotada ? '· agotado' : `· ${v.stock} en stock`}
               </span>
             </label>
           );
@@ -468,23 +463,40 @@ function Formatos({
   );
 }
 
-function Disponibilidad({ stock }: { stock: number }) {
-  /*
-   * La disponibilidad del formato ELEGIDO, con su número real, como pidió Ivan.
-   * Hoy es 0 en todo el catálogo del proveedor hasta que se rellene el stock en
-   * el panel. No es la urgencia inventada de antes —era el stock uniforme de la
-   * demo—: es el inventario de verdad de este formato. Quien manda sobre si se
-   * puede comprar es el servidor, al reservar.
-   */
-  const hay = stock > 0;
+/**
+ * Bloque de «sólo en tienda» (Gosbi): en vez de comprar, se llama o se escribe.
+ * Los botones sólo salen si hay número configurado; el texto se prellena con el
+ * producto para que la consulta llegue con contexto.
+ */
+function ConsultarEnTienda({ nombre }: { nombre: string }) {
+  const wa = enlaceWhatsApp(`¡Hola! Quería consultar por ${nombre} (Gosbi).`);
+  const tel = enlaceTelefono();
   return (
-    <p className={`mt-4 flex items-center gap-2 text-body-sm font-semibold ${hay ? 'text-success' : 'text-danger'}`}>
-      <span
-        aria-hidden="true"
-        className={`h-2 w-2 shrink-0 rounded-pill ${hay ? 'bg-success' : 'bg-danger'}`}
-      />
-      {hay ? `${stock} en stock` : 'Sin existencias en este formato'}
-    </p>
+    <div className="mt-5 rounded-card border border-edge bg-surface-sunken p-4">
+      <p className="text-body-sm font-semibold text-content">Disponible en tienda</p>
+      <p className="mt-1 text-body-sm text-content-muted">
+        Esta marca no se vende online. Escríbenos o llámanos y te atendemos.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-3">
+        {wa && (
+          <a
+            href={wa}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-md flex-1 justify-center bg-[#25D366] text-white hover:brightness-95"
+          >
+            <MessageCircle className="h-5 w-5" aria-hidden="true" />
+            Consultar por WhatsApp
+          </a>
+        )}
+        {tel && (
+          <a href={tel} className="btn btn-md btn-ghost flex-1 justify-center">
+            <Phone className="h-5 w-5" aria-hidden="true" />
+            Llamar {EMPRESA.telefono}
+          </a>
+        )}
+      </div>
+    </div>
   );
 }
 

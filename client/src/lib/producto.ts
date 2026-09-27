@@ -1,6 +1,22 @@
 import type { Product } from './types';
 
 /**
+ * MARCAS QUE NO SE VENDEN ONLINE — SÓLO EN TIENDA.
+ *
+ * Algunas marcas (Gosbi, por decisión de la tienda) no se compran por la web:
+ * quien las quiere llama o escribe por WhatsApp. En lugar del botón de comprar,
+ * su ficha y su tarjeta enseñan «Consultar en tienda». La regla vive AQUÍ, en un
+ * solo sitio, para que la ficha y la tarjeta no puedan discrepar.
+ */
+const MARCAS_SOLO_EN_TIENDA = ['gosbi'];
+
+export function esMarcaSoloEnTienda(p: Product): boolean {
+  const slug = p.brand.slug.toLowerCase();
+  const nombre = p.brand.name.toLowerCase();
+  return MARCAS_SOLO_EN_TIENDA.some((m) => slug.includes(m) || nombre.includes(m));
+}
+
+/**
  * LA FICHA, CONSTRUIDA CON LO QUE HAY.
  *
  * El encargo sugería secciones de Ingredientes, Composición y Tabla de
@@ -115,11 +131,11 @@ export function esEan13(codigo: string | undefined): boolean {
 }
 
 export function datosEstructuradosProducto(p: Product, origen: string): Record<string, unknown> {
-  const comprables = p.variants.filter((v) => v.stock > 0);
-  const hayStock = p.variants.length === 0 || comprables.length > 0;
-  const precios = (comprables.length ? comprables : p.variants)
-    .map((v) => v.price)
-    .filter((x): x is number => x != null);
+  // Encargo: todos los formatos son pedibles, así que el precio sale del más
+  // barato SIN mirar el stock. La disponibilidad distingue «en stock» de «bajo
+  // pedido» (BackOrder), no «agotado»: agotado no es que no se pueda comprar.
+  const enStock = p.variants.length === 0 || p.variants.some((v) => v.stock > 0);
+  const precios = p.variants.map((v) => v.price).filter((x): x is number => x != null);
   const precio = precios.length ? Math.min(...precios) : p.price;
 
   return {
@@ -153,9 +169,9 @@ export function datosEstructuradosProducto(p: Product, origen: string): Record<s
             url: `${origen}/producto/${p.slug}`,
             priceCurrency: 'EUR',
             price: precio.toFixed(2),
-            availability: hayStock
+            availability: enStock
               ? 'https://schema.org/InStock'
-              : 'https://schema.org/OutOfStock',
+              : 'https://schema.org/BackOrder',
             itemCondition: 'https://schema.org/NewCondition',
           },
         }

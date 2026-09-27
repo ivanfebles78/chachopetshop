@@ -146,38 +146,34 @@ async function construirLineas(input: Entrada) {
 }
 
 /**
- * Reserva existencias de forma ATÓMICA.
+ * Descuenta existencias — MODELO DE ENCARGO.
  *
- * Estrategia elegida: **descontar al crear la sesión de pago y devolver si el
- * pago no llega a buen puerto** (opción A del análisis, con liberación
- * determinista). La alternativa —descontar sólo tras el pago verificado— evita
- * retenciones fantasma, pero permite que dos personas paguen la misma última
- * unidad y obliga a devolver el dinero a una de ellas. En una tienda con dos o
- * tres sacos de cada formato, vender algo que no existe es peor que retener una
- * unidad diez minutos.
+ * Ivan quiere que la tienda venda POR ENCARGO: si un formato está agotado, se
+ * puede pedir igual y la tienda lo repone. Así que aquí ya NO se rechaza por
+ * falta de stock ni se exige `stock >= n`: se descuenta siempre, y el stock
+ * puede quedar en NEGATIVO. Ese negativo es útil —en el panel se ve cuántas
+ * unidades hay que reponer para servir lo ya pedido—.
  *
- * La atomicidad la da `updateMany` con la condición en el propio WHERE: es un
- * único `UPDATE ... WHERE stock >= n`, y PostgreSQL bloquea la fila. Leer y
- * luego escribir —el patrón evidente— tiene una ventana entre las dos
- * operaciones por la que caben dos compradores.
+ * Se mantiene el descuento al crear la sesión y la DEVOLUCIÓN si el pago no
+ * llega (para que un pago rechazado no deje el contador falseado), y se sigue
+ * usando `updateMany` con `decrement`, que es atómico a nivel de fila en
+ * PostgreSQL. Lo único que desaparece es la barrera anti-sobreventa: la
+ * sobreventa ahora es deliberada, es lo que significa «encargo».
  */
 async function reservar(lineas: { variantId: string | null; quantity: number }[]) {
   const reservadas: { variantId: string; quantity: number }[] = [];
   try {
     for (const linea of lineas) {
       if (!linea.variantId) continue;
-      const { count } = await prisma.productVariant.updateMany({
-        where: { id: linea.variantId, stock: { gte: linea.quantity } },
+      await prisma.productVariant.updateMany({
+        where: { id: linea.variantId },
         data: { stock: { decrement: linea.quantity } },
       });
-      if (count === 0) {
-        throw errorDeCliente('No hay stock suficiente para completar el pedido', 409);
-      }
       reservadas.push({ variantId: linea.variantId, quantity: linea.quantity });
     }
     return reservadas;
   } catch (err) {
-    // Lo ya reservado en este intento se devuelve antes de propagar el error.
+    // Lo ya descontado en este intento se devuelve antes de propagar el error.
     await devolver(reservadas);
     throw err;
   }

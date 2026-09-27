@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, Store } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import { cn, eur } from '@/lib/cn';
+import { esMarcaSoloEnTienda } from '@/lib/producto';
 import { useCart } from '@/store/cart';
 import { ImagenProducto } from './ImagenProducto';
 import { toast } from '@/store/toast';
@@ -15,18 +16,10 @@ export function ProductCard({ product }: { product: Product }) {
   const hasDiscount = product.compareAt != null && price != null && product.compareAt > price;
   const descuento = hasDiscount && price != null ? Math.round((1 - price / product.compareAt!) * 100) : 0;
 
-  /*
-   * Disponibilidad, sólo cuando es fiable y sólo cuando dice algo.
-   *
-   * Se anuncia Únicamente el caso negativo —no queda ninguna unidad de ninguna
-   * variante—, porque es el único que le cambia la decisión a quien mira. Nada
-   * de «¡sólo quedan 3!»: el stock de la semilla es alto y uniforme, y crear
-   * urgencia con él sería inventarse una escasez que no existe.
-   *
-   * Y esto es INFORMATIVO: quien decide de verdad si se puede comprar es el
-   * servidor, en la reserva de la Fase 1. Aquí sólo se evita el paseo.
-   */
-  const sinExistencias = product.variants.length > 0 && product.variants.every((v) => v.stock <= 0);
+  // Ya no se enseña el stock: todo se puede encargar aunque esté agotado. Lo que
+  // sí cambia la tarjeta es si la marca sólo se vende en tienda (Gosbi): esas no
+  // llevan botón de compra rápida, sólo enlazan a su ficha para consultar.
+  const soloEnTienda = esMarcaSoloEnTienda(product);
   /* Los formatos disponibles: «2 kg · 11,4 kg» dice más que «desde 34,50 €» solo. */
   const formatos = product.variants.map((v) => v.label);
 
@@ -97,9 +90,10 @@ export function ProductCard({ product }: { product: Product }) {
               En la tarjeta se queda SÓLO el descuento, que es un dato duro y
               cambia la decisión de compra.
             */}
-            {sinExistencias && (
-              <span className="rounded-full bg-content px-2.5 py-1 text-xs font-semibold text-cream">
-                Sin stock
+            {soloEnTienda && (
+              <span className="flex items-center gap-1 rounded-full bg-content px-2.5 py-1 text-xs font-semibold text-cream">
+                <Store className="h-3 w-3" aria-hidden="true" />
+                Sólo en tienda
               </span>
             )}
           </div>
@@ -112,7 +106,7 @@ export function ProductCard({ product }: { product: Product }) {
             Ahora se ve siempre por debajo de `sm` —donde no hay puntero— y
             aparece al enfocarlo con el teclado.
           */}
-          {!sinExistencias && !sinPrecio && (
+          {!sinPrecio && !soloEnTienda && (
           <button
             onClick={quickAdd}
             aria-label={`Añadir ${product.name} al carrito`}

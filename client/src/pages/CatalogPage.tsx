@@ -1,8 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ChevronRight, PackageOpen, SearchX, SlidersHorizontal, X } from 'lucide-react';
-import { api } from '@/lib/api';
-import { useFetch } from '@/lib/useFetch';
+import { ChevronRight, Loader2, PackageOpen, SearchX, SlidersHorizontal, X } from 'lucide-react';
+import { useCatalogoInfinito } from '@/lib/useCatalogoInfinito';
 import {
   ORDENES,
   cuantosFiltros,
@@ -42,9 +41,25 @@ export function CatalogPage() {
   const [cajonAbierto, setCajonAbierto] = useState(false);
 
   const filtros = useMemo(() => filtrosDeParams(params), [params]);
-  const { data, loading, error, refetch } = useFetch(() => api.products(filtros), [params.toString()]);
+  const { items, facets: facetas, total, cargando, cargandoMas, error, hayMas, refetch, cargarMas } =
+    useCatalogoInfinito(filtros, params.toString());
 
-  const facetas = data?.facets;
+  // Centinela al final de la lista: cuando asoma, se pide la página siguiente.
+  const centinela = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const nodo = centinela.current;
+    if (!nodo || !hayMas) return;
+    const obs = new IntersectionObserver(
+      (entradas) => {
+        if (entradas[0]?.isIntersecting) cargarMas();
+      },
+      // Se adelanta 600px para que la carga empiece antes de llegar al borde.
+      { rootMargin: '600px' },
+    );
+    obs.observe(nodo);
+    return () => obs.disconnect();
+  }, [hayMas, cargarMas]);
+
   const titulo = tituloDe(filtros, facetas);
   const puestos = filtrosPuestos(filtros, facetas);
   const nFiltros = cuantosFiltros(filtros);
@@ -53,8 +68,8 @@ export function CatalogPage() {
   useSeo({
     titulo,
     descripcion:
-      data && facetas
-        ? `${data.total} ${data.total === 1 ? 'producto' : 'productos'} de ${titulo.toLowerCase()} en Chacho Pet Shop. Envío en 24-48 h a toda Canarias.`
+      !cargando && facetas
+        ? `${total} ${total === 1 ? 'producto' : 'productos'} de ${titulo.toLowerCase()} en Chacho Pet Shop. Envío en 24-48 h a toda Canarias.`
         : undefined,
     canonica: canonicaDeCatalogo(window.location.origin, '/tienda', params),
     // Los resultados de búsqueda son infinitos y distintos para cada persona:
@@ -102,9 +117,9 @@ export function CatalogPage() {
       <header className="mt-4">
         <h1 className="font-display text-display font-extrabold tracking-tight text-content">{titulo}</h1>
         <p className="mt-1 text-body-sm text-content-muted" aria-live="polite">
-          {loading && !data
+          {cargando && items.length === 0
             ? 'Buscando…'
-            : `${data?.total ?? 0} ${data?.total === 1 ? 'producto' : 'productos'}`}
+            : `${total} ${total === 1 ? 'producto' : 'productos'}`}
         </p>
       </header>
 
@@ -152,14 +167,14 @@ export function CatalogPage() {
         <div className="min-w-0 flex-1">
           <div className="mb-5 hidden items-center justify-between gap-4 lg:flex">
             <p className="text-body-sm text-content-muted">
-              {data ? `Mostrando ${data.items.length} de ${data.total}` : ' '}
+              {!cargando && total > 0 ? `Mostrando ${items.length} de ${total}` : ' '}
             </p>
             <Orden valor={filtros.sort ?? 'relevance'} onChange={(v) => poner('sort', v)} className="w-56 shrink-0" />
           </div>
 
-          {error ? (
+          {error && items.length === 0 ? (
             <ErrorState message={error} onRetry={refetch} />
-          ) : loading ? (
+          ) : cargando ? (
             <ul className="grid list-none grid-cols-2 gap-4 p-0 sm:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <li key={i}>
@@ -167,21 +182,32 @@ export function CatalogPage() {
                 </li>
               ))}
             </ul>
-          ) : data && data.items.length > 0 ? (
+          ) : items.length > 0 ? (
             <>
               <ul className="grid list-none grid-cols-2 gap-4 p-0 sm:grid-cols-3 xl:grid-cols-4">
-                {data.items.map((p) => (
+                {items.map((p) => (
                   <li key={p.id}>
                     <ProductCard product={p} />
                   </li>
                 ))}
               </ul>
-              {data.totalPages > 1 && (
-                <Paginacion
-                  pagina={data.page}
-                  total={data.totalPages}
-                  onIr={(n) => poner('page', String(n))}
-                />
+
+              {/*
+                Carga por scroll: el centinela dispara la página siguiente antes
+                de llegar al final. Cuando ya no hay más, se dice —para que no
+                parezca que falta algo por cargar—.
+              */}
+              <div ref={centinela} aria-hidden="true" className="h-px" />
+              {cargandoMas && (
+                <p className="mt-8 flex items-center justify-center gap-2 text-body-sm text-content-muted" aria-live="polite">
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  Cargando más productos…
+                </p>
+              )}
+              {!hayMas && items.length >= 12 && (
+                <p className="mt-8 text-center text-body-sm text-content-subtle">
+                  Has visto los {total} {total === 1 ? 'producto' : 'productos'}.
+                </p>
               )}
             </>
           ) : (
@@ -210,7 +236,7 @@ export function CatalogPage() {
           onCerrar={() => setCajonAbierto(false)}
           onLimpiar={limpiar}
           nFiltros={nFiltros}
-          total={data?.total ?? 0}
+          total={total}
         >
           <Filtros facetas={facetas} filtros={filtros} poner={poner} alternar={alternar} />
         </CajonFiltros>
@@ -442,37 +468,3 @@ function SinResultados({
   );
 }
 
-function Paginacion({
-  pagina,
-  total,
-  onIr,
-}: {
-  pagina: number;
-  total: number;
-  onIr: (n: number) => void;
-}) {
-  const paginas = Array.from({ length: total }, (_, i) => i + 1);
-  return (
-    <nav aria-label="Paginación" className="mt-8 flex justify-center">
-      <ul className="flex list-none items-center gap-1.5 p-0">
-        {paginas.map((n) => (
-          <li key={n}>
-            <button
-              type="button"
-              onClick={() => onIr(n)}
-              aria-current={n === pagina ? 'page' : undefined}
-              aria-label={`Página ${n}`}
-              className={`flex h-10 min-w-10 items-center justify-center rounded-control px-3 text-body-sm font-semibold transition-colors ${
-                n === pagina
-                  ? 'bg-brand-700 text-cream'
-                  : 'border border-edge bg-surface text-content hover:border-brand-300 hover:bg-brand-50'
-              }`}
-            >
-              {n}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
-}

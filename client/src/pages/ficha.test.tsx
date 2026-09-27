@@ -135,10 +135,10 @@ describe('formatos', () => {
     expect(screen.getByRole('button', { name: /añadir · 112,00/i })).toBeInTheDocument();
   });
 
-  it('un formato agotado se ENSEÑA y se DESACTIVA', async () => {
+  it('un formato agotado se puede elegir (ENCARGO): ni se desactiva ni se marca agotado', async () => {
     /*
-     * Esconderlo haría creer que no existe; dejarlo pulsable lleva a un carrito
-     * que falla al pagar. Se ve, se dice «agotado» y no se puede elegir.
+     * La tienda vende por encargo: un formato agotado se puede pedir igual, así
+     * que se elige como cualquier otro y no se enseña «agotado» ni se desactiva.
      */
     montar(base({
       variants: [
@@ -147,13 +147,13 @@ describe('formatos', () => {
       ],
     }));
     await screen.findByRole('heading', { level: 1 });
-    expect(screen.getByRole('radio', { name: /2 kg/i })).toBeDisabled();
-    expect(screen.getByText(/agotado/i)).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /2 kg/i })).toBeEnabled();
+    expect(screen.queryByText(/agotado/i)).not.toBeInTheDocument();
   });
 
-  it('se preselecciona el primero COMPRABLE, no el primero a secas', async () => {
-    // Los formatos llegan del más barato al más caro; si el barato está
-    // agotado, empezar por él dejaba preseleccionado algo que no se puede comprar.
+  it('se preselecciona el PRIMER formato (se puede encargar cualquiera)', async () => {
+    // Ya no se prefiere «el que tenga stock»: se puede pedir cualquiera, así que
+    // se preselecciona el primero (el más barato) tal cual llega.
     montar(base({
       variants: [
         { id: 'v1', label: '2 kg', price: 34.5, sku: 's1', stock: 0 },
@@ -161,11 +161,11 @@ describe('formatos', () => {
       ],
     }));
     await screen.findByRole('heading', { level: 1 });
-    expect(screen.getByRole('radio', { name: /11,4 kg/i })).toBeChecked();
-    expect(screen.getByRole('button', { name: /añadir · 112,00/i })).toBeEnabled();
+    expect(screen.getByRole('radio', { name: /2 kg/i })).toBeChecked();
+    expect(screen.getByRole('button', { name: /añadir · 34,50/i })).toBeEnabled();
   });
 
-  it('con todo agotado, no se puede comprar', async () => {
+  it('con todo agotado SE PUEDE encargar: el botón añade igual', async () => {
     montar(base({
       variants: [
         { id: 'v1', label: '2 kg', price: 34.5, sku: 's1', stock: 0 },
@@ -173,16 +173,16 @@ describe('formatos', () => {
       ],
     }));
     await screen.findByRole('heading', { level: 1 });
-    expect(screen.getByRole('button', { name: /sin existencias/i })).toBeDisabled();
-    expect(screen.getByText(/sin existencias en este formato/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /añadir ·/i })).toBeEnabled();
+    expect(screen.queryByText(/sin existencias/i)).not.toBeInTheDocument();
   });
 
-  it('se muestra el stock real del formato, sin lenguaje de urgencia', async () => {
+  it('NO se muestra el stock: se vende por encargo', async () => {
     montar();
     await screen.findByRole('heading', { level: 1 });
-    // Ivan pidió ver el stock de cada formato: se muestra el número real.
-    expect(screen.getAllByText(/en stock/i).length).toBeGreaterThan(0);
-    // Pero sin fabricar escasez: el dato es «N en stock», nunca «¡sólo quedan 3!».
+    // Sin números de stock, sin «agotado», sin urgencia inventada.
+    expect(screen.queryByText(/en stock/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/agotado/i)).not.toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/sólo quedan|últimas unidades|date prisa/i);
   });
 });
@@ -196,14 +196,16 @@ describe('cantidad', () => {
     expect(screen.getByRole('button', { name: /quitar una unidad/i })).toBeDisabled();
   });
 
-  it('no pasa del stock del formato', async () => {
+  it('la cantidad NO la limita el stock (encargo)', async () => {
     const user = userEvent.setup();
     montar(base({ variants: [{ id: 'v1', label: '2 kg', price: 10, sku: 's', stock: 2 }] }));
     await screen.findByRole('heading', { level: 1 });
     const mas = screen.getByRole('button', { name: /añadir una unidad/i });
+    // Con stock 2, antes se bloqueaba en 2; ahora se puede seguir subiendo.
     await user.click(mas);
-    expect(mas).toBeDisabled();
-    expect(screen.getByRole('status', { name: /cantidad: 2/i })).toBeInTheDocument();
+    await user.click(mas);
+    expect(screen.getByRole('status', { name: /cantidad: 3/i })).toBeInTheDocument();
+    expect(mas).toBeEnabled();
   });
 
   it('cambiar de formato reinicia la cantidad', async () => {
@@ -245,12 +247,12 @@ describe('añadir al carrito', () => {
     expect(screen.getByRole('button', { name: /ver el carrito/i })).toBeInTheDocument();
   });
 
-  it('con todo agotado no añade nada', async () => {
+  it('con todo agotado, añadir SÍ lo mete en el carrito (encargo)', async () => {
     const user = userEvent.setup();
     montar(base({ variants: [{ id: 'v1', label: '2 kg', price: 10, sku: 's', stock: 0 }] }));
     await screen.findByRole('heading', { level: 1 });
-    await user.click(screen.getByRole('button', { name: /sin existencias/i })).catch(() => {});
-    expect(useCart.getState().lines).toHaveLength(0);
+    await user.click(screen.getByRole('button', { name: /añadir ·/i }));
+    expect(useCart.getState().lines).toHaveLength(1);
   });
 });
 
