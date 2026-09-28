@@ -42,7 +42,10 @@ const producto = (o: Record<string, unknown> = {}) => {
     price: 20, compareAt: null, image: '', gallery: [],
     featured: false, bestseller: false,
     animals: [animal('perro', 'Perros')], categories: [categoria('alimentacion-seca', 'Alimentación seca')],
-    needs: [], variants: [], ...o,
+    needs: [],
+    // Con existencias: «La selección de Chacho» sólo enseña lo que se puede comprar.
+    variants: [{ id: `v${n}`, label: '3 kg', price: 20, sku: `sku${n}`, stock: 5 }],
+    ...o,
   };
 };
 
@@ -67,9 +70,24 @@ const montar = (productos: unknown[]) => {
     ofertas: 0,
     precio: null,
   };
-  vi.mocked(api.products).mockResolvedValue(
-    { items: productos, page: 1, pageSize: 48, total: productos.length, totalPages: 1, facets } as never,
-  );
+  // La portada hace DOS tipos de petición: una sin filtros (con `facets`, para el
+  // menú y los recuentos) y otras filtradas por animal/categoría (para «La
+  // selección de Chacho»). El mock responde a cada una como el servidor.
+  vi.mocked(api.products).mockImplementation((f?: { animal?: string; category?: string; facets?: boolean }) => {
+    const lista = (productos as { animals?: { slug: string }[]; categories?: { slug: string }[] }[]).filter(
+      (p) =>
+        (!f?.animal || (p.animals ?? []).some((a) => a.slug === f.animal)) &&
+        (!f?.category || (p.categories ?? []).some((c) => c.slug === f.category)),
+    );
+    return Promise.resolve({
+      items: lista,
+      page: 1,
+      pageSize: 48,
+      total: lista.length,
+      totalPages: 1,
+      ...(f?.facets ? { facets } : {}),
+    } as never);
+  });
   return render(<MemoryRouter><HomePage /></MemoryRouter>);
 };
 
@@ -82,13 +100,15 @@ afterEach(() => vi.clearAllMocks());
 /* ══ 1. La portada sale del catálogo ═══════════════════════════════════ */
 
 describe('la portada se pinta con el catálogo real', () => {
-  it('enseña las mascotas que tienen producto, con su recuento', async () => {
+  it('enseña las mascotas que tienen producto, sin contadores', async () => {
     montar(CATALOGO);
     // Acotado a su sección: «Perros» también aparece como segunda llamada del
     // hero, y son dos enlaces distintos al mismo sitio a propósito.
     const region = await screen.findByRole('region', { name: /para quién compras/i });
-    expect(within(region).getByRole('link', { name: /perros/i })).toBeInTheDocument();
-    expect(within(region).getByText(/5 productos/i)).toBeInTheDocument();
+    const perros = within(region).getByRole('link', { name: /perros/i });
+    expect(perros).toHaveAttribute('href', '/tienda?animal=perro');
+    // El rediseño quita los contadores de esta sección.
+    expect(within(region).queryByText(/\d+\s*productos/i)).not.toBeInTheDocument();
   });
 
   it('no enseña ninguna faceta vacía', async () => {
@@ -123,10 +143,14 @@ describe('todo lo que se puede pulsar lleva a algún sitio', () => {
     expect(cta).toHaveAttribute('href', '/tienda?animal=perro');
   });
 
-  it('cada producto enlaza a su ficha', async () => {
-    montar([...CATALOGO, producto({ featured: true, slug: 'destacado-1' })]);
-    const enlaces = await screen.findAllByRole('link', { name: /pienso/i });
-    for (const a of enlaces) expect(a.getAttribute('href')).toMatch(/^\/producto\/[a-z0-9-]+$/);
+  it('cada producto de la selección enlaza a su ficha', async () => {
+    montar([...CATALOGO, producto({ slug: 'destacado-1' })]);
+    const region = await screen.findByRole('region', { name: /la selección de chacho/i });
+    const fichas = within(region)
+      .getAllByRole('link')
+      .filter((a) => (a.getAttribute('href') ?? '').startsWith('/producto/'));
+    expect(fichas.length).toBeGreaterThan(0);
+    for (const a of fichas) expect(a.getAttribute('href')).toMatch(/^\/producto\/[a-z0-9-]+$/);
   });
 
   it('ningún enlace se queda sin nombre accesible', async () => {
@@ -140,30 +164,27 @@ describe('todo lo que se puede pulsar lleva a algún sitio', () => {
   });
 });
 
-/* ══ 3. Ofertas ════════════════════════════════════════════════════════ */
+/* ══ 3. Selección y ofertas ════════════════════════════════════════════ */
 
-describe('la sección de ofertas', () => {
-  it('NO EXISTE si no hay ningún producto rebajado', async () => {
-    /*
-     * No es que salga vacía: es que no se pinta. Una sección comercial sin
-     * nada dentro cuesta más de lo que vale, y rellenarla con destacados sería
-     * mentir sobre el precio.
-     */
+describe('la selección y las ofertas', () => {
+  it('«La selección de Chacho» enseña productos reales con enlace a su ficha', async () => {
     montar(CATALOGO);
-    await screen.findByRole('link', { name: /ver toda la tienda/i });
-    expect(screen.queryByRole('heading', { name: /ofertas/i })).not.toBeInTheDocument();
+    const region = await screen.findByRole('region', { name: /la selección de chacho/i });
+    const enlaces = within(region).getAllByRole('link');
+    expect(enlaces.length).toBeGreaterThan(0);
+    for (const a of enlaces) {
+      const href = a.getAttribute('href') ?? '';
+      // Cada tarjeta lleva a una ficha real (o el enlace de cabecera de la sección).
+      expect(href === '/tienda?category=alimentacion-seca' || /^\/producto\/[a-z0-9-]+$/.test(href)).toBe(true);
+    }
   });
 
-  it('aparece en cuanto hay una rebaja de verdad, con el ahorro real', async () => {
+  it('el rediseño no incluye una sección de ofertas en la portada', async () => {
+    // Los productos del catálogo entran sin precio anterior, así que no hay
+    // ofertas que anunciar; la portada no finge una sección de rebajas.
     montar([...CATALOGO, producto({ price: 15, compareAt: 20, slug: 'rebajado' })]);
-    const titulo = await screen.findByRole('heading', { name: /ofertas/i });
-    expect(titulo).toHaveTextContent('-25%');
-  });
-
-  it('un `compareAt` menor o igual que el precio no es una oferta', async () => {
-    montar([...CATALOGO, producto({ price: 20, compareAt: 20 }), producto({ price: 20, compareAt: 10 })]);
     await screen.findByRole('link', { name: /ver toda la tienda/i });
-    expect(screen.queryByRole('heading', { name: /ofertas/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /^ofertas/i })).not.toBeInTheDocument();
   });
 });
 
@@ -198,8 +219,9 @@ describe('la portada no afirma lo que no puede sostener', () => {
 
   it('el contacto es el real y sale del módulo de empresa', async () => {
     montar(CATALOGO);
-    const correo = await screen.findByRole('link', { name: /chachopetshop@gmail\.com/i });
-    expect(correo).toHaveAttribute('href', 'mailto:chachopetshop@gmail.com');
+    // WhatsApp por delante, con el número real; y llamar como alternativa.
+    const whatsapp = await screen.findByRole('link', { name: /consultar por whatsapp/i });
+    expect(whatsapp.getAttribute('href')).toMatch(/wa\.me\/34689732267/);
     expect(screen.getByRole('link', { name: /689 73 22 67/ })).toHaveAttribute('href', 'tel:+34689732267');
     expect(document.body.textContent).not.toMatch(/922\s*00\s*00\s*00/);
   });

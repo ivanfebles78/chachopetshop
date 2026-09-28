@@ -1,11 +1,27 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CreditCard, Mail, Phone, Truck } from 'lucide-react';
+import {
+  ArrowRight,
+  Bird,
+  Cat,
+  CreditCard,
+  Dog,
+  Fish,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
+  Rabbit,
+  Truck,
+} from 'lucide-react';
 import { useCatalogo } from '@/lib/useCatalogo';
-import { categorias, mascotas, ofertas, porcentajeAhorro, seleccion, type Faceta } from '@/lib/portada';
+import { categorias, mascotas, type Faceta } from '@/lib/portada';
 import { rutaCatalogo } from '@/lib/navigation';
-import { EMPRESA } from '@/lib/empresa';
-import { ProductCard, ProductCardSkeleton } from '@/components/ProductCard';
+import { EMPRESA, enlaceTelefono, enlaceWhatsApp } from '@/lib/empresa';
+import { api } from '@/lib/api';
+import { eur } from '@/lib/cn';
+import { esMarcaSoloEnTienda } from '@/lib/producto';
+import { ImagenProducto } from '@/components/ImagenProducto';
 import { ArteCategoria } from '@/components/ArteCategoria';
 import { tipoDeCategoria } from '@/lib/imagenes';
 import type { Product } from '@/lib/types';
@@ -13,32 +29,21 @@ import type { Product } from '@/lib/types';
 /**
  * PORTADA.
  *
- * La anterior abría con el logotipo ocupando la pantalla entera: quien llegaba
- * veía una marca y ningún producto, ningún precio y ningún sitio al que ir. Por
- * debajo, seis tarjetas blancas idénticas con emoji —una de ellas, Reptiles, sin
- * un solo producto—, «Top ventas» sobre un dato que no lo sostiene, y un
- * formulario de suscripción que prometía un 10 % y cuyo `onSubmit` era
- * `preventDefault()`: el correo del cliente se tiraba en silencio.
+ * Rediseño de la landing (sólo esta página): se conservan el hero y la franja de
+ * servicios tal cual, y se rehace el resto para que la portada se lea como una
+ * tienda de alimentación animal cuidada, con acceso equilibrado al catálogo que
+ * YA existe. Todo lo que se enseña sale del catálogo (facetas reales) o del
+ * contacto real de `lib/empresa.ts`; nada inventado, ningún enlace vacío.
  *
- * Lo que se ha hecho:
- *
- *   · TODO SALE DEL CATÁLOGO (`lib/portada.ts`). Ninguna lista escrita a mano,
- *     ninguna faceta vacía, ningún recuento inventado.
- *
- *   · LA FOTO ES LA SUYA. El perro, el gato y el conejo salen del banner de la
- *     marca, que es material propio y son animales de verdad. Las fotos de los
- *     productos son de relleno (`picsum.photos`) y enseñan bosques y montañas,
- *     así que el diseño NO se apoya en ellas: pesan lo justo, en marcos de
- *     proporción fija, y el peso visual lo llevan la tipografía y el color.
- *     El día que haya fotografía real de producto, esto mejora solo.
- *
- *   · EL TITULAR ES SU LEMA. «Nutrición adaptada a tu mascota» está en el
- *     banner: es de ellos, no me lo he inventado. Va como texto, no incrustado
- *     en la imagen, para que se pueda leer, ampliar y traducir.
+ * Reglas de esta página:
+ *   · La ALIMENTACIÓN tiene prioridad visual sobre los accesorios.
+ *   · Perros y gatos, mismo protagonismo; aves, roedores y peces como accesos
+ *     complementarios. Sin contadores en esa sección.
+ *   · Las tarjetas de «La selección de Chacho» son EXCLUSIVAS de la portada: no
+ *     tocan la tarjeta compartida del catálogo.
  */
 
-/* La foto de marca. Es la misma para el hero y para los bloques de mascota, así
-   que el navegador la descarga UNA vez y los demás recortes salen del caché. */
+/* La foto de marca del hero. */
 const FOTO = '/banner-chacho.jpeg';
 const FOTO_ANCHO = 1600;
 const FOTO_ALTO = 506;
@@ -46,46 +51,89 @@ const FOTO_ALTO = 506;
 /** Envío gratis a partir de este importe. Igual que en el carrito. */
 const ENVIO_GRATIS_DESDE = 30;
 
+/** Cuántas marcas se enseñan en la portada (el resto, desde el menú «Marcas»). */
+const MARCAS_EN_PORTADA = 8;
+
 export function HomePage() {
-  const { taxonomy, productos, facets, cargando } = useCatalogo();
+  const { taxonomy, facets } = useCatalogo();
+  const seleccion = useSeleccionPortada();
 
   const datos = useMemo(() => {
     if (!taxonomy || !facets) return null;
     return {
-      // Los recuentos, de las facetas reales del servidor; las tarjetas
-      // (selección y ofertas), de la muestra de productos.
-      mascotas: mascotas(facets),
+      // El animal con más catálogo, para el segundo botón del hero.
+      destacada: mascotas(facets).protagonistas[0],
+      // Los animales con producto, con su enlace al filtro real del catálogo.
+      animales: facets.animals
+        .filter((a) => a.total > 0)
+        .map((a) => ({ ...a, href: rutaCatalogo({ animal: a.slug }) })),
       categorias: categorias(facets, taxonomy),
-      seleccion: seleccion(productos),
-      ofertas: ofertas(productos),
-      marcas: taxonomy.brands.map((b) => b.name),
+      // Las marcas con más catálogo, como accesos rápidos (enlazan al filtro).
+      marcas: [...facets.brands].filter((b) => b.total > 0).sort((a, b) => b.total - a.total).slice(0, MARCAS_EN_PORTADA),
     };
-  }, [taxonomy, facets, productos]);
+  }, [taxonomy, facets]);
 
   return (
     <>
-      <Hero destacada={datos?.mascotas.protagonistas[0]} />
+      <Hero destacada={datos?.destacada} />
       <Servicio />
-      {datos && <PorMascota {...datos.mascotas} />}
-      {datos && <PorCategoria categorias={datos.categorias} />}
-      <Seleccion productos={datos?.seleccion} cargando={cargando} />
-      {datos && datos.ofertas.length > 0 && <Ofertas productos={datos.ofertas} />}
-      {datos && datos.marcas.length > 0 && <Marcas marcas={datos.marcas} />}
-      <Propuesta />
+      {datos && <PorQuien animales={datos.animales} />}
+      {datos && <Alimentacion categorias={datos.categorias} />}
+      <Seleccion productos={seleccion} />
       <Ayuda />
+      {datos && datos.marcas.length > 0 && <Marcas marcas={datos.marcas} />}
+      <Conoce />
     </>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   HERO
+   SELECCIÓN — productos reales del catálogo, priorizando alimentación
+   ══════════════════════════════════════════════════════════════════════ */
+
+/**
+ * Trae hasta cuatro productos reales para «La selección de Chacho»: alimentación
+ * seca de perro y de gato, con precio y con existencias, para que haya variedad
+ * y todo lo que se enseña se pueda comprar. Usa la API existente; no añade nada
+ * al backend. `undefined` = cargando; `[]` = no hay nada que enseñar.
+ */
+function useSeleccionPortada(): Product[] | undefined {
+  const [productos, setProductos] = useState<Product[] | undefined>(undefined);
+
+  useEffect(() => {
+    let vivo = true;
+    const pedir = (animal: string) =>
+      api
+        .products({ animal, category: 'alimentacion-seca', pageSize: 12 })
+        .then((r) => r.items)
+        .catch(() => [] as Product[]);
+
+    Promise.all([pedir('perro'), pedir('gato')]).then(([perro, gato]) => {
+      // Con precio, con existencias y COMPRABLE online (se excluye Gosbi y demás
+      // marcas «sólo en tienda»: no tiene sentido destacarlas si no se compran aquí).
+      const comprables = (lista: Product[]) =>
+        lista
+          .filter((p) => p.price != null && !esMarcaSoloEnTienda(p) && p.variants.some((v) => v.stock > 0))
+          .slice(0, 2);
+      // Se intercalan perro y gato para que se vea variedad de un vistazo.
+      const sel = [...comprables(perro), ...comprables(gato)].slice(0, 4);
+      if (vivo) setProductos(sel);
+    });
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
+  return productos;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   HERO  (se conserva del diseño anterior)
    ══════════════════════════════════════════════════════════════════════ */
 
 function Hero({ destacada }: { destacada?: Faceta }) {
   return (
     <section className="relative overflow-hidden bg-brand-800 text-cream">
-      {/* La curva amarilla del banner, redibujada en SVG para que escale sin
-          pesar y sin depender de un recorte de imagen. */}
       <svg
         className="pointer-events-none absolute inset-x-0 bottom-0 h-16 w-full text-cream sm:h-24"
         viewBox="0 0 1440 100"
@@ -101,18 +149,10 @@ function Hero({ destacada }: { destacada?: Faceta }) {
           <p className="text-overline font-bold uppercase tracking-[0.18em] text-amber-400">
             Tienda de nutrición animal · Canarias
           </p>
-          {/*
-            El lema de la marca, tal cual está en su banner. Va como TEXTO y no
-            dentro de la imagen: así se puede seleccionar, ampliar y leer en voz
-            alta, y no se pixela en ninguna pantalla.
-          */}
           <h1 className="mt-2 max-w-[15ch] font-display text-[clamp(2rem,1rem+5.2vw,4.3rem)] font-extrabold leading-[0.98] tracking-tight text-cream">
             Nutrición <span className="text-amber-400">adaptada</span> a tu mascota
           </h1>
           <p className="mt-4 max-w-[46ch] text-body text-cream/80 sm:text-body-lg">
-            {/* Sin «marcas que recomiendan los veterinarios»: eso es un aval
-                profesional, y aquí nadie lo ha dado. Lo que sí es cierto es lo
-                que se vende y que se asesora. */}
             Piensos, dietas veterinarias, snacks y accesorios.
             Te ayudamos a elegir lo que le conviene.
           </p>
@@ -125,7 +165,6 @@ function Hero({ destacada }: { destacada?: Faceta }) {
               Ver toda la tienda
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
-            {/* Segundo destino REAL: la mascota con más catálogo, ahora mismo. */}
             {destacada && (
               <Link
                 to={destacada.href}
@@ -146,22 +185,6 @@ function Hero({ destacada }: { destacada?: Faceta }) {
           </p>
         </div>
 
-        {/*
-          La foto. `fetchpriority="high"` y sin `loading="lazy"`: es el elemento
-          más grande de la primera pantalla, así que es lo que mide el navegador
-          como LCP y conviene que empiece a bajar cuanto antes. Las medidas van
-          declaradas para que no dé un salto al cargar.
-
-          Antes se servía el PNG de 569 kB teniendo al lado el mismo dibujo en
-          JPEG de 131 kB.
-        */}
-        {/*
-          En móvil la foto va ARRIBA, antes del titular. En una pantalla de 375
-          px, con el texto delante los animales caen por debajo del pliegue y la
-          primera pantalla de una tienda de mascotas se queda sin una sola
-          mascota. Arriba, y en una banda baja, se ve de qué va la tienda antes
-          de leer nada —y los dos botones siguen entrando sin hacer scroll—.
-        */}
         <div className="order-1 -mx-4 w-[calc(100%+2rem)] sm:mx-0 sm:w-full lg:order-none lg:mx-auto lg:max-w-none">
           <div className="relative h-[7.5rem] overflow-hidden sm:h-[12rem] sm:rounded-card lg:h-auto lg:aspect-[16/11]">
             <img
@@ -181,16 +204,9 @@ function Hero({ destacada }: { destacada?: Faceta }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   SERVICIO — sólo lo que la tienda cumple de verdad
+   A · SERVICIO  (se conserva)
    ══════════════════════════════════════════════════════════════════════ */
 
-/*
- * Aquí ponía «Marcas premium · Las mejores del mercado», que no es una promesa
- * sino un superlativo que nadie puede comprobar. Lo que queda son las tres
- * cosas que la tienda sí hace: el envío que anuncia la propia cabecera, el
- * pago que procesa Stripe de verdad, y el asesoramiento, que es el correo y el
- * teléfono que atienden.
- */
 const SERVICIO = [
   { icono: Truck, titulo: 'Entrega en 24-48 h', texto: 'A toda Canarias' },
   { icono: CreditCard, titulo: 'Pago seguro', texto: 'Procesado por Stripe' },
@@ -216,353 +232,346 @@ function Servicio() {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   POR MASCOTA
+   B · ¿PARA QUIÉN COMPRAS?  — perros y gatos iguales; el resto, complementario
    ══════════════════════════════════════════════════════════════════════ */
 
-/*
- * EL RECORTE DE CADA MASCOTA.
- *
- * En el banner los animales están recortados sobre BLANCO, y son pequeños: el
- * perro ocupa unos 185 px de los 1600 del original. Ampliarlos para que llenen
- * un bloque los dejaba borrosos —y al primer intento el bloque de «Gatos»
- * acabó enseñando la «CH» del logotipo en vez de un gato—.
- *
- * Así que no se amplifican: se usan A TAMAÑO NATURAL como figuras recortadas
- * sobre fondo claro, que es exactamente como los usa su propio banner. La
- * imagen se pinta a sus 1600 px reales y sólo se desplaza para encuadrar a cada
- * animal. Nada de interpolar, y el fondo blanco del recorte se funde con el del
- * bloque, así que no hace falta que el recorte sea perfecto.
- *
- * Los desplazamientos son píxeles del original: el perro empieza en 0, el gato
- * hacia 122.
- */
-const RECORTE: Record<string, { caja: string; pos: string }> = {
-  // El perro ocupa x 8-185; se le deja algo de aire a los lados.
-  perro: { caja: 'w-[10.5rem] sm:w-[11rem]', pos: 'left-[-6px] top-[-186px] sm:top-[-162px]' },
-  // El gato, x 186-268: más estrecho, y empieza justo donde acaba el perro.
-  gato: { caja: 'w-[6.5rem] sm:w-[6.75rem]', pos: 'left-[-186px] top-[-186px] sm:top-[-162px]' },
+const ICONO_ANIMAL: Record<string, typeof Dog> = {
+  perro: Dog,
+  gato: Cat,
+  ave: Bird,
+  roedor: Rabbit,
+  pez: Fish,
 };
+/* Los dos protagonistas y el orden del resto. Sólo se pinta lo que existe. */
+const PRINCIPALES = ['perro', 'gato'];
+const COMPLEMENTARIAS = ['ave', 'roedor', 'pez'];
 
-function Mascota({ m }: { m: Faceta }) {
-  const recorte = RECORTE[m.slug];
-
-  return (
-    <Link
-      to={m.href}
-      className="group relative flex min-h-[10rem] items-center justify-between gap-3 overflow-hidden rounded-card border border-edge bg-surface pl-5 transition-colors hover:border-brand-300 hover:shadow-rest sm:min-h-[11.5rem] sm:pl-7"
-    >
-      <span className="relative z-10 py-5">
-        <span className="block font-display text-title font-extrabold text-content">{m.nombre}</span>
-        <span className="mt-1 flex items-center gap-1.5 text-body-sm text-content-muted">
-          {m.total} productos
-          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-        </span>
-      </span>
-
-      {recorte ? (
-        <span className={`relative h-[10rem] shrink-0 self-end overflow-hidden sm:h-[11.5rem] ${recorte.caja}`}>
-          <img
-            src={FOTO}
-            width={FOTO_ANCHO}
-            height={FOTO_ALTO}
-            loading="lazy"
-            decoding="async"
-            alt=""
-            className={`absolute w-[1600px] max-w-none transition-transform duration-500 group-hover:scale-[1.03] ${recorte.pos}`}
-          />
-        </span>
-      ) : null}
-    </Link>
-  );
-}
-
-function PorMascota({ protagonistas, secundarias }: { protagonistas: Faceta[]; secundarias: Faceta[] }) {
-  if (protagonistas.length === 0) return null;
+function PorQuien({ animales }: { animales: Faceta[] }) {
+  const buscar = (slug: string) => animales.find((a) => a.slug === slug);
+  const principales = PRINCIPALES.map(buscar).filter((a): a is Faceta => Boolean(a));
+  const complementarias = COMPLEMENTARIAS.map(buscar).filter((a): a is Faceta => Boolean(a));
+  if (principales.length === 0) return null;
 
   return (
-    <section aria-labelledby="por-mascota" className="container-page py-section">
-      <h2 id="por-mascota" className="font-display text-display font-extrabold tracking-tight text-content">
+    <section aria-labelledby="por-quien" className="container-page py-section">
+      <h2 id="por-quien" className="font-display text-display font-extrabold tracking-tight text-content">
         ¿Para quién compras?
       </h2>
+      <p className="mt-2 max-w-[52ch] text-body text-content-muted">
+        Alimentación y cuidado para cada mascota. Entra directo a lo suyo.
+      </p>
 
+      {/* Perros y gatos: dos tarjetas grandes, mismo peso. Sin contadores. */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        {protagonistas.map((m) => (
-          <Mascota key={m.slug} m={m} />
-        ))}
+        {principales.map((a) => {
+          const Icono = ICONO_ANIMAL[a.slug] ?? Dog;
+          return (
+            <Link
+              key={a.slug}
+              to={a.href}
+              className="group relative flex min-h-[9.5rem] items-center gap-5 overflow-hidden rounded-card border border-edge bg-surface p-6 transition-colors hover:border-brand-300 hover:shadow-rest"
+            >
+              <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-pill bg-brand-50 text-brand-700 transition-transform duration-300 group-hover:scale-105">
+                <Icono className="h-10 w-10" strokeWidth={1.75} aria-hidden="true" />
+              </span>
+              <span className="min-w-0">
+                <span className="block font-display text-title font-extrabold text-content">{a.nombre}</span>
+                <span className="mt-1 inline-flex items-center gap-1.5 text-body-sm font-semibold text-brand-700">
+                  Ver todo
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                </span>
+              </span>
+            </Link>
+          );
+        })}
       </div>
 
-      {/*
-        Las mascotas con poco catálogo NO llevan bloque grande: prometería un
-        departamento que hoy no existe. Pero siguen estando, con su recuento.
-      */}
-      {secundarias.length > 0 && (
-        <p className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-body-sm text-content-muted">
-          <span>También tenemos para</span>
-          {secundarias.map((m, i) => (
-            <span key={m.slug}>
-              <Link to={m.href} className="font-semibold text-brand-700 underline underline-offset-4 hover:text-brand-500">
-                {m.nombre.toLowerCase()}
-              </Link>
-              <span className="text-content-subtle"> ({m.total})</span>
-              {i < secundarias.length - 1 && <span aria-hidden="true">,</span>}
-            </span>
-          ))}
-        </p>
+      {/* Aves, roedores y peces: accesos complementarios, más compactos. */}
+      {complementarias.length > 0 && (
+        <ul className="mt-4 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-3">
+          {complementarias.map((a) => {
+            const Icono = ICONO_ANIMAL[a.slug] ?? Bird;
+            return (
+              <li key={a.slug}>
+                <Link
+                  to={a.href}
+                  className="group flex min-h-[3.5rem] items-center gap-3 rounded-card border border-edge bg-surface px-4 py-3 transition-colors hover:border-brand-300 hover:bg-brand-50"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control bg-brand-50 text-brand-600">
+                    <Icono className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
+                  </span>
+                  <span className="flex-1 font-semibold text-content">{a.nombre}</span>
+                  <ArrowRight
+                    className="h-4 w-4 shrink-0 text-content-subtle transition-transform group-hover:translate-x-1"
+                    aria-hidden="true"
+                  />
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </section>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   POR CATEGORÍA
+   C · ENCUENTRA SU ALIMENTACIÓN  — comida por delante de los accesorios
    ══════════════════════════════════════════════════════════════════════ */
 
-function PorCategoria({ categorias: lista }: { categorias: Faceta[] }) {
-  if (lista.length === 0) return null;
-  const [principal, ...resto] = lista;
+/* El orden en que se prefieren las categorías de alimentación. Sólo se pintan
+   las que existen y tienen producto; nada de «Otros» ni de accesorios aquí. */
+const ALIMENTACION = [
+  'alimentacion-seca',
+  'alimentacion-humeda',
+  'alimentacion-semihumeda',
+  'snacks-y-premios',
+];
+
+function Alimentacion({ categorias: lista }: { categorias: Faceta[] }) {
+  const comida = ALIMENTACION.map((slug) => lista.find((c) => c.slug === slug)).filter(
+    (c): c is Faceta => Boolean(c),
+  );
+  if (comida.length === 0) return null;
 
   return (
-    <section aria-labelledby="por-categoria" className="border-y border-edge-subtle bg-surface-sunken">
+    <section aria-labelledby="alimentacion" className="border-y border-edge-subtle bg-surface-sunken">
       <div className="container-page py-section">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-          <h2 id="por-categoria" className="font-display text-display font-extrabold tracking-tight text-content">
-            Qué estás buscando
-          </h2>
+          <div>
+            <p className="text-overline font-bold uppercase tracking-[0.16em] text-amber-700">Alimentación</p>
+            <h2 id="alimentacion" className="mt-1 font-display text-display font-extrabold tracking-tight text-content">
+              Encuentra su alimentación
+            </h2>
+          </div>
           <Link to="/tienda" className="btn-link text-body-sm">
             Ver el catálogo completo →
           </Link>
         </div>
 
-        {/*
-          La categoría con más catálogo abre la sección, a lo ancho. Antes la
-          etiqueta decía «Lo que más se compra», que es una afirmación sobre
-          VENTAS y aquí no hay ningún dato de ventas detrás: lo único cierto es
-          que tiene más productos que ninguna otra. Eso es lo que dice ahora.
-        */}
-        <div className="mt-6 grid gap-3">
-          {principal && (
-            <Link
-              to={principal.href}
-              className="group flex flex-wrap items-end justify-between gap-x-8 gap-y-4 rounded-card bg-brand-800 p-6 text-cream sm:p-7"
-            >
-              <span>
-                <span className="block text-overline font-bold uppercase tracking-[0.16em] text-amber-400">
-                  La sección con más variedad
+        <ul
+          className={`mt-6 grid list-none gap-4 p-0 sm:grid-cols-2 ${
+            comida.length >= 3 ? 'lg:grid-cols-3' : ''
+          } ${comida.length >= 4 ? 'lg:grid-cols-4' : ''}`}
+        >
+          {comida.map((c) => (
+            <li key={c.slug}>
+              <Link
+                to={c.href}
+                className="group flex h-full flex-col items-start gap-4 rounded-card border border-edge bg-surface p-5 transition-all hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-rest"
+              >
+                <ArteCategoria
+                  tipo={tipoDeCategoria(c.tipo)}
+                  className="h-20 w-20 transition-transform duration-300 group-hover:scale-105"
+                />
+                <span className="mt-auto">
+                  <span className="block font-display text-heading font-bold text-content">{c.nombre}</span>
+                  <span className="mt-1 inline-flex items-center gap-1.5 text-body-sm font-semibold text-brand-700">
+                    Ver productos
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                  </span>
                 </span>
-                <span className="mt-1 block font-display text-display font-extrabold">{principal.nombre}</span>
-              </span>
-              <span className="flex items-center gap-1.5 pb-1 text-body font-semibold text-cream/85">
-                Ver los {principal.total} productos
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-              </span>
-            </Link>
-          )}
-        </div>
-
-        {/* Las demás, en rejilla. Ocho entran exactas en cuatro columnas. */}
-        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {/*
-            CADA CATEGORÍA CON SU DIBUJO.
-
-            Eran ocho filas de texto idénticas: para encontrar «Camas» había que
-            leerlas todas. Con la silueta de la categoría se distinguen de un
-            vistazo, y de paso la portada deja de comunicar sólo bolsas de
-            pienso — que era el otro problema: se venden camas, transportines,
-            comederos y rascadores, y no se veía ni uno.
-
-            El dibujo es el MISMO sistema que el del catálogo, así que no entra
-            una identidad visual nueva ni un solo byte de red.
-          */}
-          {resto.map((c) => (
-            <Link
-              key={c.slug}
-              to={c.href}
-              className="group flex items-center gap-4 rounded-card border border-edge bg-surface py-3 pl-3 pr-5 transition-colors hover:border-brand-300 hover:bg-brand-50"
-            >
-              <ArteCategoria
-                tipo={tipoDeCategoria(c.tipo)}
-                className="h-14 w-14 shrink-0 transition-transform duration-300 group-hover:scale-105"
-              />
-              <span className="min-w-0 flex-1 font-semibold text-content">{c.nombre}</span>
-              <span className="shrink-0 text-body-sm text-content-subtle">{c.total}</span>
-            </Link>
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   SELECCIÓN
+   D · LA SELECCIÓN DE CHACHO  — tarjeta EXCLUSIVA de la portada
    ══════════════════════════════════════════════════════════════════════ */
 
-/**
- * Carril horizontal en móvil y rejilla a partir de `sm`.
- *
- * En una pantalla de 375 px, ocho tarjetas apiladas son ocho pantallas de
- * scroll y quien llega no ve nunca la sección siguiente. En carril se ve que
- * hay más a la derecha y se recorre con el pulgar. Se desplaza también con el
- * tabulador, porque son enlaces normales dentro de un contenedor con scroll.
- */
-function Carril({ children, etiquetado }: { children: React.ReactNode; etiquetado: string }) {
+function TarjetaSeleccion({ producto }: { producto: Product }) {
+  const precio = producto.price ?? producto.variants[0]?.price ?? null;
+  const formato = producto.variants[0]?.label;
   return (
-    <ul
-      aria-labelledby={etiquetado}
-      className="-mx-4 mt-6 flex list-none snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:snap-none sm:overflow-visible sm:px-0 lg:grid-cols-4"
-    >
-      {children}
-    </ul>
+    <li className="w-[15rem] shrink-0 snap-start sm:w-auto">
+      <Link
+        to={`/producto/${producto.slug}`}
+        className="group flex h-full flex-col overflow-hidden rounded-card border border-edge bg-surface transition-all hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-rest"
+      >
+        <div className="aspect-square bg-cream-200 p-4">
+          <ImagenProducto product={producto} className="h-full w-full object-contain" />
+        </div>
+        <div className="flex flex-1 flex-col gap-1 p-4">
+          {producto.brand && (
+            <span className="text-caption font-semibold uppercase tracking-wide text-brand-600">
+              {producto.brand.name}
+            </span>
+          )}
+          <h3 className="line-clamp-2 font-display text-body font-semibold leading-snug text-content">
+            {producto.name}
+          </h3>
+          {formato && formato !== 'Único' && (
+            <span className="text-caption text-content-subtle">{formato}</span>
+          )}
+          <div className="mt-2 flex items-center justify-between gap-2 pt-1">
+            {precio != null ? (
+              <span className="font-display text-heading font-bold text-brand-800">{eur(precio)}</span>
+            ) : (
+              <span className="text-body-sm font-semibold text-content-muted">A consultar</span>
+            )}
+            <span className="inline-flex items-center gap-1 text-body-sm font-semibold text-brand-700">
+              Ver producto
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+            </span>
+          </div>
+        </div>
+      </Link>
+    </li>
   );
 }
 
-function Seleccion({ productos, cargando }: { productos?: Product[]; cargando: boolean }) {
-  if (!cargando && (!productos || productos.length === 0)) return null;
+function Seleccion({ productos }: { productos?: Product[] }) {
+  // Cargando: se reserva el sitio para no dar saltos. Vacío: la sección no sale.
+  if (productos && productos.length === 0) return null;
 
   return (
-    <section className="container-page py-section">
+    <section aria-labelledby="seleccion" className="container-page py-section">
       <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
         <div>
           <p className="text-overline font-bold uppercase tracking-[0.16em] text-amber-700">
             Selección de la tienda
           </p>
-          {/*
-            Antes: «LOS MÁS VENDIDOS · Favoritos de la manada», con una etiqueta
-            «Top ventas» en cada tarjeta. Ningún dato de ventas lo sostenía: de
-            los pedidos reales, los siete marcados suman MENOS unidades que el
-            resto del catálogo. Esto es lo que la tienda destaca, y así se dice.
-          */}
           <h2 id="seleccion" className="mt-1 font-display text-display font-extrabold tracking-tight text-content">
-            Lo que recomendamos
+            La selección de Chacho
           </h2>
         </div>
-        <Link to="/tienda" className="btn-link text-body-sm">
-          Ver todo →
+        <Link to={rutaCatalogo({ category: 'alimentacion-seca' })} className="btn-link text-body-sm">
+          Ver más alimentación →
         </Link>
       </div>
 
-      <Carril etiquetado="seleccion">
-        {cargando
-          ? Array.from({ length: 4 }).map((_, i) => (
+      <ul className="-mx-4 mt-6 flex list-none snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-2 sm:snap-none sm:overflow-visible sm:px-0 lg:grid-cols-4">
+        {productos
+          ? productos.map((p) => <TarjetaSeleccion key={p.id} producto={p} />)
+          : Array.from({ length: 4 }).map((_, i) => (
               <li key={i} className="w-[15rem] shrink-0 snap-start sm:w-auto">
-                <ProductCardSkeleton />
-              </li>
-            ))
-          : productos?.map((p) => (
-              <li key={p.id} className="w-[15rem] shrink-0 snap-start sm:w-auto">
-                <ProductCard product={p} />
+                <div className="animate-pulse rounded-card border border-edge-subtle bg-surface">
+                  <div className="aspect-square rounded-t-card bg-cream-200" />
+                  <div className="space-y-2 p-4">
+                    <div className="h-3 w-16 rounded bg-cream-200" />
+                    <div className="h-4 w-3/4 rounded bg-cream-200" />
+                    <div className="h-5 w-20 rounded bg-cream-200" />
+                  </div>
+                </div>
               </li>
             ))}
-      </Carril>
-    </section>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   OFERTAS — sólo si hay rebajas de verdad
-   ══════════════════════════════════════════════════════════════════════ */
-
-/*
- * Esta sección entera desaparece si no hay ningún producto con `compareAt`
- * mayor que su precio. No se rellena con destacados ni se fabrica un descuento
- * para que la portada quede más completa: una sección de ofertas vacía —o
- * peor, falsa— cuesta más de lo que vale.
- */
-function Ofertas({ productos }: { productos: Product[] }) {
-  const maximo = Math.max(...productos.map((p) => porcentajeAhorro(p) ?? 0));
-
-  return (
-    <section aria-labelledby="ofertas" className="border-y border-edge-subtle bg-amber-50">
-      <div className="container-page py-section">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
-          <div>
-            <p className="text-overline font-bold uppercase tracking-[0.16em] text-amber-700">
-              Precio rebajado
-            </p>
-            <h2 id="ofertas" className="mt-1 font-display text-display font-extrabold tracking-tight text-content">
-              Ofertas {maximo > 0 && <span className="text-amber-700">hasta -{maximo}%</span>}
-            </h2>
-          </div>
-          <Link to={rutaCatalogo({ oferta: '1' })} className="btn-link text-body-sm">
-            Ver las {productos.length} ofertas →
-          </Link>
-        </div>
-
-        <Carril etiquetado="ofertas">
-          {productos.map((p) => (
-            <li key={p.id} className="w-[15rem] shrink-0 snap-start sm:w-auto">
-              <ProductCard product={p} />
-            </li>
-          ))}
-        </Carril>
-      </div>
-    </section>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   MARCAS
-   ══════════════════════════════════════════════════════════════════════ */
-
-/*
- * La cinta que se movía sola se ha quedado quieta. Una marquesina obliga a
- * esperar a que pase lo que interesa, no se puede leer con calma y no hay forma
- * de pararla; y aquí lo único que hace falta es enseñar con quién se trabaja.
- * Sin animación, además, no hay nada que desactivar para quien pide menos
- * movimiento.
- */
-function Marcas({ marcas }: { marcas: string[] }) {
-  return (
-    <section aria-labelledby="marcas" className="container-page py-section-sm">
-      <h2 id="marcas" className="text-overline font-bold uppercase tracking-[0.16em] text-content-subtle">
-        Trabajamos con {marcas.length} marcas
-      </h2>
-      <ul className="mt-4 flex list-none flex-wrap gap-x-7 gap-y-3 p-0">
-        {marcas.map((m) => (
-          <li key={m} className="font-display text-heading font-bold tracking-tight text-content-muted">
-            {m}
-          </li>
-        ))}
       </ul>
     </section>
   );
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   PROPUESTA — quiénes son, sin adornos
+   E · TE AYUDAMOS A ELEGIR  — contacto real, WhatsApp por delante
    ══════════════════════════════════════════════════════════════════════ */
 
-/*
- * Restringida a propósito. Aquí no hay años de experiencia, ni número de
- * clientes, ni avales veterinarios, ni certificaciones: nada de eso me consta,
- * y en esta tienda ya había cuatro cifras publicadas de las que tres eran
- * inventadas —«+12.000 mascotas felices», «+40 marcas» con 12 en catálogo y un
- * «4.8 de valoración media» que nadie había medido—.
- *
- * Lo que queda es lo que la propia tienda ya decía de sí misma en «Conócenos»
- * y lo que se puede comprobar mirando el catálogo y el carrito.
- */
-function Propuesta() {
+function Ayuda() {
+  const whatsapp = enlaceWhatsApp('¡Hola! ¿Me ayudáis a elegir la alimentación de mi mascota?');
+  const telefono = enlaceTelefono();
+  if (!whatsapp && !telefono && !EMPRESA.email) return null;
+
   return (
-    <section aria-labelledby="propuesta" className="container-page pb-section-sm">
-      <div className="grid items-center gap-6 rounded-card border border-edge bg-surface p-6 sm:grid-cols-[1fr_auto] sm:p-8">
+    <section aria-labelledby="ayuda" className="container-page py-section">
+      <div className="overflow-hidden rounded-card bg-brand-800 px-6 py-10 text-center text-cream sm:px-10 sm:py-12">
+        <h2 id="ayuda" className="font-display text-display font-extrabold tracking-tight">
+          Te ayudamos a elegir
+        </h2>
+        <p className="mx-auto mt-3 max-w-[50ch] text-body-lg text-cream/80">
+          Cuéntanos cómo es tu mascota y te ayudamos a encontrar su alimentación —
+          sin compromiso.
+        </p>
+        <div className="mt-7 flex flex-wrap justify-center gap-3">
+          {whatsapp && (
+            <a
+              href={whatsapp}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-12 items-center gap-2 rounded-pill bg-[#25D366] px-6 text-body font-bold text-white transition-transform hover:scale-[1.02]"
+            >
+              <MessageCircle className="h-5 w-5" aria-hidden="true" />
+              Consultar por WhatsApp
+            </a>
+          )}
+          {telefono && (
+            <a
+              href={telefono}
+              className="inline-flex min-h-12 items-center gap-2 rounded-pill border border-cream/30 px-6 text-body font-semibold text-cream transition-colors hover:border-cream/60 hover:bg-cream/10"
+            >
+              <Phone className="h-4 w-4" aria-hidden="true" />
+              Llamar {EMPRESA.telefono}
+            </a>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   F · MARCAS  — accesos rápidos a las marcas con más catálogo
+   ══════════════════════════════════════════════════════════════════════ */
+
+function Marcas({ marcas }: { marcas: { slug: string; nombre: string }[] }) {
+  return (
+    <section aria-labelledby="marcas" className="border-t border-edge-subtle bg-surface-sunken">
+      <div className="container-page py-section-sm">
+        <h2 id="marcas" className="font-display text-title font-extrabold tracking-tight text-content">
+          Marcas en las que confiamos
+        </h2>
+        <ul className="mt-5 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 lg:grid-cols-4">
+          {marcas.map((m) => (
+            <li key={m.slug}>
+              <Link
+                to={rutaCatalogo({ brand: m.slug })}
+                className="flex min-h-[3.25rem] items-center justify-center rounded-card border border-edge bg-surface px-4 py-3 text-center font-display text-body font-bold text-content-muted transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800"
+              >
+                {m.nombre}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   G · CONOCE A CHACHO  — quiénes son, sin adornos inventados
+   ══════════════════════════════════════════════════════════════════════ */
+
+function Conoce() {
+  return (
+    <section aria-labelledby="conoce" className="container-page py-section">
+      <div className="grid items-center gap-6 overflow-hidden rounded-card border border-edge bg-surface p-6 sm:grid-cols-[1.4fr_auto] sm:p-8">
         <div>
-          <h2 id="propuesta" className="font-display text-title font-extrabold tracking-tight text-content">
-            De Canarias, y con quien preguntar
+          <p className="text-overline font-bold uppercase tracking-[0.16em] text-amber-700">De Canarias</p>
+          <h2 id="conoce" className="mt-1 font-display text-title font-extrabold tracking-tight text-content">
+            Conoce a Chacho
           </h2>
-          <p className="mt-3 max-w-[52ch] text-body text-content-muted">
-            Chacho Pet Shop nació en Canarias con una idea sencilla: que alimentar
-            bien a tu mascota sea fácil y honesto. Trabajamos nutrición
-            especializada —incluidas dietas veterinarias— y respondemos nosotros
-            cuando escribes.
+          <p className="mt-3 max-w-[54ch] text-body text-content-muted">
+            Somos una tienda de barrio en La Laguna con toda la tienda también
+            online. Nutrición especializada —incluidas dietas veterinarias— y
+            atención de verdad: cuando escribes, respondemos nosotros.
           </p>
-          <Link to="/conocenos" className="btn-link mt-4 inline-flex text-body-sm">
-            Cómo trabajamos →
-          </Link>
+          <div className="mt-5 flex flex-wrap items-center gap-4">
+            <Link to="/conocenos" className="btn-link text-body-sm">
+              Conócenos →
+            </Link>
+            {EMPRESA.direccion && (
+              <span className="inline-flex items-center gap-1.5 text-body-sm text-content-muted">
+                <MapPin className="h-4 w-4 shrink-0 text-brand-600" aria-hidden="true" />
+                {EMPRESA.direccion}
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* El conejo del banner: la tercera mascota, también a tamaño natural. */}
-        <div className="relative hidden h-[8rem] w-[6.5rem] shrink-0 self-end overflow-hidden sm:block">
+        {/* La mascota del banner (material propio de la marca), como acento. */}
+        <div className="relative hidden h-[9rem] w-[7.5rem] shrink-0 self-end overflow-hidden sm:block">
           <img
             src={FOTO}
             width={FOTO_ANCHO}
@@ -572,58 +581,6 @@ function Propuesta() {
             alt=""
             className="absolute left-[-286px] top-[-222px] w-[1600px] max-w-none"
           />
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   AYUDA — el contacto real, no un boletín inventado
-   ══════════════════════════════════════════════════════════════════════ */
-
-/*
- * Aquí había un formulario de suscripción que ofrecía «un 10 % en tu primer
- * pedido». No existe ninguna infraestructura de boletín —ni endpoint, ni tabla,
- * ni forma de canjear ese descuento— y su `onSubmit` era `preventDefault()`:
- * el correo que escribía el cliente no iba a ninguna parte.
- *
- * En su lugar, las dos vías de contacto que sí atienden, sacadas de
- * `lib/empresa.ts`. Si algún día faltara alguna, deja de pintarse sola.
- */
-function Ayuda() {
-  const telefono = EMPRESA.telefono && EMPRESA.telefonoE164;
-  if (!telefono && !EMPRESA.email) return null;
-
-  return (
-    <section aria-labelledby="ayuda" className="container-page pb-section">
-      <div className="rounded-card bg-brand-800 px-6 py-10 text-center text-cream sm:px-10 sm:py-12">
-        <h2 id="ayuda" className="font-display text-display font-extrabold tracking-tight">
-          ¿No sabes cuál elegir?
-        </h2>
-        <p className="mx-auto mt-3 max-w-[48ch] text-body-lg text-cream/80">
-          Cuéntanos qué mascota tienes y qué necesita. Te decimos qué le conviene
-          — sin compromiso.
-        </p>
-        <div className="mt-7 flex flex-wrap justify-center gap-3">
-          {EMPRESA.email && (
-            <a
-              href={`mailto:${EMPRESA.email}`}
-              className="inline-flex min-h-12 items-center gap-2 rounded-pill bg-amber-500 px-6 text-body font-bold text-ink transition-colors hover:bg-amber-400"
-            >
-              <Mail className="h-4 w-4" aria-hidden="true" />
-              {EMPRESA.email}
-            </a>
-          )}
-          {telefono && (
-            <a
-              href={`tel:${EMPRESA.telefonoE164}`}
-              className="inline-flex min-h-12 items-center gap-2 rounded-pill border border-cream/30 px-6 text-body font-semibold text-cream transition-colors hover:border-cream/60 hover:bg-cream/10"
-            >
-              <Phone className="h-4 w-4" aria-hidden="true" />
-              {EMPRESA.telefono}
-            </a>
-          )}
         </div>
       </div>
     </section>
