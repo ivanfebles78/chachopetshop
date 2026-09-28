@@ -207,49 +207,53 @@ describe('la cabecera pinta el menú real', () => {
   });
 });
 
-/* ══ 2b. El menú de escritorio es un MEGA-MENÚ de dos paneles ═══════════ */
+/* ══ 2b. El menú de escritorio: categorías colapsadas, flyout a la derecha ═ */
 
-describe('el mega-menú de escritorio abre las marcas a la derecha', () => {
+describe('el menú de escritorio se abre por clic, hacia la derecha', () => {
   const abrirPerros = async (user: ReturnType<typeof userEvent.setup>) => {
     pintarCabecera();
-    await user.click(await screen.findByRole('button', { name: /perros/i }));
+    await user.click(await screen.findByRole('button', { name: /^perros$/i }));
   };
 
-  it('el NOMBRE de la categoría es un enlace; la primera queda activa y muestra sus marcas', async () => {
+  it('al abrir «Perros», las categorías salen COLAPSADAS (sin marcas a la vista)', async () => {
     const user = userEvent.setup();
     await abrirPerros(user);
-    // La categoría de la izquierda es un enlace a su página.
-    const enlace = screen.getByRole('link', { name: /alimentación seca/i });
-    expect(enlace.getAttribute('href')).toContain('category=alimentacion-seca');
-    // Al abrir, la primera categoría queda activa: sus marcas ya se ven a la
-    // derecha, sin más clics. No hay que ir desplegando hacia abajo.
-    expect(screen.getByRole('link', { name: /^atlanticpet/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /^ownat/i })).toBeInTheDocument();
-    // Y hay un «Ver todo» para ir a la categoría entera.
-    expect(screen.getByRole('link', { name: /ver todo/i })).toBeInTheDocument();
+    // Cada categoría es un botón que despliega, colapsado de entrada.
+    const cat = screen.getByRole('button', { name: /alimentación seca/i });
+    expect(cat).toHaveAttribute('aria-expanded', 'false');
+    // Ninguna marca se ve hasta pulsar una categoría.
+    expect(screen.queryByRole('link', { name: /^atlanticpet/i })).not.toBeInTheDocument();
   });
 
-  it('al posar el ratón sobre otra categoría, el panel derecho cambia', async () => {
+  it('al pulsar una categoría, sus marcas se abren a la derecha (con «Ver todo»)', async () => {
     const user = userEvent.setup();
     await abrirPerros(user);
+    await user.click(screen.getByRole('button', { name: /alimentación seca/i }));
+    // Ahora sus marcas son enlaces al catálogo filtrado.
+    expect(screen.getByRole('link', { name: /^atlanticpet/i }).getAttribute('href')).toContain('brand=atlanticpet');
+    expect(screen.getByRole('link', { name: /^ownat/i })).toBeInTheDocument();
+    // Y un «Ver todo» que lleva a la categoría entera.
+    expect(screen.getByRole('link', { name: /ver todo/i }).getAttribute('href')).toContain('category=alimentacion-seca');
+  });
+
+  it('sólo una categoría abierta a la vez; volver a pulsarla la cierra', async () => {
+    const user = userEvent.setup();
+    await abrirPerros(user);
+    const seca = screen.getByRole('button', { name: /alimentación seca/i });
+    const humeda = screen.getByRole('button', { name: /alimentación húmeda/i });
+
+    await user.click(seca);
+    expect(seca).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: /^atlanticpet/i })).toBeInTheDocument();
-    // Húmeda sólo tiene Ownat: al posarse, AtlanticPet desaparece del panel.
-    await user.hover(screen.getByRole('link', { name: /alimentación húmeda/i }));
+
+    // Abrir húmeda cierra seca (y sus marcas).
+    await user.click(humeda);
+    expect(seca).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByText('AtlanticPet')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /^ownat/i })).toBeInTheDocument();
-  });
 
-  it('al posar el ratón sobre una marca CON líneas, salen sus líneas a la derecha; una SIN líneas es enlace directo', async () => {
-    const user = userEvent.setup();
-    await abrirPerros(user);
-    // Ownat no tiene líneas: es un enlace directo a su página de marca.
-    expect(screen.getByRole('link', { name: /^ownat/i }).getAttribute('href')).toContain('brand=ownat');
-    // Las líneas de AtlanticPet NO están hasta posar el ratón sobre la marca:
-    // es la tercera columna de la cascada, que sale a la derecha.
-    expect(screen.queryByRole('link', { name: /grain free/i })).not.toBeInTheDocument();
-    await user.hover(screen.getByRole('link', { name: /^atlanticpet/i }));
-    const grainFree = screen.getByRole('link', { name: /grain free/i });
-    expect(grainFree.getAttribute('href')).toContain('line=Grain');
+    // Volver a pulsar húmeda la cierra: nada queda abierto.
+    await user.click(humeda);
+    expect(humeda).toHaveAttribute('aria-expanded', 'false');
   });
 });
 
