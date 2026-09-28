@@ -19,16 +19,29 @@ export type Category = {
 export type Need = { id: string; name: string; slug: string };
 export type Brand = { id: string; name: string; slug: string; logoUrl: string | null; featured: boolean };
 
-export type Variant = { id: string; label: string; price: number; sku: string; stock: number };
+export type Variant = {
+  id: string;
+  label: string;
+  /** null = «a consultar»: el proveedor entrega el catálogo sin precios. */
+  price: number | null;
+  sku: string;
+  stock: number;
+  /** Tamaño normalizado para filtrar/ordenar. Opcionales (un accesorio no tiene gramos). */
+  quantity?: number | null;
+  unit?: string | null;
+  packUnits?: number | null;
+};
 
 export type Product = {
   id: string;
   name: string;
   slug: string;
   description: string;
-  brand: Brand;
-  brandId: string;
-  price: number;
+  /** null = producto sin marca (accesorios genéricos, graneles del catálogo). */
+  brand: Brand | null;
+  brandId: string | null;
+  /** null = «Precio a consultar» hasta que el cliente lo fije en el panel. */
+  price: number | null;
   compareAt: number | null;
   image: string;
   gallery: string[];
@@ -58,6 +71,12 @@ export type Taxonomy = {
   brands: Brand[];
 };
 
+/** El árbol del menú de cabecera que devuelve `/api/taxonomy/menu`. */
+export type MenuLinea = { nombre: string; total: number };
+export type MenuMarca = { slug: string; nombre: string; total: number; lineas: MenuLinea[] };
+export type MenuCategoria = { slug: string; nombre: string; sortOrder: number; total: number; marcas: MenuMarca[] };
+export type MenuAnimal = { slug: string; nombre: string; total: number; categorias: MenuCategoria[] };
+
 /** Una opción de filtro, con cuántos productos hay detrás. */
 export type Faceta = { slug: string; nombre: string; total: number };
 
@@ -73,6 +92,8 @@ export type Facetas = {
   categories: Faceta[];
   needs: Faceta[];
   brands: Faceta[];
+  /** Rangos de tamaño por peso (Hasta 1 kg, 1–3 kg…). */
+  sizes: Faceta[];
   ofertas: number;
   precio: { min: number; max: number } | null;
 };

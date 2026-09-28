@@ -28,11 +28,15 @@ const VALUES = [
  * que se mueven solas cuando la tienda crece y no hay que acordarse de nada.
  * Prefiero tres ciertas que cuatro con relleno.
  */
-const ENVIO_GRATIS_DESDE = 49;
+const ENVIO_GRATIS_DESDE = 30;
 
 export function ConocenosPage() {
   const nav = useNavegacion();
-  const marcas = nav.find((e) => e.etiqueta === 'Marcas')?.columnas?.[0]?.enlaces.length ?? 0;
+  // Marcas distintas del catálogo: se cuentan sobre el árbol del menú, donde la
+  // misma marca puede aparecer en varias categorías, así que se deduplican.
+  const marcas = new Set(
+    nav.flatMap((a) => a.categorias.flatMap((c) => c.marcas.map((m) => m.slug))),
+  ).size;
 
   const cifras: [string, string][] = [
     ...(marcas > 0 ? ([[`${marcas}`, 'Marcas en catálogo']] as [string, string][]) : []),

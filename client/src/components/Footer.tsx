@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { CreditCard, Facebook, Headphones, Instagram, Leaf, Truck } from 'lucide-react';
+import { CreditCard, Facebook, Headphones, Instagram, Leaf, MapPin, Truck } from 'lucide-react';
 import { EMPRESA, REDES_SOCIALES, datosDeContacto } from '@/lib/empresa';
 
 /**
@@ -76,6 +76,63 @@ function Columna({ titulo, enlaces }: { titulo: string; enlaces: [string, string
   );
 }
 
+/**
+ * DÓNDE ESTAMOS.
+ *
+ * El mapa se embebe desde OpenStreetMap con las coordenadas de la tienda: es
+ * fiable y no necesita clave de API (el embed «keyless» de Google devuelve 429 a
+ * poco que se recargue). Va con `loading="lazy"` para no cargar el iframe hasta
+ * que se acerca al pie —es lo último de la página— y con un enlace «Cómo llegar»
+ * que abre la app de mapas, que es lo que de verdad usa quien viene a la tienda.
+ */
+function Mapa({ direccion }: { direccion: string }) {
+  const consulta = encodeURIComponent(direccion);
+  const geo = EMPRESA.geo;
+  // Un recuadro pequeño alrededor del punto, para que el mapa salga con zoom de
+  // calle y el marcador centrado.
+  const d = 0.004;
+  const mapaSrc = geo
+    ? `https://www.openstreetmap.org/export/embed.html?bbox=${geo.lon - d}%2C${geo.lat - d}%2C${
+        geo.lon + d
+      }%2C${geo.lat + d}&layer=mapnik&marker=${geo.lat}%2C${geo.lon}`
+    : `https://www.google.com/maps?q=${consulta}&output=embed`;
+  // «Cómo llegar»: si hay coordenadas exactas, se abre el punto justo; si no, se
+  // busca por la dirección.
+  const destinoLlegar = geo ? `${geo.lat},${geo.lon}` : direccion;
+  return (
+    <div className="container-page border-t border-edge-subtle py-section-sm">
+      <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr] lg:items-center">
+        <div>
+          <h3 className="mb-3 flex items-center gap-2 text-overline font-bold uppercase text-content-muted">
+            <MapPin className="h-4 w-4 text-brand-600" aria-hidden="true" />
+            Dónde estamos
+          </h3>
+          <p className="text-body font-semibold text-content">{EMPRESA.nombreComercial}</p>
+          <p className="mt-1 max-w-xs text-body-sm text-content-muted">{direccion}</p>
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destinoLlegar)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-control bg-brand-700 px-4 text-body-sm font-semibold text-content-inverse transition-colors hover:bg-brand-800"
+          >
+            <MapPin className="h-4 w-4" aria-hidden="true" />
+            Cómo llegar
+          </a>
+        </div>
+        <div className="overflow-hidden rounded-card border border-edge-subtle">
+          <iframe
+            title={`Mapa de ${EMPRESA.nombreComercial} en ${direccion}`}
+            src={mapaSrc}
+            className="h-64 w-full border-0"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Footer() {
   const contacto = datosDeContacto();
 
@@ -138,6 +195,9 @@ export function Footer() {
         <Columna titulo="Ayuda" enlaces={AYUDA} />
         <Columna titulo="Legal" enlaces={LEGAL} />
       </div>
+
+      {/* Dónde estamos: dirección + mapa. Sólo si hay dirección confirmada. */}
+      {EMPRESA.direccion && <Mapa direccion={EMPRESA.direccion} />}
 
       {/* Pie del pie */}
       <div className="border-t border-edge-subtle">

@@ -20,8 +20,8 @@ export type { Envio };
 /* Espejo de `server/src/lib/envio.ts`, con una prueba en `envio-zona.test.ts`
    que lee el fichero del servidor y comprueba que no se han separado. */
 export const ENVIO_POR_DEFECTO: Envio = {
-  gratisDesde: 49,
-  tarifa: 4.95,
+  gratisDesde: 30,
+  tarifa: 5,
   zona: 'Canarias',
   plazo: '24-48 h',
   prefijosCp: ['35', '38'],

@@ -181,7 +181,7 @@ describe('la portada no afirma lo que no puede sostener', () => {
     montar(CATALOGO);
     const correo = await screen.findByRole('link', { name: /chachopetshop@gmail\.com/i });
     expect(correo).toHaveAttribute('href', 'mailto:chachopetshop@gmail.com');
-    expect(screen.getByRole('link', { name: /628 013 933/ })).toHaveAttribute('href', 'tel:+34628013933');
+    expect(screen.getByRole('link', { name: /689 73 22 67/ })).toHaveAttribute('href', 'tel:+34689732267');
     expect(document.body.textContent).not.toMatch(/922\s*00\s*00\s*00/);
   });
 });

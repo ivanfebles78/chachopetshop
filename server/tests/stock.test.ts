@@ -1,18 +1,20 @@
 /**
- * CONTRATO DE EXISTENCIAS.
+ * CONTRATO DE EXISTENCIAS — MODELO DE ENCARGO.
  *
- * El defecto: `buildOrder()` leía el precio de la variante pero nunca su
- * `stock`, y no había en todo el proyecto un solo punto que lo descontara. Se
- * podían comprar 99 sacos de algo agotado, y el panel seguía diciendo lo mismo
- * después de vender.
+ * La tienda vende POR ENCARGO (decisión de Ivan): un formato agotado se puede
+ * pedir igual y la tienda lo repone. Así que el stock **ya NO es un límite
+ * superior**: se descuenta siempre al comprar y puede quedar en negativo, que en
+ * el panel se lee como «unidades que hay que reponer».
  *
- * La regla es dura y no admite pedidos pendientes: **el stock disponible es un
- * límite superior**. No hay reservas anticipadas ni ventas contra reposición
- * porque el negocio no las tiene definidas, y no me las voy a inventar.
+ * Lo que se comprueba aquí es que el checkout NO rechaza por falta de stock, que
+ * el descuento sigue ocurriendo y que la cantidad se sigue validando (entero,
+ * positivo, dentro del máximo por línea). El descuento se hace con el mismo
+ * `updateMany` atómico de antes, sólo que sin la condición `stock >= n`.
  *
- * La parte de concurrencia es la que obliga a usar una base de datos de verdad.
- * Con `stock = 1` y dos compradores a la vez, un mock diría lo que le pidiéramos;
- * sólo PostgreSQL puede demostrar que el descuento condicional es atómico.
+ * (Con la clave de Stripe falsa de las pruebas, toda compra que pasa el control
+ * de existencias se queda a medias en el paso de Stripe y devuelve su descuento;
+ * por eso el stock final vuelve a su sitio y no se puede observar el negativo
+ * por este camino. Lo que sí se observa es que NO hay 409 de stock.)
  */
 
 import { describe, it, expect, beforeEach, afterAll } from 'vitest';
@@ -45,34 +47,36 @@ afterAll(async () => {
   await prisma.$disconnect();
 });
 
-/* ══ 1. El stock es un techo ════════════════════════════════════════════ */
+/* ══ 1. El stock NO es un techo: se vende por encargo ═══════════════════ */
 
-describe('el stock disponible limita lo que se puede pedir', () => {
-  it('con stock 0 no se puede comprar', async () => {
+describe('se puede pedir por encargo aunque no haya stock', () => {
+  it('con stock 0 se puede encargar (no se rechaza por existencias)', async () => {
     const { producto, variante } = await crearProducto({ stock: 0 });
     const res = await comprar(producto.id, variante.id, 1);
 
-    expect(res.status).toBeGreaterThanOrEqual(400);
-    expect(res.status).toBeLessThan(500);
-    expect(String(res.body.error ?? '')).toMatch(/stock|disponib|existencias/i);
+    expect(res.status).not.toBe(409);
+    expect(String(res.body.error ?? '')).not.toMatch(/stock|disponib|existencias/i);
+    // El pedido llega a crearse: el encargo pasa el control de existencias.
+    expect(await prisma.order.count()).toBe(1);
   });
 
-  it('con stock 1 y cantidad 2 se rechaza', async () => {
+  it('con stock 1 se pueden pedir 2 unidades', async () => {
     const { producto, variante } = await crearProducto({ stock: 1 });
     const res = await comprar(producto.id, variante.id, 2);
 
-    expect(res.status).toBeGreaterThanOrEqual(400);
-    expect(res.status).toBeLessThan(500);
-    expect(await stockDe(variante.id)).toBe(1);
+    expect(res.status).not.toBe(409);
+    expect(String(res.body.error ?? '')).not.toMatch(/stock|disponib|existencias/i);
+    expect(await prisma.order.count()).toBe(1);
   });
 
-  it('una cantidad enorme se rechaza sin tocar el stock', async () => {
+  it('una cantidad por encima del máximo por línea se rechaza por VALIDACIÓN', async () => {
+    // El tope de 99 por línea sigue vigente: es validación de entrada, no stock.
     const { producto, variante } = await crearProducto({ stock: 10 });
     const res = await comprar(producto.id, variante.id, 999999);
 
-    expect(res.status).toBeGreaterThanOrEqual(400);
-    expect(res.status).toBeLessThan(500);
+    expect(res.status).toBe(400);
     expect(await stockDe(variante.id)).toBe(10);
+    expect(await prisma.order.count()).toBe(0);
   });
 });
 

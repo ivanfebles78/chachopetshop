@@ -5,6 +5,7 @@ import { Footer } from './Footer';
 import { CartDrawer } from './CartDrawer';
 import { Toaster } from './Toaster';
 import { ErrorBoundary } from './ErrorBoundary';
+import { BotonWhatsApp } from './BotonWhatsApp';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -56,6 +57,7 @@ export function Layout() {
       <Footer />
       <CartDrawer />
       <Toaster />
+      <BotonWhatsApp />
     </div>
   );
 }

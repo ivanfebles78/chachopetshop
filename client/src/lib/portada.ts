@@ -93,6 +93,6 @@ export function ofertas(productos: Product[], limite = 4): Product[] {
 
 /** El ahorro real, para no tener que calcularlo en la plantilla. */
 export function porcentajeAhorro(p: Product): number | null {
-  if (!estaRebajado(p)) return null;
+  if (!estaRebajado(p) || p.price == null) return null;
   return Math.round((1 - p.price / (p.compareAt as number)) * 100);
 }

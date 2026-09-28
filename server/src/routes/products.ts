@@ -5,6 +5,7 @@ import { prisma } from '../db.js';
 import { serializeProduct } from '../lib/serialize.js';
 import { calcularFacetas, type Condiciones } from '../lib/facetas.js';
 import { condicionDeBusqueda } from '../lib/busqueda.js';
+import { condicionTamanos } from '../lib/tamanos.js';
 
 export const productsRouter = Router();
 
@@ -13,6 +14,10 @@ const listQuery = z.object({
   animal: z.string().optional(),
   category: z.string().optional(),
   brand: z.string().optional(),
+  /** Línea de marca (atributo del producto). Valor exacto; acepta CSV. */
+  line: z.string().optional(),
+  /** Rango(s) de tamaño por peso (slug de `lib/tamanos.ts`). Acepta CSV. */
+  size: z.string().optional(),
   need: z.string().optional(),
   q: z.string().optional(),
   // No negativos: `minPrice=-100` no rompía nada pero tampoco significa nada,
@@ -84,6 +89,27 @@ productsRouter.get('/', async (req, res, next) => {
     if (brands.length) {
       cond.brand = { brand: { slug: { in: brands } } };
       and.push(cond.brand);
+    }
+
+    // Línea: atributo del producto. Se aplica como condición base (afecta a todas
+    // las facetas) porque el menú llega con marca+línea juntas y no hay todavía un
+    // filtro de línea independiente en el panel.
+    const lineas = csv(p.line);
+    if (lineas.length) {
+      const c = { line: { in: lineas } };
+      cond.base.push(c);
+      and.push(c);
+    }
+
+    // Tamaño: rangos de peso (OR entre ellos). Es su propia dimensión de faceta,
+    // para que al elegir «7-15 kg» los recuentos de las demás lo reflejen.
+    const tamanos = csv(p.size);
+    if (tamanos.length) {
+      const c = condicionTamanos(tamanos);
+      if (c) {
+        cond.size = c;
+        and.push(c);
+      }
     }
 
     // Cada "need" seleccionada es un AND (más filtros = más específico).

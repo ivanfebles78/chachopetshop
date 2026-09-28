@@ -148,23 +148,23 @@ describe('una capa abierta no se reinicia al repintar el padre', () => {
      * devolvía el foco al principio. Es decir, no se podía escribir.
      */
     const { MobileNav } = await import('./MobileNav');
-    const entradas = [
-      { etiqueta: 'Perros', href: '/tienda?animal=perro', total: 3,
-        columnas: [{ titulo: 'Alimentación', enlaces: [{ etiqueta: 'Seca', href: '/x', total: 2 }] }] },
-      { etiqueta: 'Gatos', href: '/tienda?animal=gato', total: 2, columnas: undefined },
+    const animales = [
+      { slug: 'perro', nombre: 'Perros', total: 3, categorias: [] },
+      { slug: 'gato', nombre: 'Gatos', total: 2, categorias: [] },
     ] as never;
 
     const { rerender } = render(
-      <MemoryRouter><MobileNav entradas={entradas} conSesion={false} onClose={() => {}} /></MemoryRouter>,
+      <MemoryRouter><MobileNav animales={animales} conSesion={false} onClose={() => {}} /></MemoryRouter>,
     );
 
-    const gatos = screen.getByRole('link', { name: 'Gatos' });
+    // En el primer nivel los animales son botones para entrar en su menú.
+    const gatos = screen.getByRole('button', { name: 'Gatos' });
     gatos.focus();
     expect(document.activeElement).toBe(gatos);
 
     // El padre repinta y entrega una función NUEVA, como hace Navbar de verdad.
     rerender(
-      <MemoryRouter><MobileNav entradas={entradas} conSesion={false} onClose={() => {}} /></MemoryRouter>,
+      <MemoryRouter><MobileNav animales={animales} conSesion={false} onClose={() => {}} /></MemoryRouter>,
     );
 
     expect(document.activeElement).toBe(gatos);

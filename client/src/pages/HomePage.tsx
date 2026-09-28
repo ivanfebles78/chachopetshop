@@ -44,7 +44,7 @@ const FOTO_ANCHO = 1600;
 const FOTO_ALTO = 506;
 
 /** Envío gratis a partir de este importe. Igual que en el carrito. */
-const ENVIO_GRATIS_DESDE = 49;
+const ENVIO_GRATIS_DESDE = 30;
 
 export function HomePage() {
   const { taxonomy, productos, cargando } = useCatalogo();

@@ -1,20 +1,47 @@
-import { useMemo } from 'react';
-import { construirNavegacion, type EntradaNav } from './navigation';
-import { useCatalogo, _resetCacheCatalogo } from './useCatalogo';
+import { useEffect, useState } from 'react';
+import { api } from './api';
+import type { MenuAnimal } from './types';
 
 /**
- * El menú de la cabecera, construido desde el catálogo real.
+ * El árbol del menú de cabecera —categoría → marca → línea, por animal—, pedido
+ * una vez por sesión de navegador a `/api/taxonomy/menu`.
  *
- * La lógica está en `navigation.ts`, que son funciones puras y se prueban sin
- * React ni servidor. Aquí sólo se conectan a los datos.
+ * Se devuelve tal cual lo da el servidor; darle forma de acordeón es cosa del
+ * componente que lo pinta (`MenuArbol`). Se cachea en el módulo para no repetir
+ * la petición en cada montaje de la cabecera.
  */
-export function useNavegacion(): EntradaNav[] {
-  const { taxonomy, productos } = useCatalogo();
-  return useMemo(
-    () => (taxonomy ? construirNavegacion(taxonomy, productos) : []),
-    [taxonomy, productos],
-  );
+
+let cache: MenuAnimal[] | null = null;
+let enVuelo: Promise<MenuAnimal[]> | null = null;
+
+export function useNavegacion(): MenuAnimal[] {
+  const [animales, setAnimales] = useState<MenuAnimal[]>(cache ?? []);
+
+  useEffect(() => {
+    if (cache) return;
+    let vivo = true;
+    enVuelo ??= api.menu().then((r) => r.animales);
+    enVuelo
+      .then((datos) => {
+        cache = datos;
+        if (vivo) setAnimales(datos);
+      })
+      .catch(() => {
+        /* Si el menú no carga, la cabecera se queda con logo, buscador, cuenta y
+           carrito: se puede seguir navegando. Un fallo de datos no tumba la web. */
+        enVuelo = null;
+        if (vivo) setAnimales([]);
+      });
+    return () => {
+      vivo = false;
+    };
+  }, []);
+
+  return animales;
 }
 
-/** Sólo para las pruebas. */
-export const _resetCacheNavegacion = _resetCacheCatalogo;
+/** Sólo para las pruebas: el caché vive en el módulo y sobrevive entre ellas. */
+export function _resetCacheNavegacion() {
+  cache = null;
+  enVuelo = null;
+}

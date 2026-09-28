@@ -204,20 +204,22 @@ describe('integridad de precios', () => {
       });
 
     const pedido = await prisma.order.findFirst();
-    // Por debajo del umbral: 4,95 € de envío, lo diga el cliente o no.
-    expect(Number(pedido!.shipping)).toBe(4.95);
-    expect(Number(pedido!.total)).toBe(14.95);
+    // Por debajo del umbral: 5 € de envío, lo diga el cliente o no.
+    expect(Number(pedido!.shipping)).toBe(5);
+    expect(Number(pedido!.total)).toBe(15);
   });
 
-  it('varias líneas del mismo producto se agrupan antes de mirar el stock', async () => {
+  it('varias líneas del mismo producto se agrupan en una sola', async () => {
     /*
-     * Sin agrupar, dos líneas de 1 unidad comprobarían el stock por separado y
-     * las dos pasarían con una sola unidad disponible. Es la misma sobreventa
-     * que la concurrencia, pero dentro de una única petición.
+     * Agrupar las líneas repetidas sigue importando aunque la venta sea por
+     * encargo: el pedido debe quedar con UNA línea de cantidad 2, no con dos de
+     * una unidad —el precio se suma bien y el descuento de stock es uno solo—.
+     * El pedido se crea antes del paso de Stripe, así que sus líneas se pueden
+     * inspeccionar aunque luego el pago se quede a medias por la clave falsa.
      */
     const { producto, variante } = await crearProducto({ stock: 1 });
 
-    const res = await request(await app())
+    await request(await app())
       .post('/api/checkout')
       .send({
         shipping: DIRECCION_CANARIA,
@@ -228,8 +230,9 @@ describe('integridad de precios', () => {
         ],
       });
 
-    expect(res.status).toBeGreaterThanOrEqual(400);
-    expect(res.status).toBeLessThan(500);
+    const items = await prisma.orderItem.findMany({ where: { variantId: variante.id } });
+    expect(items).toHaveLength(1);
+    expect(items[0]!.quantity).toBe(2);
   });
 });
 

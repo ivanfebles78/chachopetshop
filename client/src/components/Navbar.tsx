@@ -4,7 +4,9 @@ import { ChevronDown, Menu, Search, ShoppingBag, Truck, User, X } from 'lucide-r
 import { selectCount, useCart } from '@/store/cart';
 import { useAuth } from '@/store/auth';
 import { useNavegacion } from '@/lib/useNavegacion';
-import type { EntradaNav } from '@/lib/navigation';
+import { rutaCatalogo } from '@/lib/navigation';
+import type { MenuAnimal } from '@/lib/types';
+import { MegaMenu } from './MegaMenu';
 import { MobileNav } from './MobileNav';
 
 /**
@@ -47,27 +49,27 @@ function Logo() {
   );
 }
 
-/** Un desplegable de la cabecera, con el patrón de divulgación. */
-function Desplegable({ entrada }: { entrada: EntradaNav }) {
-  /*
-   * No basta con «abierto sí o no»: hace falta saber POR QUÉ está abierto.
-   *
-   * El puntero abre al pasar por encima y el clic alterna, y las dos cosas se
-   * pelean, porque para pulsar hay que estar encima: al llegar al botón el
-   * ratón ya lo había abierto, así que el clic lo cerraba y ABRIR CON EL RATÓN
-   * ERA IMPOSIBLE. Con teclado no pasaba —no hay `mouseenter`—, de modo que el
-   * fallo sólo salía con el ratón, que es como entra casi todo el mundo.
-   *
-   * Distinguiendo el motivo, el clic sólo cierra lo que el propio clic abrió.
-   */
-  const [modo, setModo] = useState<'cerrado' | 'puntero' | 'clic'>('cerrado');
-  const abierto = modo !== 'cerrado';
-  const setAbierto = (v: boolean) => setModo(v ? 'clic' : 'cerrado');
+/**
+ * Un desplegable de la cabecera. Genérico: la cabecera decide qué va dentro
+ * (las categorías de un animal, la lista de otras mascotas, o las marcas).
+ *
+ * ABRE Y CIERRA CON CLIC, no al pasar el ratón: dentro hay que recorrer varios
+ * niveles con más clics, y si se cerrara al salir el puntero, bastaría rozar el
+ * borde para perderlo todo. Se cierra con Escape, con un clic fuera o al seguir
+ * un enlace. El contenido recibe `cerrar` para cerrarse al navegar.
+ */
+function Desplegable({
+  titulo,
+  children,
+}: {
+  titulo: string;
+  children: (cerrar: () => void) => React.ReactNode;
+}) {
+  const [abierto, setAbierto] = useState(false);
   const contenedor = useRef<HTMLDivElement>(null);
   const disparador = useRef<HTMLButtonElement>(null);
   const panelId = useId();
 
-  /* Escape cierra y devuelve el foco a quien abrió: si no, el foco se pierde. */
   useEffect(() => {
     if (!abierto) return;
     const alPulsar = (e: KeyboardEvent) => {
@@ -87,95 +89,116 @@ function Desplegable({ entrada }: { entrada: EntradaNav }) {
     };
   }, [abierto]);
 
-  /* Al salir con el tabulador del último enlace, el panel se cierra solo. */
   const alPerderFoco = (e: React.FocusEvent<HTMLDivElement>) => {
     if (!e.currentTarget.contains(e.relatedTarget as Node)) setAbierto(false);
   };
 
-  if (!entrada.columnas) {
-    return (
-      <Link to={entrada.href} className="nav-link">
-        {entrada.etiqueta}
-      </Link>
-    );
-  }
-
   return (
-    <div
-      ref={contenedor}
-      className="relative"
-      /* El puntero sólo abre lo que estaba cerrado: nunca pisa un clic. */
-      onMouseEnter={() => setModo((m) => (m === 'cerrado' ? 'puntero' : m))}
-      /* Al salir se cierra, se hubiera abierto como se hubiera abierto. */
-      onMouseLeave={() => setModo('cerrado')}
-      onBlur={alPerderFoco}
-    >
+    <div ref={contenedor} className="relative" onBlur={alPerderFoco}>
       <button
         ref={disparador}
         type="button"
         className="nav-link"
         aria-expanded={abierto}
         aria-controls={panelId}
-        onClick={() => setModo((m) => (m === 'clic' ? 'cerrado' : 'clic'))}
+        onClick={() => setAbierto((v) => !v)}
       >
-        {entrada.etiqueta}
+        {titulo}
         <ChevronDown className={`h-4 w-4 transition-transform ${abierto ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
 
       {abierto && (
         <div
           id={panelId}
-          className="absolute left-0 top-full z-50 w-max min-w-[34rem] max-w-[46rem] animate-slide-up rounded-card border border-edge-subtle bg-surface p-5 shadow-raised"
+          // `overflow` visible a propósito: las marcas de una categoría se abren
+          // en un panel flotante a la derecha (ver `MegaMenu`) y no deben quedar
+          // recortadas por el borde del desplegable.
+          className="absolute left-0 top-full z-50 mt-1 animate-slide-up rounded-card border border-edge-subtle bg-surface p-3 shadow-raised"
         >
-          <div className="grid grid-cols-3 gap-5">
-            {entrada.columnas.map((col, i) => (
-              <div key={`${col.titulo}-${i}`}>
-                {col.titulo.trim() && <p className="menu-heading">{col.titulo}</p>}
-                <ul className="list-none space-y-0.5 p-0">
-                  {col.enlaces.map((enlace) => (
-                    <li key={enlace.href}>
-                      <Link to={enlace.href} className="menu-link" onClick={() => setAbierto(false)}>
-                        <span>{enlace.etiqueta}</span>
-                        {/*
-                          El recuento sólo aparece si hay algo que contar.
-
-                          Desde la Fase 2I el menú enseña la estructura comercial
-                          completa, y muchas categorías todavía están vacías
-                          porque la mercancía entra después. Un «0» junto a cada
-                          nombre se lee como un error de la tienda, no como «aún
-                          no hay». El nombre ya lleva el significado; el número
-                          sólo aporta cuando es mayor que cero.
-                        */}
-                        {enlace.total > 0 && (
-                          <span className="text-caption text-content-subtle" aria-hidden="true">
-                            {enlace.total}
-                          </span>
-                        )}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-          {entrada.verTodo && (
-            <div className="mt-4 border-t border-edge-subtle pt-3">
-              <Link to={entrada.verTodo.href} className="btn-link text-body-sm" onClick={() => setAbierto(false)}>
-                {entrada.verTodo.etiqueta} →
-              </Link>
-            </div>
-          )}
+          {children(() => setAbierto(false))}
         </div>
       )}
     </div>
   );
 }
 
+/** «Otras mascotas»: enlaces directos a cada animal (aves, roedores, peces…). */
+function ListaAnimales({ animales, onNavegar }: { animales: MenuAnimal[]; onNavegar: () => void }) {
+  return (
+    <ul className="w-56 list-none space-y-0.5 p-0">
+      {animales.map((a) => (
+        <li key={a.slug}>
+          <Link
+            to={rutaCatalogo({ animal: a.slug })}
+            onClick={onNavegar}
+            className="flex min-h-11 items-center justify-between gap-2 rounded-control px-3 text-body font-semibold text-content hover:bg-brand-50"
+          >
+            <span>{a.nombre}</span>
+            <span className="text-caption tabular-nums text-content-subtle" aria-hidden="true">{a.total}</span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** «Marcas»: todas las del catálogo, en dos columnas, cada una un enlace. */
+function ListaMarcas({
+  marcas,
+  onNavegar,
+}: {
+  marcas: { slug: string; nombre: string; total: number }[];
+  onNavegar: () => void;
+}) {
+  return (
+    <ul className="grid max-h-[60vh] w-[28rem] max-w-[80vw] list-none grid-cols-2 gap-x-3 gap-y-0.5 overflow-y-auto p-0">
+      {marcas.map((m) => (
+        <li key={m.slug}>
+          <Link
+            to={rutaCatalogo({ brand: m.slug })}
+            onClick={onNavegar}
+            className="flex min-h-9 items-center justify-between gap-2 rounded-control px-3 text-body-sm text-content hover:bg-brand-50"
+          >
+            <span className="truncate">{m.nombre}</span>
+            <span className="text-caption tabular-nums text-content-subtle" aria-hidden="true">{m.total}</span>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * Todas las marcas del catálogo, a partir del árbol del menú: se recorren todas
+ * las categorías de todos los animales, se juntan las marcas por `slug` y se
+ * suman sus totales. Ordenadas por nombre.
+ */
+function marcasDe(animales: MenuAnimal[]): { slug: string; nombre: string; total: number }[] {
+  const mapa = new Map<string, { slug: string; nombre: string; total: number }>();
+  for (const animal of animales) {
+    for (const cat of animal.categorias) {
+      for (const marca of cat.marcas) {
+        const previa = mapa.get(marca.slug);
+        if (previa) previa.total += marca.total;
+        else mapa.set(marca.slug, { slug: marca.slug, nombre: marca.nombre, total: marca.total });
+      }
+    }
+  }
+  return [...mapa.values()].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+}
+
 export function Navbar() {
   const count = useCart(selectCount);
   const openCart = useCart((s) => s.open);
   const { user } = useAuth();
-  const entradas = useNavegacion();
+  const animales = useNavegacion();
+  // Los cinco elementos de la cabecera: Perros y Gatos con su menú completo, el
+  // resto de animales agrupados en «Otras mascotas», todas las marcas juntas, y
+  // «Ofertas» como enlace directo.
+  const perro = animales.find((a) => a.slug === 'perro');
+  const gato = animales.find((a) => a.slug === 'gato');
+  const otras = animales.filter((a) => a.slug !== 'perro' && a.slug !== 'gato');
+  const marcas = marcasDe(animales);
   const [movilAbierto, setMovilAbierto] = useState(false);
   const [q, setQ] = useState('');
   const navigate = useNavigate();
@@ -199,7 +222,7 @@ export function Navbar() {
         <div className="container-page flex min-h-9 flex-wrap items-center justify-between gap-x-4 py-1.5 text-caption">
           <span className="flex items-center gap-2">
             <Truck className="h-4 w-4 shrink-0 text-amber-400" aria-hidden="true" />
-            Envío 24-48h en Canarias · Gratis desde 49&nbsp;€
+            Envío 24-48h en Canarias · Gratis desde 30&nbsp;€
           </span>
           <nav aria-label="Enlaces de ayuda" className="hidden items-center gap-4 sm:flex">
             <Link to="/conocenos" className="hover:text-amber-400">Conócenos</Link>
@@ -213,9 +236,29 @@ export function Navbar() {
         <Logo />
 
         <nav aria-label="Catálogo" className="hidden items-center lg:flex">
-          {entradas.map((entrada) => (
-            <Desplegable key={entrada.etiqueta} entrada={entrada} />
-          ))}
+          {perro && (
+            <Desplegable titulo="Perros">
+              {(cerrar) => <MegaMenu animal={perro} onNavegar={cerrar} />}
+            </Desplegable>
+          )}
+          {gato && (
+            <Desplegable titulo="Gatos">
+              {(cerrar) => <MegaMenu animal={gato} onNavegar={cerrar} />}
+            </Desplegable>
+          )}
+          {otras.length > 0 && (
+            <Desplegable titulo="Otras mascotas">
+              {(cerrar) => <ListaAnimales animales={otras} onNavegar={cerrar} />}
+            </Desplegable>
+          )}
+          {marcas.length > 0 && (
+            <Desplegable titulo="Marcas">
+              {(cerrar) => <ListaMarcas marcas={marcas} onNavegar={cerrar} />}
+            </Desplegable>
+          )}
+          <Link to="/tienda?oferta=1" className="nav-link">
+            Ofertas
+          </Link>
         </nav>
 
         {/*
@@ -285,7 +328,7 @@ export function Navbar() {
 
       {movilAbierto && (
         <MobileNav
-          entradas={entradas}
+          animales={animales}
           conSesion={Boolean(user)}
           onClose={() => {
             setMovilAbierto(false);

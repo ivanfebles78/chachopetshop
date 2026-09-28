@@ -1,5 +1,6 @@
 import type { Prisma } from '@prisma/client';
 import { prisma } from '../db.js';
+import { TAMANOS, condicionTamano } from './tamanos.js';
 
 /**
  * RECUENTOS POR FACETA.
@@ -31,6 +32,8 @@ export type Facetas = {
   categories: Faceta[];
   needs: Faceta[];
   brands: Faceta[];
+  /** Rangos de tamaño por peso (ver `lib/tamanos.ts`). */
+  sizes: Faceta[];
   /** Cuántos hay rebajados de verdad, con los demás filtros puestos. */
   ofertas: number;
   /** Rango de precios real del resultado, para acotar el filtro de precio. */
@@ -43,6 +46,8 @@ export type Condiciones = {
   category?: Prisma.ProductWhereInput;
   need?: Prisma.ProductWhereInput[];
   brand?: Prisma.ProductWhereInput;
+  /** Tamaño: OR de los rangos elegidos (ver `lib/tamanos.ts`). */
+  size?: Prisma.ProductWhereInput;
   oferta?: Prisma.ProductWhereInput[];
   /** Lo que se aplica siempre: búsqueda, precio, activo… */
   base: Prisma.ProductWhereInput[];
@@ -55,6 +60,7 @@ function salvo(c: Condiciones, dimension: keyof Condiciones | null): Prisma.Prod
   if (dimension !== 'category' && c.category) and.push(c.category);
   if (dimension !== 'need' && c.need) and.push(...c.need);
   if (dimension !== 'brand' && c.brand) and.push(c.brand);
+  if (dimension !== 'size' && c.size) and.push(c.size);
   if (dimension !== 'oferta' && c.oferta) and.push(...c.oferta);
   return { active: true, ...(and.length ? { AND: and } : {}) };
 }
@@ -76,7 +82,7 @@ const aFaceta = (f: { slug: string; name: string; _count: { products: number } }
 });
 
 export async function calcularFacetas(c: Condiciones): Promise<Facetas> {
-  const [animals, categories, needs, brands, ofertas, precios] = await Promise.all([
+  const [animals, categories, needs, brands, sizes, ofertas, precios] = await Promise.all([
     prisma.animal.findMany({
       select: { slug: true, name: true, _count: { select: { products: { where: salvo(c, 'animal') } } } },
       orderBy: { sortOrder: 'asc' },
@@ -93,6 +99,16 @@ export async function calcularFacetas(c: Condiciones): Promise<Facetas> {
       select: { slug: true, name: true, _count: { select: { products: { where: salvo(c, 'brand') } } } },
       orderBy: { name: 'asc' },
     }).then((f) => f.map(aFaceta)),
+    // Tamaño: un recuento por rango, contando productos con algún formato en él.
+    Promise.all(
+      TAMANOS.map(async (t) => ({
+        slug: t.slug,
+        nombre: t.nombre,
+        total: await prisma.product.count({
+          where: { AND: [salvo(c, 'size'), condicionTamano(t.slug)!] },
+        }),
+      })),
+    ),
     prisma.product.count({
       where: {
         ...salvo(c, 'oferta'),
@@ -118,6 +134,7 @@ export async function calcularFacetas(c: Condiciones): Promise<Facetas> {
     categories,
     needs,
     brands,
+    sizes,
     ofertas,
     precio: min != null && max != null ? { min: Number(min), max: Number(max) } : null,
   };

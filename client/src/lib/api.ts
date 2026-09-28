@@ -3,6 +3,7 @@ import type {
   AuthUser,
   ContactMessage,
   Envio,
+  MenuAnimal,
   Order,
   Product,
   ProductListResponse,
@@ -43,6 +44,10 @@ export type ProductFilters = {
   animal?: string;
   category?: string;
   brand?: string[];
+  /** Línea de marca (atributo del producto). El menú enlaza marca + línea. */
+  line?: string[];
+  /** Rango(s) de tamaño por peso (slug de los rangos). */
+  size?: string[];
   need?: string[];
   q?: string;
   minPrice?: number;
@@ -71,6 +76,8 @@ function toQuery(f: ProductFilters): string {
   if (f.animal) p.set('animal', f.animal);
   if (f.category) p.set('category', f.category);
   if (f.brand?.length) p.set('brand', f.brand.join(','));
+  if (f.line?.length) p.set('line', f.line.join(','));
+  if (f.size?.length) p.set('size', f.size.join(','));
   if (f.need?.length) p.set('need', f.need.join(','));
   if (f.q) p.set('q', f.q);
   if (f.minPrice != null) p.set('minPrice', String(f.minPrice));
@@ -88,6 +95,7 @@ function toQuery(f: ProductFilters): string {
 
 export const api = {
   taxonomy: () => request<Taxonomy>('/taxonomy'),
+  menu: () => request<{ animales: MenuAnimal[] }>('/taxonomy/menu'),
   /* Las reglas comerciales que la tienda anuncia, para que lo que se enseña y
      lo que se cobra no puedan separarse. */
   config: () => request<{ envio: Envio }>('/config'),

@@ -117,7 +117,18 @@ async function construirLineas(input: Entrada) {
       throw errorDeCliente('Debes elegir un formato del producto');
     }
 
-    const unitPrice = toNumber(variante?.price ?? producto.price) ?? 0;
+    /*
+     * SIN PRECIO NO SE VENDE.
+     *
+     * Desde la Fase 2J el precio es nullable: el catálogo del proveedor entra sin
+     * precios y el cliente los pone en el panel. Un `?? 0` aquí cobraría a 0 € un
+     * producto «a consultar» —regalar el género, el mismo fallo que el modo demo
+     * que se cerró—. Nulo es un error de negocio, no un descuento.
+     */
+    const unitPrice = toNumber(variante?.price ?? producto.price);
+    if (unitPrice === null) {
+      throw errorDeCliente('Este producto todavía no tiene precio y no se puede comprar');
+    }
     return {
       productId: producto.id,
       variantId: variante?.id ?? null,
@@ -135,38 +146,34 @@ async function construirLineas(input: Entrada) {
 }
 
 /**
- * Reserva existencias de forma ATÓMICA.
+ * Descuenta existencias — MODELO DE ENCARGO.
  *
- * Estrategia elegida: **descontar al crear la sesión de pago y devolver si el
- * pago no llega a buen puerto** (opción A del análisis, con liberación
- * determinista). La alternativa —descontar sólo tras el pago verificado— evita
- * retenciones fantasma, pero permite que dos personas paguen la misma última
- * unidad y obliga a devolver el dinero a una de ellas. En una tienda con dos o
- * tres sacos de cada formato, vender algo que no existe es peor que retener una
- * unidad diez minutos.
+ * Ivan quiere que la tienda venda POR ENCARGO: si un formato está agotado, se
+ * puede pedir igual y la tienda lo repone. Así que aquí ya NO se rechaza por
+ * falta de stock ni se exige `stock >= n`: se descuenta siempre, y el stock
+ * puede quedar en NEGATIVO. Ese negativo es útil —en el panel se ve cuántas
+ * unidades hay que reponer para servir lo ya pedido—.
  *
- * La atomicidad la da `updateMany` con la condición en el propio WHERE: es un
- * único `UPDATE ... WHERE stock >= n`, y PostgreSQL bloquea la fila. Leer y
- * luego escribir —el patrón evidente— tiene una ventana entre las dos
- * operaciones por la que caben dos compradores.
+ * Se mantiene el descuento al crear la sesión y la DEVOLUCIÓN si el pago no
+ * llega (para que un pago rechazado no deje el contador falseado), y se sigue
+ * usando `updateMany` con `decrement`, que es atómico a nivel de fila en
+ * PostgreSQL. Lo único que desaparece es la barrera anti-sobreventa: la
+ * sobreventa ahora es deliberada, es lo que significa «encargo».
  */
 async function reservar(lineas: { variantId: string | null; quantity: number }[]) {
   const reservadas: { variantId: string; quantity: number }[] = [];
   try {
     for (const linea of lineas) {
       if (!linea.variantId) continue;
-      const { count } = await prisma.productVariant.updateMany({
-        where: { id: linea.variantId, stock: { gte: linea.quantity } },
+      await prisma.productVariant.updateMany({
+        where: { id: linea.variantId },
         data: { stock: { decrement: linea.quantity } },
       });
-      if (count === 0) {
-        throw errorDeCliente('No hay stock suficiente para completar el pedido', 409);
-      }
       reservadas.push({ variantId: linea.variantId, quantity: linea.quantity });
     }
     return reservadas;
   } catch (err) {
-    // Lo ya reservado en este intento se devuelve antes de propagar el error.
+    // Lo ya descontado en este intento se devuelve antes de propagar el error.
     await devolver(reservadas);
     throw err;
   }

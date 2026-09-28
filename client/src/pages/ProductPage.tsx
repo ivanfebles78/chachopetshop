@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Check, ChevronRight, CreditCard, Minus, Plus, ShoppingBag, Truck } from 'lucide-react';
+import { Check, ChevronRight, CreditCard, MessageCircle, Minus, Phone, Plus, ShoppingBag, Truck } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { eur } from '@/lib/cn';
+import { EMPRESA, enlaceTelefono, enlaceWhatsApp } from '@/lib/empresa';
+import { esMarcaSoloEnTienda } from '@/lib/producto';
 import { useSeo } from '@/lib/useSeo';
 import { fichaTecnica, datosEstructuradosProducto, motivoRelacionado } from '@/lib/producto';
 import { Galeria } from '@/components/producto/Galeria';
@@ -15,7 +17,7 @@ import { ErrorState } from '@/components/ErrorState';
 import { useCart } from '@/store/cart';
 import { toast } from '@/store/toast';
 
-const ENVIO_GRATIS_DESDE = 49;
+const ENVIO_GRATIS_DESDE = 30;
 
 /**
  * FICHA DE PRODUCTO.
@@ -52,26 +54,36 @@ export function ProductPage() {
   const producto = data?.product;
 
   /*
-   * La variante elegida, o la primera QUE SE PUEDA COMPRAR.
-   *
-   * Empezar por `variants[0]` a secas dejaba preseleccionado un formato agotado
-   * siempre que fuera el más barato, que es justo el orden en que llegan.
+   * La variante elegida, o la primera. Ya no se prefiere «la que tenga stock»:
+   * se puede encargar cualquier formato, esté o no en existencias.
    */
   const variante = useMemo(() => {
     if (!producto) return undefined;
     const elegida = producto.variants.find((v) => v.id === variantId);
-    if (elegida) return elegida;
-    return producto.variants.find((v) => v.stock > 0) ?? producto.variants[0];
+    return elegida ?? producto.variants[0];
   }, [producto, variantId]);
 
-  const precio = variante?.price ?? producto?.price ?? 0;
-  const rebajado = producto?.compareAt != null && producto.compareAt > precio;
+  /*
+   * Precio nullable (Fase 2J): el catálogo del proveedor entra sin precios. Un
+   * producto «a consultar» se muestra pero no se puede comprar —lo impide tanto
+   * `anadir` aquí como el checkout en el servidor—. `precio` cae a 0 sólo para
+   * los cálculos; `sinPrecio` es la verdad que decide qué se pinta y qué se puede.
+   */
+  const precioReal = variante?.price ?? producto?.price ?? null;
+  const sinPrecio = precioReal === null;
+  const precio = precioReal ?? 0;
+  const rebajado = !sinPrecio && producto?.compareAt != null && producto.compareAt > precio;
   const ahorro = rebajado ? Math.round((1 - precio / (producto!.compareAt as number)) * 100) : 0;
-  const hayExistencias = variante ? variante.stock > 0 : false;
-  const maximo = Math.max(1, Math.min(variante?.stock ?? 1, 20));
+  /*
+   * ENCARGO: no se enseña el stock ni se bloquea la compra por él. Un formato
+   * agotado se puede pedir igual (la tienda lo repone). Lo único que impide
+   * comprar es que el precio no esté fijado todavía.
+   */
+  const soloEnTienda = producto ? esMarcaSoloEnTienda(producto) : false;
+  const MAXIMO_POR_PEDIDO = 20;
 
   useSeo({
-    titulo: producto ? `${producto.name} · ${producto.brand.name}` : 'Producto',
+    titulo: producto ? (producto.brand ? `${producto.name} · ${producto.brand.name}` : producto.name) : 'Producto',
     descripcion: producto?.description,
     canonica: producto ? `${window.location.origin}/producto/${producto.slug}` : undefined,
     estructurado: producto ? datosEstructuradosProducto(producto, window.location.origin) : null,
@@ -129,7 +141,7 @@ export function ProductPage() {
   const animal = producto.animals[0];
 
   const anadir = () => {
-    if (!hayExistencias) return;
+    if (sinPrecio || soloEnTienda) return;
     add({
       productId: producto.id,
       variantId: variante?.id,
@@ -198,12 +210,14 @@ export function ProductPage() {
 
         {/* ── Compra ─────────────────────────────────────────────────── */}
         <div className="lg:sticky lg:top-24 lg:self-start">
-          <Link
-            to={`/tienda?brand=${producto.brand.slug}`}
-            className="text-overline font-bold uppercase tracking-[0.14em] text-brand-600 hover:underline"
-          >
-            {producto.brand.name}
-          </Link>
+          {producto.brand && (
+            <Link
+              to={`/tienda?brand=${producto.brand.slug}`}
+              className="text-overline font-bold uppercase tracking-[0.14em] text-brand-600 hover:underline"
+            >
+              {producto.brand.name}
+            </Link>
+          )}
           <h1 className="mt-2 font-display text-display font-extrabold leading-tight tracking-tight text-content">
             {producto.name}
           </h1>
@@ -254,28 +268,30 @@ export function ProductPage() {
             />
           )}
 
-          <Disponibilidad hay={hayExistencias} />
-
-          <div className="mt-5 flex flex-wrap items-center gap-3">
-            <Cantidad valor={cantidad} maximo={maximo} onCambiar={setCantidad} desactivado={!hayExistencias} />
-            <button
-              type="button"
-              onClick={anadir}
-              disabled={!hayExistencias}
-              className="btn btn-lg btn-primary flex-1 justify-center disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {anadido ? (
-                <>
-                  <Check className="h-5 w-5" aria-hidden="true" /> Añadido
-                </>
-              ) : (
-                <>
-                  <ShoppingBag className="h-5 w-5" aria-hidden="true" />
-                  {!hayExistencias ? 'Sin existencias' : precio > 0 ? `Añadir · ${eur(precio * cantidad)}` : 'Añadir al carrito'}
-                </>
-              )}
-            </button>
-          </div>
+          {soloEnTienda ? (
+            <ConsultarEnTienda nombre={producto.name} />
+          ) : (
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Cantidad valor={cantidad} maximo={MAXIMO_POR_PEDIDO} onCambiar={setCantidad} desactivado={sinPrecio} />
+              <button
+                type="button"
+                onClick={anadir}
+                disabled={sinPrecio}
+                className="btn btn-lg btn-primary flex-1 justify-center disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {anadido ? (
+                  <>
+                    <Check className="h-5 w-5" aria-hidden="true" /> Añadido
+                  </>
+                ) : (
+                  <>
+                    <ShoppingBag className="h-5 w-5" aria-hidden="true" />
+                    {sinPrecio ? 'Precio a consultar' : precio > 0 ? `Añadir · ${eur(precio * cantidad)}` : 'Añadir al carrito'}
+                  </>
+                )}
+              </button>
+            </div>
+          )}
 
           {/*
             Después de añadir NO se navega a ninguna parte: quien está mirando
@@ -393,15 +409,15 @@ export function ProductPage() {
  * recorren y el lector de pantalla dice «1 de 2». Con `<button>` habría que
  * programar todo eso a mano, y no estaba.
  *
- * Un formato agotado se ENSEÑA y se DESACTIVA. Esconderlo haría creer que no
- * existe; dejarlo pulsable lleva a un carrito que falla al pagar.
+ * Ya NO se enseña el stock ni se desactiva ningún formato: se puede encargar
+ * cualquiera. Cada formato lleva su precio, que es lo que decide la compra.
  */
 function Formatos({
   variantes,
   elegida,
   onElegir,
 }: {
-  variantes: { id: string; label: string; price: number; stock: number }[];
+  variantes: { id: string; label: string; price: number | null }[];
   elegida?: { id: string };
   onElegir: (id: string) => void;
 }) {
@@ -421,27 +437,26 @@ function Formatos({
       </legend>
       <div className="flex flex-wrap gap-2">
         {variantes.map((v) => {
-          const agotada = v.stock <= 0;
           const marcada = elegida?.id === v.id;
           return (
             <label
               key={v.id}
               className={`relative flex min-h-11 cursor-pointer items-center gap-2 rounded-control border px-4 text-body-sm transition-colors ${
                 marcada ? 'border-brand-600 bg-brand-50 font-bold text-brand-700' : 'border-edge bg-surface text-content hover:border-brand-300'
-              } ${agotada ? 'cursor-not-allowed opacity-45' : ''}`}
+              }`}
             >
               <input
                 type="radio"
                 name="formato"
                 value={v.id}
                 checked={marcada}
-                disabled={agotada}
                 onChange={() => onElegir(v.id)}
                 className="sr-only"
               />
-              <span>{v.label}</span>
-              <span className={marcada ? 'text-brand-700' : 'text-content-muted'}>{eur(v.price)}</span>
-              {agotada && <span className="text-caption text-content-subtle">· agotado</span>}
+              <span className="font-semibold">{v.label}</span>
+              <span className={marcada ? 'text-brand-700' : 'text-content-muted'}>
+                {v.price == null ? 'Consultar' : eur(v.price)}
+              </span>
             </label>
           );
         })}
@@ -450,21 +465,40 @@ function Formatos({
   );
 }
 
-function Disponibilidad({ hay }: { hay: boolean }) {
-  /*
-   * Sólo dos estados, y ninguno inventa urgencia. Nada de «quedan 3»: el stock
-   * de la tienda es alto y uniforme, y fabricar escasez con él sería una
-   * presión falsa. Quien manda sobre si se puede comprar de verdad es el
-   * servidor, al reservar.
-   */
+/**
+ * Bloque de «sólo en tienda» (Gosbi): en vez de comprar, se llama o se escribe.
+ * Los botones sólo salen si hay número configurado; el texto se prellena con el
+ * producto para que la consulta llegue con contexto.
+ */
+function ConsultarEnTienda({ nombre }: { nombre: string }) {
+  const wa = enlaceWhatsApp(`¡Hola! Quería consultar por ${nombre} (Gosbi).`);
+  const tel = enlaceTelefono();
   return (
-    <p className={`mt-4 flex items-center gap-2 text-body-sm font-semibold ${hay ? 'text-success' : 'text-danger'}`}>
-      <span
-        aria-hidden="true"
-        className={`h-2 w-2 shrink-0 rounded-pill ${hay ? 'bg-success' : 'bg-danger'}`}
-      />
-      {hay ? 'Disponible' : 'Sin existencias en este formato'}
-    </p>
+    <div className="mt-5 rounded-card border border-edge bg-surface-sunken p-4">
+      <p className="text-body-sm font-semibold text-content">Disponible en tienda</p>
+      <p className="mt-1 text-body-sm text-content-muted">
+        Esta marca no se vende online. Escríbenos o llámanos y te atendemos.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-3">
+        {wa && (
+          <a
+            href={wa}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn btn-md flex-1 justify-center bg-[#25D366] text-white hover:brightness-95"
+          >
+            <MessageCircle className="h-5 w-5" aria-hidden="true" />
+            Consultar por WhatsApp
+          </a>
+        )}
+        {tel && (
+          <a href={tel} className="btn btn-md btn-ghost flex-1 justify-center">
+            <Phone className="h-5 w-5" aria-hidden="true" />
+            Llamar {EMPRESA.telefono}
+          </a>
+        )}
+      </div>
+    </div>
   );
 }
 

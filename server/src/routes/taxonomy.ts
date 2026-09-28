@@ -1,7 +1,33 @@
 import { Router } from 'express';
 import { prisma } from '../db.js';
+import { construirMenu } from '../lib/menu.js';
 
 export const taxonomyRouter = Router();
+
+/**
+ * GET /api/taxonomy/menu
+ * El árbol del menú de cabecera —categoría → marca → línea, por animal— con los
+ * recuentos calculados sobre TODO el catálogo. Ver `lib/menu.ts`.
+ */
+taxonomyRouter.get('/menu', async (_req, res, next) => {
+  try {
+    const [productos, animales] = await Promise.all([
+      prisma.product.findMany({
+        where: { active: true },
+        select: {
+          line: true,
+          animals: { select: { slug: true } },
+          categories: { select: { slug: true, name: true, sortOrder: true } },
+          brand: { select: { slug: true, name: true } },
+        },
+      }),
+      prisma.animal.findMany({ orderBy: { sortOrder: 'asc' }, select: { slug: true, name: true, sortOrder: true } }),
+    ]);
+    res.json({ animales: construirMenu(productos, animales) });
+  } catch (err) {
+    next(err);
+  }
+});
 
 /**
  * GET /api/taxonomy

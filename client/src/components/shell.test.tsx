@@ -44,6 +44,8 @@ vi.mock('@/lib/api', () => ({
   api: {
     taxonomy: vi.fn(),
     products: vi.fn(),
+    // La cabecera pide el árbol del menú al servidor (`/api/taxonomy/menu`).
+    menu: vi.fn(),
   },
 }));
 
@@ -68,10 +70,47 @@ const PRODUCTO = {
   animals: [TAX.animals[0]], categories: [TAX.categories[0]], needs: [TAX.needs[0]], variants: [],
 };
 
+/*
+ * El árbol del menú tal como lo devuelve `/api/taxonomy/menu`: sólo Perros tiene
+ * producto. Gatos NO está —el catálogo de prueba no tiene ninguno— y por eso no
+ * debe aparecer en la cabecera.
+ */
+const MENU = {
+  animales: [
+    {
+      slug: 'perro',
+      nombre: 'Perros',
+      total: 3,
+      categorias: [
+        {
+          slug: 'alimentacion-seca',
+          nombre: 'Alimentación seca',
+          sortOrder: 1,
+          total: 3,
+          marcas: [
+            // Con líneas: es un desplegable.
+            { slug: 'atlanticpet', nombre: 'AtlanticPet', total: 2, lineas: [{ nombre: 'Grain Free', total: 2 }] },
+            // Sin líneas: es un enlace directo.
+            { slug: 'ownat', nombre: 'Ownat', total: 1, lineas: [] },
+          ],
+        },
+        {
+          slug: 'alimentacion-humeda',
+          nombre: 'Alimentación húmeda',
+          sortOrder: 2,
+          total: 1,
+          marcas: [{ slug: 'ownat', nombre: 'Ownat', total: 1, lineas: [] }],
+        },
+      ],
+    },
+  ],
+};
+
 beforeEach(() => {
   _resetCacheNavegacion();
   vi.mocked(api.taxonomy).mockResolvedValue(TAX as never);
   vi.mocked(api.products).mockResolvedValue({ items: [PRODUCTO], page: 1, pageSize: 48, total: 1, totalPages: 1 } as never);
+  vi.mocked(api.menu).mockResolvedValue(MENU as never);
 });
 
 afterEach(() => vi.clearAllMocks());
@@ -168,6 +207,69 @@ describe('la cabecera pinta el menú real', () => {
   });
 });
 
+/* ══ 2b. El menú de escritorio: categorías colapsadas, flyout a la derecha ═ */
+
+describe('el menú de escritorio se abre por clic, hacia la derecha', () => {
+  const abrirPerros = async (user: ReturnType<typeof userEvent.setup>) => {
+    pintarCabecera();
+    await user.click(await screen.findByRole('button', { name: /^perros$/i }));
+  };
+
+  it('al abrir «Perros», las categorías salen COLAPSADAS (sin marcas a la vista)', async () => {
+    const user = userEvent.setup();
+    await abrirPerros(user);
+    // Cada categoría es un botón que despliega, colapsado de entrada.
+    const cat = screen.getByRole('button', { name: /alimentación seca/i });
+    expect(cat).toHaveAttribute('aria-expanded', 'false');
+    // Ninguna marca se ve hasta pulsar una categoría.
+    expect(screen.queryByRole('link', { name: /^atlanticpet/i })).not.toBeInTheDocument();
+  });
+
+  it('al pulsar una categoría, sus marcas se abren a la derecha (sin «Ver todo»)', async () => {
+    const user = userEvent.setup();
+    await abrirPerros(user);
+    await user.click(screen.getByRole('button', { name: /alimentación seca/i }));
+    // AtlanticPet tiene líneas → es un desplegable (botón), colapsado. Ownat no
+    // tiene líneas → es un enlace directo a su página.
+    expect(screen.getByRole('button', { name: /atlanticpet/i })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('link', { name: /^ownat/i }).getAttribute('href')).toContain('brand=ownat');
+    // Ni «Ver todo» ni líneas a la vista hasta pulsar la marca.
+    expect(screen.queryByRole('link', { name: /ver todo/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /grain free/i })).not.toBeInTheDocument();
+  });
+
+  it('una marca CON líneas abre un nivel más a la derecha', async () => {
+    const user = userEvent.setup();
+    await abrirPerros(user);
+    await user.click(screen.getByRole('button', { name: /alimentación seca/i }));
+    await user.click(screen.getByRole('button', { name: /atlanticpet/i }));
+    // Ahora salen sus líneas como enlaces al catálogo filtrado por línea.
+    const grainFree = screen.getByRole('link', { name: /grain free/i });
+    expect(grainFree.getAttribute('href')).toContain('line=Grain');
+  });
+
+  it('sólo una categoría abierta a la vez; volver a pulsarla la cierra', async () => {
+    const user = userEvent.setup();
+    await abrirPerros(user);
+    const seca = screen.getByRole('button', { name: /alimentación seca/i });
+    const humeda = screen.getByRole('button', { name: /alimentación húmeda/i });
+
+    await user.click(seca);
+    expect(seca).toHaveAttribute('aria-expanded', 'true');
+    // AtlanticPet (con líneas) aparece como desplegable dentro de seca.
+    expect(screen.getByRole('button', { name: /atlanticpet/i })).toBeInTheDocument();
+
+    // Abrir húmeda cierra seca (y sus marcas).
+    await user.click(humeda);
+    expect(seca).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('AtlanticPet')).not.toBeInTheDocument();
+
+    // Volver a pulsar húmeda la cierra: nada queda abierto.
+    await user.click(humeda);
+    expect(humeda).toHaveAttribute('aria-expanded', 'false');
+  });
+});
+
 /* ══ 3. El buscador nunca desaparece ═══════════════════════════════════ */
 
 describe('buscador', () => {
@@ -221,7 +323,9 @@ describe('menú móvil', () => {
     expect(within(dialogo).queryByText(/alimentación seca/i)).not.toBeInTheDocument();
 
     await user.click(within(dialogo).getByRole('button', { name: /perros/i }));
-    expect(within(dialogo).getByText(/alimentación seca/i)).toBeInTheDocument();
+    // La categoría aparece como título de columna y como enlace «Todo en…»:
+    // con dos apariciones, `getByText` sería ambiguo, así que basta con que haya.
+    expect(within(dialogo).getAllByText(/alimentación seca/i).length).toBeGreaterThan(0);
   });
 
   it('bloquea el desplazamiento de la página de detrás', async () => {

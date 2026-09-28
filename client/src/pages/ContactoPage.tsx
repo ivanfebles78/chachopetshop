@@ -1,21 +1,34 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Clock, Facebook, Instagram, Mail, MapPin, Phone } from 'lucide-react';
+import { Clock, Facebook, Instagram, Mail, MapPin, MessageCircle, Phone } from 'lucide-react';
 import { REDES_SOCIALES, datosDeContacto } from '@/lib/empresa';
 import { Reveal } from '@/components/Reveal';
 import { toast } from '@/store/toast';
 import { api } from '@/lib/api';
 
 /*
- * Los datos de contacto ya NO se escriben aquí: vienen de `lib/empresa.ts`,
- * que es el único sitio donde se configuran y hoy está vacío a propósito.
- *
- * Lo que había era inventado y estaba publicado: la dirección «Calle Ejemplo,
- * 1», el teléfono «922 00 00 00» con su enlace `tel:`, un horario y un correo.
- * Se ha retirado sin sustituirlo por otra invención. El formulario —que sí
- * funciona y llega al buzón de la tienda— sigue siendo la vía de contacto.
+ * Los datos de contacto NO se escriben aquí: vienen de `lib/empresa.ts`, que es
+ * el único sitio donde se configuran. Hoy hay teléfono, WhatsApp, email y la
+ * dirección de la tienda; lo que no esté confirmado (horario) sigue en `null` y
+ * no se pinta.
  */
-const ICONO = { 'Teléfono': Phone, 'Email': Mail, 'Dirección': MapPin, 'Horario': Clock } as const;
+const ICONO = {
+  'Teléfono': Phone,
+  'WhatsApp': MessageCircle,
+  'Email': Mail,
+  'Dirección': MapPin,
+  'Horario': Clock,
+} as const;
+
+/** Los motivos del desplegable «Asunto». El primero es el hueco vacío. */
+const ASUNTOS = [
+  'Dudas y consultas',
+  'Productos',
+  'Pedidos y envíos',
+  'Problemas con la web',
+  'Quejas o sugerencias',
+  'Otros',
+] as const;
 
 export function ContactoPage() {
   // `phone` es opcional y `website` es el cebo para robots: invisible para una
@@ -51,12 +64,12 @@ export function ContactoPage() {
     }
   };
 
-  const field = (key: keyof typeof form, label: string, type = 'text') => (
+  const field = (key: keyof typeof form, label: string, type = 'text', required = true) => (
     <label className="block">
       <span className="mb-1 block text-sm font-semibold text-brand-900/70">{label}</span>
       <input
         type={type}
-        required
+        required={required}
         value={form[key]}
         onChange={(e) => setForm({ ...form, [key]: e.target.value })}
         className="w-full rounded-2xl border border-brand-900/10 bg-white px-4 py-2.5 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
@@ -82,8 +95,28 @@ export function ContactoPage() {
               {field('name', 'Nombre')}
               {field('email', 'Email', 'email')}
             </div>
-            {field('phone', 'Teléfono (opcional)', 'tel')}
-            {field('subject', 'Asunto')}
+            {field('phone', 'Teléfono (opcional)', 'tel', false)}
+
+            {/* Asunto como DESPLEGABLE: encamina el mensaje al motivo correcto y
+                evita el «Asunto: hola» que no dice nada. */}
+            <label className="block">
+              <span className="mb-1 block text-sm font-semibold text-brand-900/70">Motivo de tu mensaje</span>
+              <select
+                required
+                value={form.subject}
+                onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                className="w-full rounded-2xl border border-brand-900/10 bg-white px-4 py-2.5 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
+              >
+                <option value="" disabled>
+                  Elige un motivo…
+                </option>
+                {ASUNTOS.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
+            </label>
 
             {/*
               Cebo para robots. No se oculta con `display:none` —algunos lo
@@ -163,11 +196,8 @@ export function ContactoPage() {
               </div>
             )}
 
-            {/*
-              Aquí había un recuadro gris que le decía al CLIENTE «Aquí puedes
-              incrustar Google Maps»: una nota para quien programa, publicada.
-              El mapa vuelve cuando haya una dirección real que señalar.
-            */}
+            {/* El mapa de la tienda vive en el pie de página (Footer), para no
+                duplicarlo: se ve en todas las pantallas, no sólo en Contacto. */}
           </div>
         </Reveal>
       </div>

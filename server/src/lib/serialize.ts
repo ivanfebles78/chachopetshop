@@ -7,9 +7,11 @@ export function toNumber(value: unknown): number | null {
 }
 
 type ProductLike = {
-  price: Prisma.Decimal;
+  // Nullable desde la Fase 2J: un producto sin precio es «a consultar». `toNumber`
+  // ya devuelve null, así que el JSON sale con `price: null` y el cliente lo pinta.
+  price: Prisma.Decimal | null;
   compareAt: Prisma.Decimal | null;
-  variants?: { price: Prisma.Decimal }[];
+  variants?: { price: Prisma.Decimal | null }[];
   [key: string]: unknown;
 };
 

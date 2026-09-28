@@ -27,8 +27,9 @@ export function CondicionesPage() {
 
       <LegalSection title="4. Envío">
         <p>
-          Realizamos envíos a [zona de reparto] en un plazo aproximado de 24-48 horas laborables. El
-          envío es gratuito a partir de 49 € de compra; por debajo, se aplica una tarifa de [importe] €.
+          Realizamos envíos a Canarias en un plazo aproximado de 24-48 horas laborables. El envío es
+          gratuito a partir de 30 € de compra; por debajo, se aplica una tarifa de 5 €. También puedes
+          elegir recogida gratuita en tienda.
         </p>
       </LegalSection>
 
