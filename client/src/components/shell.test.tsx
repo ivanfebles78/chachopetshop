@@ -229,11 +229,23 @@ describe('el menú de escritorio se abre por clic, hacia la derecha', () => {
     const user = userEvent.setup();
     await abrirPerros(user);
     await user.click(screen.getByRole('button', { name: /alimentación seca/i }));
-    // Sus marcas son enlaces al catálogo filtrado.
-    expect(screen.getByRole('link', { name: /^atlanticpet/i }).getAttribute('href')).toContain('brand=atlanticpet');
-    expect(screen.getByRole('link', { name: /^ownat/i })).toBeInTheDocument();
-    // Ya no hay «Ver todo» dentro de la categoría.
+    // AtlanticPet tiene líneas → es un desplegable (botón), colapsado. Ownat no
+    // tiene líneas → es un enlace directo a su página.
+    expect(screen.getByRole('button', { name: /atlanticpet/i })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('link', { name: /^ownat/i }).getAttribute('href')).toContain('brand=ownat');
+    // Ni «Ver todo» ni líneas a la vista hasta pulsar la marca.
     expect(screen.queryByRole('link', { name: /ver todo/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /grain free/i })).not.toBeInTheDocument();
+  });
+
+  it('una marca CON líneas abre un nivel más a la derecha', async () => {
+    const user = userEvent.setup();
+    await abrirPerros(user);
+    await user.click(screen.getByRole('button', { name: /alimentación seca/i }));
+    await user.click(screen.getByRole('button', { name: /atlanticpet/i }));
+    // Ahora salen sus líneas como enlaces al catálogo filtrado por línea.
+    const grainFree = screen.getByRole('link', { name: /grain free/i });
+    expect(grainFree.getAttribute('href')).toContain('line=Grain');
   });
 
   it('sólo una categoría abierta a la vez; volver a pulsarla la cierra', async () => {
@@ -244,7 +256,8 @@ describe('el menú de escritorio se abre por clic, hacia la derecha', () => {
 
     await user.click(seca);
     expect(seca).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('link', { name: /^atlanticpet/i })).toBeInTheDocument();
+    // AtlanticPet (con líneas) aparece como desplegable dentro de seca.
+    expect(screen.getByRole('button', { name: /atlanticpet/i })).toBeInTheDocument();
 
     // Abrir húmeda cierra seca (y sus marcas).
     await user.click(humeda);
