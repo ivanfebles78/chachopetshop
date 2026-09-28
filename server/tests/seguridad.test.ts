@@ -110,6 +110,8 @@ describe('cabeceras de seguridad', () => {
     // Stripe: sin esto el checkout no carga.
     expect(csp).toMatch(/js\.stripe\.com/);
     expect(csp).toMatch(/checkout\.stripe\.com/);
+    // OpenStreetMap: el iframe del mapa del pie. Sin esto sale en blanco.
+    expect(csp).toMatch(/frame-src[^;]*openstreetmap\.org/);
     // Imágenes de producto y fuentes que index.html carga hoy.
     expect(csp).toMatch(/picsum\.photos/);
     expect(csp).toMatch(/fonts\.gstatic\.com/);
