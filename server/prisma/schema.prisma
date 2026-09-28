@@ -27,6 +27,9 @@ enum CategoryType {
   BEDS
   TRAVEL
   VET_DIET
+  // Genérico, para el catálogo completo: categorías que no encajan en un tipo
+  // concreto (p. ej. «Otros»). El cliente le dibuja la ilustración genérica.
+  OTHER
 }
 
 /**
