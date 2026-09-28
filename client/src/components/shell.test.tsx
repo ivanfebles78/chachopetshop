@@ -225,15 +225,15 @@ describe('el menú de escritorio se abre por clic, hacia la derecha', () => {
     expect(screen.queryByRole('link', { name: /^atlanticpet/i })).not.toBeInTheDocument();
   });
 
-  it('al pulsar una categoría, sus marcas se abren a la derecha (con «Ver todo»)', async () => {
+  it('al pulsar una categoría, sus marcas se abren a la derecha (sin «Ver todo»)', async () => {
     const user = userEvent.setup();
     await abrirPerros(user);
     await user.click(screen.getByRole('button', { name: /alimentación seca/i }));
-    // Ahora sus marcas son enlaces al catálogo filtrado.
+    // Sus marcas son enlaces al catálogo filtrado.
     expect(screen.getByRole('link', { name: /^atlanticpet/i }).getAttribute('href')).toContain('brand=atlanticpet');
     expect(screen.getByRole('link', { name: /^ownat/i })).toBeInTheDocument();
-    // Y un «Ver todo» que lleva a la categoría entera.
-    expect(screen.getByRole('link', { name: /ver todo/i }).getAttribute('href')).toContain('category=alimentacion-seca');
+    // Ya no hay «Ver todo» dentro de la categoría.
+    expect(screen.queryByRole('link', { name: /ver todo/i })).not.toBeInTheDocument();
   });
 
   it('sólo una categoría abierta a la vez; volver a pulsarla la cierra', async () => {

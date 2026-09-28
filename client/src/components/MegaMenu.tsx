@@ -56,17 +56,6 @@ export function MegaMenu({ animal, onNavegar }: { animal: MenuAnimal; onNavegar:
 
             {expandida && (
               <ul className="absolute left-full top-0 z-10 ml-3 w-64 animate-fade-in list-none space-y-0.5 rounded-card border border-edge-subtle bg-surface p-2 shadow-raised">
-                <li>
-                  <Link
-                    to={rutaCatalogo({ animal: animal.slug, category: cat.slug })}
-                    onClick={onNavegar}
-                    className="flex min-h-9 items-center justify-between gap-2 rounded-control px-3 text-body-sm font-semibold text-brand-700 hover:bg-brand-50"
-                  >
-                    Ver todo {cat.nombre.toLowerCase()}
-                    <span className="text-caption tabular-nums text-content-subtle">{cat.total}</span>
-                  </Link>
-                </li>
-                {cat.marcas.length > 0 && <li className="my-1 border-t border-edge-subtle" aria-hidden="true" />}
                 {cat.marcas.map((marca) => (
                   <li key={marca.slug}>
                     <Link
