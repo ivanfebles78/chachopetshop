@@ -96,6 +96,9 @@ function Mapa({ direccion }: { direccion: string }) {
         geo.lon + d
       }%2C${geo.lat + d}&layer=mapnik&marker=${geo.lat}%2C${geo.lon}`
     : `https://www.google.com/maps?q=${consulta}&output=embed`;
+  // «Cómo llegar»: si hay coordenadas exactas, se abre el punto justo; si no, se
+  // busca por la dirección.
+  const destinoLlegar = geo ? `${geo.lat},${geo.lon}` : direccion;
   return (
     <div className="container-page border-t border-edge-subtle py-section-sm">
       <div className="grid gap-6 lg:grid-cols-[1fr_1.4fr] lg:items-center">
@@ -107,7 +110,7 @@ function Mapa({ direccion }: { direccion: string }) {
           <p className="text-body font-semibold text-content">{EMPRESA.nombreComercial}</p>
           <p className="mt-1 max-w-xs text-body-sm text-content-muted">{direccion}</p>
           <a
-            href={`https://www.google.com/maps/search/?api=1&query=${consulta}`}
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(destinoLlegar)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-control bg-brand-700 px-4 text-body-sm font-semibold text-content-inverse transition-colors hover:bg-brand-800"

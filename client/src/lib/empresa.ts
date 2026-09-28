@@ -31,14 +31,10 @@ export const EMPRESA: {
   email: 'chachopetshop@gmail.com',
 
   direccion: 'C. San Francisco de Paula, 157, 38205 La Laguna, Tenerife',
-  /*
-   * Sin coordenadas: el número exacto de esta dirección no se pudo geocodificar
-   * de forma fiable con Nominatim (sólo daba el centroide del código postal, que
-   * quedaba desviado). Con `geo` a null el mapa del pie geocodifica la DIRECCIÓN
-   * con Google (embed sin API key), que sí la sitúa con precisión. Si algún día
-   * se quiere el mapa de OpenStreetMap, basta poner aquí las coordenadas exactas.
-   */
-  geo: null,
+  // Coordenadas EXACTAS del local (resueltas desde el enlace de Google que pasó
+  // Ivan; su ficha de Google en ese punto figura como «Piensos El Campesino Los
+  // Baldíos»). Con ellas el mapa del pie es OpenStreetMap con el pin justo ahí.
+  geo: { lat: 28.4610576, lon: -16.3278474 },
   horario: null,       // TODO(Ivan): horario de atención
 
   /*
