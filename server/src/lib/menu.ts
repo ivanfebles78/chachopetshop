@@ -17,7 +17,9 @@ export type ProductoMenu = {
   line: string | null;
   animals: { slug: string }[];
   categories: { slug: string; name: string; sortOrder: number }[];
-  brand: { slug: string; name: string };
+  // Nullable: un producto sin marca cuenta en su categoría pero no cuelga de
+  // ninguna marca del menú.
+  brand: { slug: string; name: string } | null;
 };
 
 export type LineaMenu = { nombre: string; total: number };
@@ -47,11 +49,15 @@ export function construirMenu(
         { nombre: cat.name, sortOrder: cat.sortOrder, total: 0, marcas: new Map() };
       nc.total += 1;
 
-      const nm = nc.marcas.get(p.brand.slug) ?? { nombre: p.brand.name, total: 0, lineas: new Map() };
-      nm.total += 1;
-      if (p.line) nm.lineas.set(p.line, (nm.lineas.get(p.line) ?? 0) + 1);
+      // Sólo los productos CON marca cuelgan de una marca del menú; los que no
+      // la tienen cuentan igual en su categoría (arriba), pero no aquí.
+      if (p.brand) {
+        const nm = nc.marcas.get(p.brand.slug) ?? { nombre: p.brand.name, total: 0, lineas: new Map() };
+        nm.total += 1;
+        if (p.line) nm.lineas.set(p.line, (nm.lineas.get(p.line) ?? 0) + 1);
+        nc.marcas.set(p.brand.slug, nm);
+      }
 
-      nc.marcas.set(p.brand.slug, nm);
       na.categorias.set(cat.slug, nc);
       arbol.set(a.slug, na);
     }

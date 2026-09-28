@@ -133,7 +133,7 @@ export function AdminPage() {
                       <Link to={`/producto/${p.slug}`} className="font-semibold text-ink hover:text-brand-700">{p.name}</Link>
                     </div>
                   </td>
-                  <td className="px-5 py-3 text-brand-900/70">{p.brand.name}</td>
+                  <td className="px-5 py-3 text-brand-900/70">{p.brand?.name ?? '—'}</td>
                   <td className="px-5 py-3 font-semibold">{eur(p.price)}</td>
                   <td className="px-5 py-3 text-brand-900/60">{p.variants.length}</td>
                   <td className="px-5 py-3 text-right">

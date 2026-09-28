@@ -118,9 +118,11 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
 
         <div className="flex flex-1 flex-col gap-2 p-4">
-          <span className="text-xs font-semibold uppercase tracking-wide text-brand-600">
-            {product.brand.name}
-          </span>
+          {product.brand && (
+            <span className="text-xs font-semibold uppercase tracking-wide text-brand-600">
+              {product.brand.name}
+            </span>
+          )}
           <h3 className="line-clamp-2 font-display text-[0.98rem] font-semibold leading-snug text-ink">
             {product.name}
           </h3>

@@ -127,8 +127,15 @@ model Product {
   name        String
   slug        String           @unique
   description String
-  brand       Brand            @relation(fields: [brandId], references: [id])
-  brandId     String
+  /**
+   * MARCA — NULLABLE desde el catálogo completo de tienda.
+   * La mitad de los artículos del TPV (accesorios genéricos, graneles…) no traen
+   * un fabricante fiable, e Ivan quiere que entren igual, sin marca. Un producto
+   * sin marca se muestra en su categoría pero no cuelga de ninguna marca del
+   * menú ni del filtro de marca.
+   */
+  brand       Brand?           @relation(fields: [brandId], references: [id])
+  brandId     String?
   /**
    * LÍNEA de marca (col C del Excel): «Premium Recetas», «Grain Free»…
    * Es un atributo del producto, NO un nodo del árbol: así una marca aparece UNA

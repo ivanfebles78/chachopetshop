@@ -186,3 +186,23 @@ describe('marcas sólo en tienda', () => {
     expect(esMarcaSoloEnTienda(conMarca('AtlanticPet', 'atlanticpet'))).toBe(false);
   });
 });
+
+/* ══ Productos SIN marca (catálogo completo de tienda) ═════════════════ */
+
+describe('un producto sin marca', () => {
+  const sinMarca = producto({ brand: null, brandId: null });
+
+  it('no es «sólo en tienda» ni revienta', () => {
+    expect(esMarcaSoloEnTienda(sinMarca)).toBe(false);
+  });
+
+  it('no añade la fila «Marca» a la ficha técnica', () => {
+    const etiquetas = fichaTecnica(sinMarca).map((f) => f.etiqueta);
+    expect(etiquetas).not.toContain('Marca');
+  });
+
+  it('no declara `brand` en los datos estructurados', () => {
+    const d = datosEstructuradosProducto(sinMarca, 'https://x.test') as Record<string, unknown>;
+    expect(d).not.toHaveProperty('brand');
+  });
+});

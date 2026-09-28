@@ -11,6 +11,7 @@ import type { Product } from './types';
 const MARCAS_SOLO_EN_TIENDA = ['gosbi'];
 
 export function esMarcaSoloEnTienda(p: Product): boolean {
+  if (!p.brand) return false; // sin marca no puede ser una marca sólo-en-tienda
   const slug = p.brand.slug.toLowerCase();
   const nombre = p.brand.name.toLowerCase();
   return MARCAS_SOLO_EN_TIENDA.some((m) => slug.includes(m) || nombre.includes(m));
@@ -41,10 +42,13 @@ export type Fila = {
 export function fichaTecnica(p: Product): Fila[] {
   const filas: Fila[] = [];
 
-  filas.push({
-    etiqueta: 'Marca',
-    enlaces: [{ etiqueta: p.brand.name, href: `/tienda?brand=${p.brand.slug}` }],
-  });
+  // La fila de marca sólo sale si el producto tiene marca.
+  if (p.brand) {
+    filas.push({
+      etiqueta: 'Marca',
+      enlaces: [{ etiqueta: p.brand.name, href: `/tienda?brand=${p.brand.slug}` }],
+    });
+  }
 
   if (p.variants.length > 0) {
     filas.push({
@@ -156,7 +160,7 @@ export function datosEstructuradosProducto(p: Product, origen: string): Record<s
      * Se comprueba, no se supone. Ver `esEan13`.
      */
     ...(esEan13(p.variants[0]?.sku) ? { gtin13: p.variants[0]!.sku } : {}),
-    brand: { '@type': 'Brand', name: p.brand.name },
+    ...(p.brand ? { brand: { '@type': 'Brand', name: p.brand.name } } : {}),
     category: p.categories[0]?.name,
     /*
      * Sin precio fijado no hay oferta que declarar. Publicar `price: "0.00"`

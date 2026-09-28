@@ -37,8 +37,9 @@ export type Product = {
   name: string;
   slug: string;
   description: string;
-  brand: Brand;
-  brandId: string;
+  /** null = producto sin marca (accesorios genéricos, graneles del catálogo). */
+  brand: Brand | null;
+  brandId: string | null;
   /** null = «Precio a consultar» hasta que el cliente lo fije en el panel. */
   price: number | null;
   compareAt: number | null;

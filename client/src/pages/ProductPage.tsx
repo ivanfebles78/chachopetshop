@@ -83,7 +83,7 @@ export function ProductPage() {
   const MAXIMO_POR_PEDIDO = 20;
 
   useSeo({
-    titulo: producto ? `${producto.name} · ${producto.brand.name}` : 'Producto',
+    titulo: producto ? (producto.brand ? `${producto.name} · ${producto.brand.name}` : producto.name) : 'Producto',
     descripcion: producto?.description,
     canonica: producto ? `${window.location.origin}/producto/${producto.slug}` : undefined,
     estructurado: producto ? datosEstructuradosProducto(producto, window.location.origin) : null,
@@ -210,12 +210,14 @@ export function ProductPage() {
 
         {/* ── Compra ─────────────────────────────────────────────────── */}
         <div className="lg:sticky lg:top-24 lg:self-start">
-          <Link
-            to={`/tienda?brand=${producto.brand.slug}`}
-            className="text-overline font-bold uppercase tracking-[0.14em] text-brand-600 hover:underline"
-          >
-            {producto.brand.name}
-          </Link>
+          {producto.brand && (
+            <Link
+              to={`/tienda?brand=${producto.brand.slug}`}
+              className="text-overline font-bold uppercase tracking-[0.14em] text-brand-600 hover:underline"
+            >
+              {producto.brand.name}
+            </Link>
+          )}
           <h1 className="mt-2 font-display text-display font-extrabold leading-tight tracking-tight text-content">
             {producto.name}
           </h1>
