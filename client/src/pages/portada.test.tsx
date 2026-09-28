@@ -48,8 +48,27 @@ const producto = (o: Record<string, unknown> = {}) => {
 
 const montar = (productos: unknown[]) => {
   vi.mocked(api.taxonomy).mockResolvedValue(TAX as never);
+  // La portada consume las FACETAS del servidor para sus recuentos, así que el
+  // mock las devuelve calculadas de los productos (como haría el servidor).
+  const cuenta = (lista: { slug: string; name: string }[], clave: 'animals' | 'categories') =>
+    lista.map((x) => ({
+      slug: x.slug,
+      nombre: x.name,
+      total: (productos as { animals?: { slug: string }[]; categories?: { slug: string }[] }[]).filter(
+        (p) => (p[clave] ?? []).some((f) => f.slug === x.slug),
+      ).length,
+    }));
+  const facets = {
+    animals: cuenta(TAX.animals, 'animals'),
+    categories: cuenta(TAX.categories, 'categories'),
+    needs: [],
+    brands: [],
+    sizes: [],
+    ofertas: 0,
+    precio: null,
+  };
   vi.mocked(api.products).mockResolvedValue(
-    { items: productos, page: 1, pageSize: 48, total: productos.length, totalPages: 1 } as never,
+    { items: productos, page: 1, pageSize: 48, total: productos.length, totalPages: 1, facets } as never,
   );
   return render(<MemoryRouter><HomePage /></MemoryRouter>);
 };

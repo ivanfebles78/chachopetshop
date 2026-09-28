@@ -20,7 +20,7 @@ import {
   seleccion,
   MINIMO_PARA_PROTAGONISTA,
 } from './portada';
-import type { Animal, Brand, Category, Need, Product, Taxonomy } from './types';
+import type { Animal, Brand, Category, Facetas, Need, Product, Taxonomy } from './types';
 
 const animal = (slug: string, name: string): Animal => ({ id: slug, slug, name, emoji: null, sortOrder: 0 });
 const categoria = (slug: string, name: string): Category => ({ id: slug, slug, name, type: 'DRY_FOOD', sortOrder: 0 });
@@ -83,26 +83,49 @@ const CATALOGO: Product[] = [
   producto({ animales: ['pez'] }),
 ];
 
+/**
+ * Construye las FACETAS como las devuelve el servidor (con recuentos reales,
+ * incluidas las que valen cero), a partir de un catálogo de prueba. La portada
+ * ahora consume esos recuentos, no cuenta una muestra de productos.
+ */
+function facetasDe(productos: Product[]): Facetas {
+  const cuenta = (lista: { slug: string; name: string }[], clave: 'animals' | 'categories') =>
+    lista.map((x) => ({
+      slug: x.slug,
+      nombre: x.name,
+      total: productos.filter((p) => p[clave].some((f) => f.slug === x.slug)).length,
+    }));
+  return {
+    animals: cuenta(TAX.animals, 'animals'),
+    categories: cuenta(TAX.categories, 'categories'),
+    needs: [],
+    brands: [],
+    sizes: [],
+    ofertas: 0,
+    precio: null,
+  };
+}
+
 /* ══ 1. Nada vacío ═════════════════════════════════════════════════════ */
 
 describe('la portada no enseña facetas sin producto', () => {
   it('reptiles no sale por ninguna parte', () => {
-    const todo = JSON.stringify({ ...mascotas(TAX, CATALOGO), c: categorias(TAX, CATALOGO) });
+    const todo = JSON.stringify({ ...mascotas(facetasDe(CATALOGO)), c: categorias(facetasDe(CATALOGO), TAX) });
     expect(todo).not.toMatch(/reptil/i);
   });
 
   it('semihúmeda tampoco', () => {
-    expect(JSON.stringify(categorias(TAX, CATALOGO))).not.toMatch(/semihumeda/i);
+    expect(JSON.stringify(categorias(facetasDe(CATALOGO), TAX))).not.toMatch(/semihumeda/i);
   });
 
   it('NINGUNA categoría de la portada devuelve cero', () => {
     // La comprobación general: caza cualquier caso futuro, con su nombre.
-    const vacias = categorias(TAX, CATALOGO).filter((c) => c.total <= 0).map((c) => c.nombre);
+    const vacias = categorias(facetasDe(CATALOGO), TAX).filter((c) => c.total <= 0).map((c) => c.nombre);
     expect(vacias).toEqual([]);
   });
 
   it('NINGUNA mascota de la portada devuelve cero', () => {
-    const { protagonistas, secundarias } = mascotas(TAX, CATALOGO);
+    const { protagonistas, secundarias } = mascotas(facetasDe(CATALOGO));
     const vacias = [...protagonistas, ...secundarias].filter((m) => m.total <= 0).map((m) => m.nombre);
     expect(vacias).toEqual([]);
   });
@@ -112,7 +135,7 @@ describe('la portada no enseña facetas sin producto', () => {
 
 describe('el tamaño del bloque depende de lo que hay detrás', () => {
   it('perros va arriba y peces no, porque peces tiene uno', () => {
-    const { protagonistas, secundarias } = mascotas(TAX, CATALOGO);
+    const { protagonistas, secundarias } = mascotas(facetasDe(CATALOGO));
     expect(protagonistas.map((m) => m.slug)).toEqual(['perro']);
     expect(secundarias.map((m) => m.slug)).toEqual(['gato', 'pez']);
   });
@@ -126,21 +149,21 @@ describe('el tamaño del bloque depende de lo que hay detrás', () => {
       ...CATALOGO,
       ...Array.from({ length: MINIMO_PARA_PROTAGONISTA - 2 }, () => producto({ animales: ['gato'] })),
     ];
-    const { protagonistas } = mascotas(TAX, conMasGatos);
+    const { protagonistas } = mascotas(facetasDe(conMasGatos));
     expect(protagonistas.map((m) => m.slug)).toContain('gato');
   });
 
   it('los recuentos son los reales, no aproximados', () => {
-    const { protagonistas, secundarias } = mascotas(TAX, CATALOGO);
+    const { protagonistas, secundarias } = mascotas(facetasDe(CATALOGO));
     expect(protagonistas.find((m) => m.slug === 'perro')!.total).toBe(6);
     expect(secundarias.find((m) => m.slug === 'pez')!.total).toBe(1);
   });
 
   it('un catálogo vacío no produce una portada de mentira', () => {
-    const { protagonistas, secundarias } = mascotas(TAX, []);
+    const { protagonistas, secundarias } = mascotas(facetasDe([]));
     expect(protagonistas).toEqual([]);
     expect(secundarias).toEqual([]);
-    expect(categorias(TAX, [])).toEqual([]);
+    expect(categorias(facetasDe([]), TAX)).toEqual([]);
   });
 });
 
