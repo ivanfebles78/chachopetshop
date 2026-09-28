@@ -1,4 +1,4 @@
-import type { Product, Taxonomy } from './types';
+import type { Facetas, Faceta as FacetaServidor, Product, Taxonomy } from './types';
 import { estaRebajado, rutaCatalogo } from './navigation';
 
 /**
@@ -30,23 +30,25 @@ export type Faceta = {
 /**
  * Cuántos productos hay tras cada faceta, en orden descendente y sin vacías.
  * Enseñar una faceta vacía es prometer un sitio al que no se puede llegar.
+ *
+ * Los TOTALES salen de los recuentos que ya calcula el servidor (`?facets=1`),
+ * no de contar una muestra de productos: con un catálogo de miles, contar sobre
+ * la primera página daba cifras minúsculas y falsas («Gatos (7)»).
  */
-function facetas(
-  lista: { slug: string; name: string; type?: string }[],
-  productos: Product[],
-  clave: 'animals' | 'categories',
+function construir(
+  facetasServidor: FacetaServidor[],
   parametro: 'animal' | 'category',
+  tipos?: Map<string, string>,
 ): Faceta[] {
-  return lista
-    .map((x) => ({
-      slug: x.slug,
-      nombre: x.name,
-      total: productos.filter((p) => p[clave].some((f) => f.slug === x.slug)).length,
-      href: rutaCatalogo({ [parametro]: x.slug }),
-      // Sólo las categorías traen `type`; las de animal quedan sin él.
-      tipo: x.type,
-    }))
+  return facetasServidor
     .filter((f) => f.total > 0)
+    .map((f) => ({
+      slug: f.slug,
+      nombre: f.nombre,
+      total: f.total,
+      href: rutaCatalogo({ [parametro]: f.slug }),
+      tipo: tipos?.get(f.slug),
+    }))
     .sort((a, b) => b.total - a.total);
 }
 
@@ -61,17 +63,19 @@ export const MINIMO_PARA_PROTAGONISTA = 5;
 
 export type Mascotas = { protagonistas: Faceta[]; secundarias: Faceta[] };
 
-export function mascotas(tax: Taxonomy, productos: Product[]): Mascotas {
-  const todas = facetas(tax.animals, productos, 'animals', 'animal');
+export function mascotas(facetas: Facetas): Mascotas {
+  const todas = construir(facetas.animals, 'animal');
   return {
     protagonistas: todas.filter((f) => f.total >= MINIMO_PARA_PROTAGONISTA),
     secundarias: todas.filter((f) => f.total < MINIMO_PARA_PROTAGONISTA),
   };
 }
 
-/** Las categorías que tienen producto, de más a menos. */
-export function categorias(tax: Taxonomy, productos: Product[]): Faceta[] {
-  return facetas(tax.categories, productos, 'categories', 'category');
+/** Las categorías que tienen producto, de más a menos. El `type` (para la
+ *  ilustración) sale de la taxonomía. */
+export function categorias(facetas: Facetas, tax: Taxonomy): Faceta[] {
+  const tipos = new Map(tax.categories.map((c) => [c.slug, c.type]));
+  return construir(facetas.categories, 'category', tipos);
 }
 
 /**

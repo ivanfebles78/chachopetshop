@@ -47,18 +47,20 @@ const FOTO_ALTO = 506;
 const ENVIO_GRATIS_DESDE = 30;
 
 export function HomePage() {
-  const { taxonomy, productos, cargando } = useCatalogo();
+  const { taxonomy, productos, facets, cargando } = useCatalogo();
 
   const datos = useMemo(() => {
-    if (!taxonomy) return null;
+    if (!taxonomy || !facets) return null;
     return {
-      mascotas: mascotas(taxonomy, productos),
-      categorias: categorias(taxonomy, productos),
+      // Los recuentos, de las facetas reales del servidor; las tarjetas
+      // (selección y ofertas), de la muestra de productos.
+      mascotas: mascotas(facets),
+      categorias: categorias(facets, taxonomy),
       seleccion: seleccion(productos),
       ofertas: ofertas(productos),
       marcas: taxonomy.brands.map((b) => b.name),
     };
-  }, [taxonomy, productos]);
+  }, [taxonomy, facets, productos]);
 
   return (
     <>
