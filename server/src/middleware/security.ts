@@ -31,6 +31,9 @@ import { isProd, isTest } from '../env.js';
 const STRIPE_SCRIPTS = ['https://js.stripe.com'];
 const STRIPE_FRAMES = ['https://js.stripe.com', 'https://hooks.stripe.com', 'https://checkout.stripe.com'];
 const STRIPE_CONNECT = ['https://api.stripe.com'];
+// El mapa «Dónde estamos» del pie embebe OpenStreetMap en un iframe. Sin esto,
+// la CSP `frame-src` (que sólo abría Stripe) lo bloquea y el mapa sale en blanco.
+const MAPA_FRAMES = ['https://www.openstreetmap.org'];
 const FUENTES_ESTILO = ['https://fonts.googleapis.com'];
 const FUENTES_FICHERO = ['https://fonts.gstatic.com'];
 const IMAGENES = ['https://picsum.photos', 'https://fastly.picsum.photos', 'data:', 'blob:'];
@@ -72,7 +75,7 @@ export const cabecerasDeSeguridad: RequestHandler = helmet({
       fontSrc: ["'self'", ...FUENTES_FICHERO],
       imgSrc: ["'self'", ...IMAGENES],
       connectSrc: ["'self'", ...STRIPE_CONNECT],
-      frameSrc: STRIPE_FRAMES,
+      frameSrc: [...STRIPE_FRAMES, ...MAPA_FRAMES],
       // Sustituye a X-Frame-Options y es lo que impide el clickjacking.
       frameAncestors: ["'none'"],
       formAction: ["'self'", 'https://checkout.stripe.com'],
