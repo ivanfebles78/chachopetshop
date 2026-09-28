@@ -30,9 +30,15 @@ export const EMPRESA: {
   whatsapp: '34689732267',
   email: 'chachopetshop@gmail.com',
 
-  direccion: 'C. de Carmen Monteverde, 40, 38003 Santa Cruz de Tenerife',
-  // Geocodificado de la dirección (Nominatim/OpenStreetMap).
-  geo: { lat: 28.4664761, lon: -16.2542669 },
+  direccion: 'C. San Francisco de Paula, 157, 38205 La Laguna, Tenerife',
+  /*
+   * Sin coordenadas: el número exacto de esta dirección no se pudo geocodificar
+   * de forma fiable con Nominatim (sólo daba el centroide del código postal, que
+   * quedaba desviado). Con `geo` a null el mapa del pie geocodifica la DIRECCIÓN
+   * con Google (embed sin API key), que sí la sitúa con precisión. Si algún día
+   * se quiere el mapa de OpenStreetMap, basta poner aquí las coordenadas exactas.
+   */
+  geo: null,
   horario: null,       // TODO(Ivan): horario de atención
 
   /*
