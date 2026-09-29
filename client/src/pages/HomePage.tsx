@@ -4,14 +4,14 @@ import {
   ArrowRight,
   Bird,
   Cat,
-  CreditCard,
+  Clock,
   Dog,
   Fish,
-  Mail,
   MapPin,
   MessageCircle,
   Phone,
   Rabbit,
+  Send,
   Truck,
 } from 'lucide-react';
 import { useCatalogo } from '@/lib/useCatalogo';
@@ -24,26 +24,22 @@ import { esMarcaSoloEnTienda } from '@/lib/producto';
 import { ImagenProducto } from '@/components/ImagenProducto';
 import { ArteCategoria } from '@/components/ArteCategoria';
 import { tipoDeCategoria } from '@/lib/imagenes';
+import { toast } from '@/store/toast';
 import type { Product } from '@/lib/types';
 
 /**
- * PORTADA.
+ * PORTADA (landing). Sólo esta página.
  *
- * Rediseño de la landing (sólo esta página): se conservan el hero y la franja de
- * servicios tal cual, y se rehace el resto para que la portada se lea como una
- * tienda de alimentación animal cuidada, con acceso equilibrado al catálogo que
- * YA existe. Todo lo que se enseña sale del catálogo (facetas reales) o del
- * contacto real de `lib/empresa.ts`; nada inventado, ningún enlace vacío.
+ * Se conserva el hero. El resto presenta la tienda de alimentación animal con
+ * acceso equilibrado al catálogo que YA existe. Todo sale del catálogo (facetas
+ * reales) o del contacto real de `lib/empresa.ts`.
  *
- * Reglas de esta página:
- *   · La ALIMENTACIÓN tiene prioridad visual sobre los accesorios.
- *   · Perros y gatos, mismo protagonismo; aves, roedores y peces como accesos
- *     complementarios. Sin contadores en esa sección.
- *   · Las tarjetas de «La selección de Chacho» son EXCLUSIVAS de la portada: no
- *     tocan la tarjeta compartida del catálogo.
+ * IMÁGENES: las fotos de mascota, la de la tienda y los logotipos de marca se
+ * sirven desde `client/public` (rutas fijas más abajo). Mientras un fichero no
+ * exista, cada bloque cae a un respaldo digno —icono o nombre— sin romperse, así
+ * que la portada funciona con o sin las fotos.
  */
 
-/* La foto de marca del hero. */
 const FOTO = '/banner-chacho.jpeg';
 const FOTO_ANCHO = 1600;
 const FOTO_ALTO = 506;
@@ -51,7 +47,7 @@ const FOTO_ALTO = 506;
 /** Envío gratis a partir de este importe. Igual que en el carrito. */
 const ENVIO_GRATIS_DESDE = 30;
 
-/** Cuántas marcas se enseñan en la portada (el resto, desde el menú «Marcas»). */
+/** Cuántas marcas se enseñan en la portada. */
 const MARCAS_EN_PORTADA = 8;
 
 export function HomePage() {
@@ -61,14 +57,11 @@ export function HomePage() {
   const datos = useMemo(() => {
     if (!taxonomy || !facets) return null;
     return {
-      // El animal con más catálogo, para el segundo botón del hero.
       destacada: mascotas(facets).protagonistas[0],
-      // Los animales con producto, con su enlace al filtro real del catálogo.
       animales: facets.animals
         .filter((a) => a.total > 0)
         .map((a) => ({ ...a, href: rutaCatalogo({ animal: a.slug }) })),
       categorias: categorias(facets, taxonomy),
-      // Las marcas con más catálogo, como accesos rápidos (enlazan al filtro).
       marcas: [...facets.brands].filter((b) => b.total > 0).sort((a, b) => b.total - a.total).slice(0, MARCAS_EN_PORTADA),
     };
   }, [taxonomy, facets]);
@@ -76,14 +69,36 @@ export function HomePage() {
   return (
     <>
       <Hero destacada={datos?.destacada} />
-      <Servicio />
       {datos && <PorQuien animales={datos.animales} />}
       {datos && <Alimentacion categorias={datos.categorias} />}
       <Seleccion productos={seleccion} />
-      <Ayuda />
       {datos && datos.marcas.length > 0 && <Marcas marcas={datos.marcas} />}
-      <Conoce />
+      <Contacto />
     </>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Utilidad: imagen con respaldo si el fichero no existe todavía
+   ══════════════════════════════════════════════════════════════════════ */
+
+/** Muestra `respaldo` (un icono, un nombre…) si la imagen no carga. */
+function ImagenConRespaldo({
+  src,
+  alt,
+  className,
+  respaldo,
+  ...rest
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  respaldo: React.ReactNode;
+} & Pick<React.ImgHTMLAttributes<HTMLImageElement>, 'width' | 'height' | 'loading'>) {
+  const [falla, setFalla] = useState(false);
+  if (falla) return <>{respaldo}</>;
+  return (
+    <img src={src} alt={alt} className={className} decoding="async" onError={() => setFalla(true)} {...rest} />
   );
 }
 
@@ -91,12 +106,6 @@ export function HomePage() {
    SELECCIÓN — productos reales del catálogo, priorizando alimentación
    ══════════════════════════════════════════════════════════════════════ */
 
-/**
- * Trae hasta cuatro productos reales para «La selección de Chacho»: alimentación
- * seca de perro y de gato, con precio y con existencias, para que haya variedad
- * y todo lo que se enseña se pueda comprar. Usa la API existente; no añade nada
- * al backend. `undefined` = cargando; `[]` = no hay nada que enseñar.
- */
 function useSeleccionPortada(): Product[] | undefined {
   const [productos, setProductos] = useState<Product[] | undefined>(undefined);
 
@@ -109,13 +118,10 @@ function useSeleccionPortada(): Product[] | undefined {
         .catch(() => [] as Product[]);
 
     Promise.all([pedir('perro'), pedir('gato')]).then(([perro, gato]) => {
-      // Con precio, con existencias y COMPRABLE online (se excluye Gosbi y demás
-      // marcas «sólo en tienda»: no tiene sentido destacarlas si no se compran aquí).
       const comprables = (lista: Product[]) =>
         lista
           .filter((p) => p.price != null && !esMarcaSoloEnTienda(p) && p.variants.some((v) => v.stock > 0))
           .slice(0, 2);
-      // Se intercalan perro y gato para que se vea variedad de un vistazo.
       const sel = [...comprables(perro), ...comprables(gato)].slice(0, 4);
       if (vivo) setProductos(sel);
     });
@@ -128,7 +134,7 @@ function useSeleccionPortada(): Product[] | undefined {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   HERO  (se conserva del diseño anterior)
+   HERO  (se conserva)
    ══════════════════════════════════════════════════════════════════════ */
 
 function Hero({ destacada }: { destacada?: Faceta }) {
@@ -204,35 +210,7 @@ function Hero({ destacada }: { destacada?: Faceta }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   A · SERVICIO  (se conserva)
-   ══════════════════════════════════════════════════════════════════════ */
-
-const SERVICIO = [
-  { icono: Truck, titulo: 'Entrega en 24-48 h', texto: 'A toda Canarias' },
-  { icono: CreditCard, titulo: 'Pago seguro', texto: 'Procesado por Stripe' },
-  { icono: Mail, titulo: 'Te asesoramos', texto: 'Escríbenos y te ayudamos a elegir' },
-];
-
-function Servicio() {
-  return (
-    <section aria-label="Servicios de la tienda" className="border-b border-edge-subtle bg-surface">
-      <ul className="container-page grid list-none grid-cols-1 gap-x-8 gap-y-4 p-0 py-6 sm:grid-cols-3">
-        {SERVICIO.map((s) => (
-          <li key={s.titulo} className="flex items-center gap-3">
-            <s.icono className="h-5 w-5 shrink-0 text-brand-600" aria-hidden="true" />
-            <span className="text-body-sm">
-              <span className="font-bold text-content">{s.titulo}</span>
-              <span className="text-content-muted"> · {s.texto}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   B · ¿PARA QUIÉN COMPRAS?  — perros y gatos iguales; el resto, complementario
+   ¿PARA QUIÉN COMPRAS?  — foto de cada mascota (con respaldo de icono)
    ══════════════════════════════════════════════════════════════════════ */
 
 const ICONO_ANIMAL: Record<string, typeof Dog> = {
@@ -242,9 +220,29 @@ const ICONO_ANIMAL: Record<string, typeof Dog> = {
   roedor: Rabbit,
   pez: Fish,
 };
-/* Los dos protagonistas y el orden del resto. Sólo se pinta lo que existe. */
 const PRINCIPALES = ['perro', 'gato'];
 const COMPLEMENTARIAS = ['ave', 'roedor', 'pez'];
+
+/** El retrato de la mascota: foto en `public/animales/<slug>.webp`, o el icono. */
+function RetratoAnimal({ slug, tamano }: { slug: string; tamano: number }) {
+  const Icono = ICONO_ANIMAL[slug] ?? Dog;
+  return (
+    <span
+      className="flex shrink-0 items-center justify-center overflow-hidden rounded-pill bg-brand-50 text-brand-700"
+      style={{ width: tamano, height: tamano }}
+    >
+      <ImagenConRespaldo
+        src={`/animales/${slug}.webp`}
+        alt=""
+        width={tamano}
+        height={tamano}
+        loading="lazy"
+        className="h-full w-full object-cover"
+        respaldo={<Icono className="h-1/2 w-1/2" strokeWidth={1.75} aria-hidden="true" />}
+      />
+    </span>
+  );
+}
 
 function PorQuien({ animales }: { animales: Faceta[] }) {
   const buscar = (slug: string) => animales.find((a) => a.slug === slug);
@@ -261,54 +259,44 @@ function PorQuien({ animales }: { animales: Faceta[] }) {
         Alimentación y cuidado para cada mascota. Entra directo a lo suyo.
       </p>
 
-      {/* Perros y gatos: dos tarjetas grandes, mismo peso. Sin contadores. */}
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        {principales.map((a) => {
-          const Icono = ICONO_ANIMAL[a.slug] ?? Dog;
-          return (
-            <Link
-              key={a.slug}
-              to={a.href}
-              className="group relative flex min-h-[9.5rem] items-center gap-5 overflow-hidden rounded-card border border-edge bg-surface p-6 transition-colors hover:border-brand-300 hover:shadow-rest"
-            >
-              <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-pill bg-brand-50 text-brand-700 transition-transform duration-300 group-hover:scale-105">
-                <Icono className="h-10 w-10" strokeWidth={1.75} aria-hidden="true" />
+        {principales.map((a) => (
+          <Link
+            key={a.slug}
+            to={a.href}
+            className="group relative flex min-h-[9.5rem] items-center gap-5 overflow-hidden rounded-card border border-edge bg-surface p-6 transition-colors hover:border-brand-300 hover:shadow-rest"
+          >
+            <span className="transition-transform duration-300 group-hover:scale-105">
+              <RetratoAnimal slug={a.slug} tamano={88} />
+            </span>
+            <span className="min-w-0">
+              <span className="block font-display text-title font-extrabold text-content">{a.nombre}</span>
+              <span className="mt-1 inline-flex items-center gap-1.5 text-body-sm font-semibold text-brand-700">
+                Ver todo
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
               </span>
-              <span className="min-w-0">
-                <span className="block font-display text-title font-extrabold text-content">{a.nombre}</span>
-                <span className="mt-1 inline-flex items-center gap-1.5 text-body-sm font-semibold text-brand-700">
-                  Ver todo
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-                </span>
-              </span>
-            </Link>
-          );
-        })}
+            </span>
+          </Link>
+        ))}
       </div>
 
-      {/* Aves, roedores y peces: accesos complementarios, más compactos. */}
       {complementarias.length > 0 && (
         <ul className="mt-4 grid list-none grid-cols-1 gap-3 p-0 sm:grid-cols-3">
-          {complementarias.map((a) => {
-            const Icono = ICONO_ANIMAL[a.slug] ?? Bird;
-            return (
-              <li key={a.slug}>
-                <Link
-                  to={a.href}
-                  className="group flex min-h-[3.5rem] items-center gap-3 rounded-card border border-edge bg-surface px-4 py-3 transition-colors hover:border-brand-300 hover:bg-brand-50"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-control bg-brand-50 text-brand-600">
-                    <Icono className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
-                  </span>
-                  <span className="flex-1 font-semibold text-content">{a.nombre}</span>
-                  <ArrowRight
-                    className="h-4 w-4 shrink-0 text-content-subtle transition-transform group-hover:translate-x-1"
-                    aria-hidden="true"
-                  />
-                </Link>
-              </li>
-            );
-          })}
+          {complementarias.map((a) => (
+            <li key={a.slug}>
+              <Link
+                to={a.href}
+                className="group flex min-h-[3.5rem] items-center gap-3 rounded-card border border-edge bg-surface px-4 py-2.5 transition-colors hover:border-brand-300 hover:bg-brand-50"
+              >
+                <RetratoAnimal slug={a.slug} tamano={44} />
+                <span className="flex-1 font-semibold text-content">{a.nombre}</span>
+                <ArrowRight
+                  className="h-4 w-4 shrink-0 text-content-subtle transition-transform group-hover:translate-x-1"
+                  aria-hidden="true"
+                />
+              </Link>
+            </li>
+          ))}
         </ul>
       )}
     </section>
@@ -316,11 +304,9 @@ function PorQuien({ animales }: { animales: Faceta[] }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   C · ENCUENTRA SU ALIMENTACIÓN  — comida por delante de los accesorios
+   ENCUENTRA SU ALIMENTACIÓN
    ══════════════════════════════════════════════════════════════════════ */
 
-/* El orden en que se prefieren las categorías de alimentación. Sólo se pintan
-   las que existen y tienen producto; nada de «Otros» ni de accesorios aquí. */
 const ALIMENTACION = [
   'alimentacion-seca',
   'alimentacion-humeda',
@@ -381,7 +367,7 @@ function Alimentacion({ categorias: lista }: { categorias: Faceta[] }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   D · LA SELECCIÓN DE CHACHO  — tarjeta EXCLUSIVA de la portada
+   LA SELECCIÓN DE CHACHO
    ══════════════════════════════════════════════════════════════════════ */
 
 function TarjetaSeleccion({ producto }: { producto: Product }) {
@@ -426,7 +412,6 @@ function TarjetaSeleccion({ producto }: { producto: Product }) {
 }
 
 function Seleccion({ productos }: { productos?: Product[] }) {
-  // Cargando: se reserva el sitio para no dar saltos. Vacío: la sección no sale.
   if (productos && productos.length === 0) return null;
 
   return (
@@ -466,53 +451,7 @@ function Seleccion({ productos }: { productos?: Product[] }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   E · TE AYUDAMOS A ELEGIR  — contacto real, WhatsApp por delante
-   ══════════════════════════════════════════════════════════════════════ */
-
-function Ayuda() {
-  const whatsapp = enlaceWhatsApp('¡Hola! ¿Me ayudáis a elegir la alimentación de mi mascota?');
-  const telefono = enlaceTelefono();
-  if (!whatsapp && !telefono && !EMPRESA.email) return null;
-
-  return (
-    <section aria-labelledby="ayuda" className="container-page py-section">
-      <div className="overflow-hidden rounded-card bg-brand-800 px-6 py-10 text-center text-cream sm:px-10 sm:py-12">
-        <h2 id="ayuda" className="font-display text-display font-extrabold tracking-tight">
-          Te ayudamos a elegir
-        </h2>
-        <p className="mx-auto mt-3 max-w-[50ch] text-body-lg text-cream/80">
-          Cuéntanos cómo es tu mascota y te ayudamos a encontrar su alimentación —
-          sin compromiso.
-        </p>
-        <div className="mt-7 flex flex-wrap justify-center gap-3">
-          {whatsapp && (
-            <a
-              href={whatsapp}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-12 items-center gap-2 rounded-pill bg-[#25D366] px-6 text-body font-bold text-white transition-transform hover:scale-[1.02]"
-            >
-              <MessageCircle className="h-5 w-5" aria-hidden="true" />
-              Consultar por WhatsApp
-            </a>
-          )}
-          {telefono && (
-            <a
-              href={telefono}
-              className="inline-flex min-h-12 items-center gap-2 rounded-pill border border-cream/30 px-6 text-body font-semibold text-cream transition-colors hover:border-cream/60 hover:bg-cream/10"
-            >
-              <Phone className="h-4 w-4" aria-hidden="true" />
-              Llamar {EMPRESA.telefono}
-            </a>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   F · MARCAS  — accesos rápidos a las marcas con más catálogo
+   MARCAS  — logotipo si existe el fichero, si no el nombre
    ══════════════════════════════════════════════════════════════════════ */
 
 function Marcas({ marcas }: { marcas: { slug: string; nombre: string }[] }) {
@@ -527,9 +466,21 @@ function Marcas({ marcas }: { marcas: { slug: string; nombre: string }[] }) {
             <li key={m.slug}>
               <Link
                 to={rutaCatalogo({ brand: m.slug })}
-                className="flex min-h-[3.25rem] items-center justify-center rounded-card border border-edge bg-surface px-4 py-3 text-center font-display text-body font-bold text-content-muted transition-colors hover:border-brand-300 hover:bg-brand-50 hover:text-brand-800"
+                aria-label={m.nombre}
+                className="flex min-h-[4rem] items-center justify-center rounded-card border border-edge bg-surface px-4 py-3 transition-colors hover:border-brand-300 hover:bg-brand-50"
               >
-                {m.nombre}
+                {/* Logotipo en public/marcas/<slug>.png; si no está, el nombre. */}
+                <ImagenConRespaldo
+                  src={`/marcas/${m.slug}.png`}
+                  alt={m.nombre}
+                  loading="lazy"
+                  className="max-h-9 w-auto max-w-full object-contain"
+                  respaldo={
+                    <span className="text-center font-display text-body font-bold text-content-muted">
+                      {m.nombre}
+                    </span>
+                  }
+                />
               </Link>
             </li>
           ))}
@@ -540,49 +491,178 @@ function Marcas({ marcas }: { marcas: { slug: string; nombre: string }[] }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   G · CONOCE A CHACHO  — quiénes son, sin adornos inventados
+   CONTACTO — formulario, WhatsApp, teléfono, dirección y horario
    ══════════════════════════════════════════════════════════════════════ */
 
-function Conoce() {
+function Contacto() {
+  const whatsapp = enlaceWhatsApp('¡Hola! ¿Me ayudáis a elegir la alimentación de mi mascota?');
+  const telefono = enlaceTelefono();
+
   return (
-    <section aria-labelledby="conoce" className="container-page py-section">
-      <div className="grid items-center gap-6 overflow-hidden rounded-card border border-edge bg-surface p-6 sm:grid-cols-[1.4fr_auto] sm:p-8">
+    <section aria-labelledby="contacto" className="border-t border-edge-subtle bg-surface-sunken">
+      <div className="container-page grid gap-8 py-section lg:grid-cols-2 lg:gap-12">
+        {/* Columna izquierda: mensaje + datos de contacto */}
         <div>
-          <p className="text-overline font-bold uppercase tracking-[0.16em] text-amber-700">De Canarias</p>
-          <h2 id="conoce" className="mt-1 font-display text-title font-extrabold tracking-tight text-content">
-            Conoce a Chacho
+          <p className="text-overline font-bold uppercase tracking-[0.16em] text-amber-700">Te ayudamos</p>
+          <h2 id="contacto" className="mt-1 font-display text-display font-extrabold tracking-tight text-content">
+            ¿Hablamos?
           </h2>
-          <p className="mt-3 max-w-[54ch] text-body text-content-muted">
-            Somos una tienda de barrio en La Laguna con toda la tienda también
-            online. Nutrición especializada —incluidas dietas veterinarias— y
-            atención de verdad: cuando escribes, respondemos nosotros.
+          <p className="mt-3 max-w-[48ch] text-body text-content-muted">
+            Cuéntanos cómo es tu mascota y te ayudamos a encontrar su alimentación
+            — sin compromiso. Respondemos nosotros.
           </p>
-          <div className="mt-5 flex flex-wrap items-center gap-4">
-            <Link to="/conocenos" className="btn-link text-body-sm">
-              Conócenos →
-            </Link>
-            {EMPRESA.direccion && (
-              <span className="inline-flex items-center gap-1.5 text-body-sm text-content-muted">
-                <MapPin className="h-4 w-4 shrink-0 text-brand-600" aria-hidden="true" />
-                {EMPRESA.direccion}
-              </span>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            {whatsapp && (
+              <a
+                href={whatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-12 items-center gap-2 rounded-pill bg-[#25D366] px-6 text-body font-bold text-white transition-transform hover:scale-[1.02]"
+              >
+                <MessageCircle className="h-5 w-5" aria-hidden="true" />
+                Consultar por WhatsApp
+              </a>
+            )}
+            {telefono && (
+              <a
+                href={telefono}
+                className="inline-flex min-h-12 items-center gap-2 rounded-pill border border-edge px-6 text-body font-semibold text-content transition-colors hover:border-brand-300 hover:bg-brand-50"
+              >
+                <Phone className="h-4 w-4 text-brand-600" aria-hidden="true" />
+                {EMPRESA.telefono}
+              </a>
             )}
           </div>
+
+          <dl className="mt-7 space-y-3 text-body-sm">
+            {EMPRESA.direccion && (
+              <div className="flex items-start gap-2.5">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden="true" />
+                <span className="text-content-muted">{EMPRESA.direccion}</span>
+              </div>
+            )}
+            {EMPRESA.horario && (
+              <div className="flex items-start gap-2.5">
+                <Clock className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden="true" />
+                <span className="whitespace-pre-line text-content-muted">{EMPRESA.horario}</span>
+              </div>
+            )}
+          </dl>
         </div>
 
-        {/* La mascota del banner (material propio de la marca), como acento. */}
-        <div className="relative hidden h-[9rem] w-[7.5rem] shrink-0 self-end overflow-hidden sm:block">
-          <img
-            src={FOTO}
-            width={FOTO_ANCHO}
-            height={FOTO_ALTO}
-            loading="lazy"
-            decoding="async"
-            alt=""
-            className="absolute left-[-286px] top-[-222px] w-[1600px] max-w-none"
-          />
-        </div>
+        {/* Columna derecha: formulario de contacto (usa el endpoint existente) */}
+        <FormularioContacto />
       </div>
     </section>
+  );
+}
+
+function FormularioContacto() {
+  const [form, setForm] = useState({ name: '', email: '', phone: '', message: '', website: '' });
+  const [acepta, setAcepta] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+
+  const enviar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!acepta) {
+      toast.error('Debes aceptar la política de privacidad.');
+      return;
+    }
+    setEnviando(true);
+    try {
+      await api.contact({
+        name: form.name,
+        email: form.email,
+        phone: form.phone || undefined,
+        subject: 'Consulta desde la portada',
+        message: form.message,
+        consent: acepta,
+        website: form.website,
+      });
+      toast.success('¡Gracias! Hemos recibido tu mensaje, te responderemos pronto.');
+      setForm({ name: '', email: '', phone: '', message: '', website: '' });
+      setAcepta(false);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setEnviando(false);
+    }
+  };
+
+  const campo = (clave: 'name' | 'email' | 'phone', etiqueta: string, type = 'text', requerido = true) => (
+    <label className="block">
+      <span className="mb-1 block text-body-sm font-semibold text-content-muted">{etiqueta}</span>
+      <input
+        type={type}
+        required={requerido}
+        value={form[clave]}
+        onChange={(e) => setForm({ ...form, [clave]: e.target.value })}
+        className="field h-11 w-full"
+      />
+    </label>
+  );
+
+  return (
+    <form onSubmit={enviar} className="rounded-card border border-edge bg-surface p-6 shadow-rest sm:p-7">
+      <h3 className="font-display text-heading font-bold text-content">Escríbenos</h3>
+      <p className="mt-1 text-body-sm text-content-muted">Te contestamos al correo o al teléfono que nos dejes.</p>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        {campo('name', 'Nombre')}
+        {campo('email', 'Email', 'email')}
+      </div>
+      <div className="mt-4">{campo('phone', 'Teléfono (opcional)', 'tel', false)}</div>
+
+      {/* Cebo antirrobots: fuera de la vista y del teclado. */}
+      <div className="absolute left-[-9999px]" aria-hidden="true">
+        <label>
+          No rellenar
+          <input
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={form.website}
+            onChange={(e) => setForm({ ...form, website: e.target.value })}
+          />
+        </label>
+      </div>
+
+      <label className="mt-4 block">
+        <span className="mb-1 block text-body-sm font-semibold text-content-muted">Mensaje</span>
+        <textarea
+          required
+          rows={4}
+          value={form.message}
+          onChange={(e) => setForm({ ...form, message: e.target.value })}
+          className="field w-full resize-y py-2.5"
+        />
+      </label>
+
+      <label className="mt-4 flex items-start gap-2 text-body-sm text-content-muted">
+        <input
+          type="checkbox"
+          checked={acepta}
+          onChange={(e) => setAcepta(e.target.checked)}
+          className="mt-0.5 h-4 w-4 rounded border-edge-strong text-brand-600"
+        />
+        <span>
+          He leído y acepto la{' '}
+          <Link to="/privacidad" className="font-semibold text-brand-700 underline">
+            política de privacidad
+          </Link>
+          .
+        </span>
+      </label>
+
+      <button
+        type="submit"
+        disabled={enviando}
+        className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-pill bg-brand-700 px-6 text-body font-bold text-content-inverse transition-colors hover:bg-brand-800 disabled:opacity-60"
+      >
+        <Send className="h-4 w-4" aria-hidden="true" />
+        {enviando ? 'Enviando…' : 'Enviar mensaje'}
+      </button>
+    </form>
   );
 }
