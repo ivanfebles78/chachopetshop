@@ -454,6 +454,21 @@ function Seleccion({ productos }: { productos?: Product[] }) {
    MARCAS  — logotipo si existe el fichero, si no el nombre
    ══════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Logos oficiales disponibles en `public/marcas/`, con su extensión REAL.
+ *
+ * Se guarda el formato nativo de cada marca (SVG cuando la web oficial lo da —es
+ * nítido a cualquier tamaño— y PNG cuando no). Una marca sin entrada aquí enseña
+ * su nombre en texto, que es lo honesto: mejor el nombre que el logo de otro.
+ */
+const LOGO_MARCA: Record<string, string> = {
+  gosbi: '/marcas/gosbi.svg',
+  freedog: '/marcas/freedog.svg',
+  ownat: '/marcas/ownat.svg',
+  bubimex: '/marcas/bubimex.png',
+  disugual: '/marcas/disugual.png',
+};
+
 function Marcas({ marcas }: { marcas: { slug: string; nombre: string }[] }) {
   return (
     <section aria-labelledby="marcas" className="border-t border-edge-subtle bg-surface-sunken">
@@ -462,28 +477,36 @@ function Marcas({ marcas }: { marcas: { slug: string; nombre: string }[] }) {
           Marcas en las que confiamos
         </h2>
         <ul className="mt-5 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 lg:grid-cols-4">
-          {marcas.map((m) => (
-            <li key={m.slug}>
-              <Link
-                to={rutaCatalogo({ brand: m.slug })}
-                aria-label={m.nombre}
-                className="flex min-h-[4rem] items-center justify-center rounded-card border border-edge bg-surface px-4 py-3 transition-colors hover:border-brand-300 hover:bg-brand-50"
-              >
-                {/* Logotipo en public/marcas/<slug>.png; si no está, el nombre. */}
-                <ImagenConRespaldo
-                  src={`/marcas/${m.slug}.png`}
-                  alt={m.nombre}
-                  loading="lazy"
-                  className="max-h-9 w-auto max-w-full object-contain"
-                  respaldo={
-                    <span className="text-center font-display text-body font-bold text-content-muted">
-                      {m.nombre}
-                    </span>
-                  }
-                />
-              </Link>
-            </li>
-          ))}
+          {marcas.map((m) => {
+            const logo = LOGO_MARCA[m.slug];
+            const nombre = (
+              <span className="text-center font-display text-body font-bold text-content-muted">
+                {m.nombre}
+              </span>
+            );
+            return (
+              <li key={m.slug}>
+                <Link
+                  to={rutaCatalogo({ brand: m.slug })}
+                  aria-label={m.nombre}
+                  className="flex min-h-[4rem] items-center justify-center rounded-card border border-edge bg-surface px-4 py-3 transition-colors hover:border-brand-300 hover:bg-brand-50"
+                >
+                  {/* Logotipo oficial si lo tenemos; si no, el nombre de la marca. */}
+                  {logo ? (
+                    <ImagenConRespaldo
+                      src={logo}
+                      alt={m.nombre}
+                      loading="lazy"
+                      className="max-h-9 w-auto max-w-full object-contain"
+                      respaldo={nombre}
+                    />
+                  ) : (
+                    nombre
+                  )}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </div>
     </section>
