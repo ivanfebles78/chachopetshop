@@ -467,6 +467,9 @@ const LOGO_MARCA: Record<string, string> = {
   ownat: '/marcas/ownat.svg',
   bubimex: '/marcas/bubimex.png',
   disugual: '/marcas/disugual.png',
+  atlantic: '/marcas/atlantic.png',
+  duvo: '/marcas/duvo.jpg',
+  nobleza: '/marcas/nobleza.jpg',
 };
 
 function Marcas({ marcas }: { marcas: { slug: string; nombre: string }[] }) {
