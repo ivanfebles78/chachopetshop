@@ -42,7 +42,8 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export type ProductFilters = {
   animal?: string;
-  category?: string;
+  /** Categorías (Alimentación, Accesorios…). Multi-selección: se muestran todas. */
+  category?: string[];
   brand?: string[];
   /** Línea de marca (atributo del producto). El menú enlaza marca + línea. */
   line?: string[];
@@ -74,7 +75,7 @@ export type ProductFilters = {
 function toQuery(f: ProductFilters): string {
   const p = new URLSearchParams();
   if (f.animal) p.set('animal', f.animal);
-  if (f.category) p.set('category', f.category);
+  if (f.category?.length) p.set('category', f.category.join(','));
   if (f.brand?.length) p.set('brand', f.brand.join(','));
   if (f.line?.length) p.set('line', f.line.join(','));
   if (f.size?.length) p.set('size', f.size.join(','));

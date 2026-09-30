@@ -80,8 +80,12 @@ productsRouter.get('/', async (req, res, next) => {
       cond.animal = { animals: { some: { slug: p.animal } } };
       and.push(cond.animal);
     }
-    if (p.category) {
-      cond.category = { categories: { some: { slug: p.category } } };
+    // Categoría: multi-selección (OR entre las elegidas). Marcar «Alimentación»
+    // y «Accesorios» debe mostrar AMBAS, no obligar a escoger una. Como faceta,
+    // sus recuentos se calculan sin su propia dimensión (ver `lib/facetas.ts`).
+    const categorias = csv(p.category);
+    if (categorias.length) {
+      cond.category = { categories: { some: { slug: { in: categorias } } } };
       and.push(cond.category);
     }
 

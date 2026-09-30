@@ -39,7 +39,7 @@ describe('los filtros salen de la dirección', () => {
   it('lee todas las dimensiones', () => {
     const f = filtrosDeParams(params('animal=perro&category=alimentacion-seca&need=digestivo,dental&brand=ownat&q=pienso&oferta=1&sort=price_asc&page=2'));
     expect(f.animal).toBe('perro');
-    expect(f.category).toBe('alimentacion-seca');
+    expect(f.category).toEqual(['alimentacion-seca']);
     expect(f.need).toEqual(['digestivo', 'dental']);
     expect(f.brand).toEqual(['ownat']);
     expect(f.q).toBe('pienso');

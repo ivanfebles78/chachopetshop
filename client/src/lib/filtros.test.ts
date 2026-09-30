@@ -67,7 +67,7 @@ describe('el filtro de ofertas llega hasta el servidor', () => {
 
     const filtros: ProductFilters = {
       animal: params.get('animal') ?? undefined,
-      category: params.get('category') ?? undefined,
+      category: params.get('category')?.split(',').filter(Boolean) ?? undefined,
       oferta: params.get('oferta') === '1' || undefined,
     };
     expect(filtros.oferta).toBe(true);
