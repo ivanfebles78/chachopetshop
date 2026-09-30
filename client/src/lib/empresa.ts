@@ -35,7 +35,7 @@ export const EMPRESA: {
   // Ivan; su ficha de Google en ese punto figura como «Piensos El Campesino Los
   // Baldíos»). Con ellas el mapa del pie es OpenStreetMap con el pin justo ahí.
   geo: { lat: 28.4610576, lon: -16.3278474 },
-  horario: null,       // TODO(Ivan): horario de atención
+  horario: 'Lunes a viernes: 9:00–13:00 y 16:00–19:00\nSábados: 9:00–14:00',
 
   /*
    * OBLIGATORIOS POR LA LSSI, Y SIGUEN SIN ESTAR.

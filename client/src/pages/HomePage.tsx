@@ -73,6 +73,7 @@ export function HomePage() {
       {datos && <Alimentacion categorias={datos.categorias} />}
       <Seleccion productos={seleccion} />
       {datos && datos.marcas.length > 0 && <Marcas marcas={datos.marcas} />}
+      <NuestraTienda />
       <Contacto />
     </>
   );
@@ -511,6 +512,68 @@ function Marcas({ marcas }: { marcas: { slug: string; nombre: string }[] }) {
             );
           })}
         </ul>
+      </div>
+    </section>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   NUESTRA TIENDA — fotos reales del local (escaparate + interior)
+   ══════════════════════════════════════════════════════════════════════ */
+
+/** Fotos reales del local, en `public/`. La del escaparate manda; las de
+ *  interior la acompañan. Son la prueba de que la tienda existe y es esta. */
+const FOTOS_TIENDA = [
+  { src: '/tienda-escaparate.jpg', alt: 'Escaparate de Chacho Pet Shop, con el rótulo y la tienda abierta' },
+  { src: '/tienda-ownat.jpg', alt: 'Interior de la tienda: estanterías de pienso Ownat y alimentación natural' },
+  { src: '/tienda-atlantic.jpg', alt: 'Interior de la tienda: expositor de Atlantic Pet y camas para mascotas' },
+];
+
+function NuestraTienda() {
+  const [principal, ...interiores] = FOTOS_TIENDA;
+  if (!principal) return null;
+
+  return (
+    <section aria-labelledby="nuestra-tienda" className="border-t border-edge-subtle bg-surface">
+      <div className="container-page py-section-sm">
+        <p className="text-overline font-bold uppercase tracking-[0.16em] text-amber-700">En La Laguna</p>
+        <h2
+          id="nuestra-tienda"
+          className="mt-1 font-display text-title font-extrabold tracking-tight text-content"
+        >
+          Ven a conocernos
+        </h2>
+        <p className="mt-3 max-w-[52ch] text-body text-content-muted">
+          Una tienda de barrio con asesoramiento de verdad. Pásate y te ayudamos a
+          elegir en persona lo que le conviene a tu mascota.
+        </p>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2">
+          <figure className="relative overflow-hidden rounded-card border border-edge sm:col-span-2 lg:row-span-2">
+            <img
+              src={principal.src}
+              alt={principal.alt}
+              width={1824}
+              height={1026}
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover"
+            />
+          </figure>
+          {interiores.map((f) => (
+            <figure key={f.src} className="overflow-hidden rounded-card border border-edge">
+              <img
+                src={f.src}
+                alt={f.alt}
+                width={1824}
+                height={1026}
+                loading="lazy"
+                decoding="async"
+                className="aspect-[16/10] h-full w-full object-cover"
+              />
+            </figure>
+          ))}
+        </div>
       </div>
     </section>
   );
