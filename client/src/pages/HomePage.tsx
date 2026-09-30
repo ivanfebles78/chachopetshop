@@ -235,7 +235,7 @@ const FOTO_ANIMAL: Record<string, string> = {
   gato: '/animales/gato.jpeg',
   ave: '/animales/ave.jpeg',
   roedor: '/animales/roedor.jpeg',
-  pez: '/animales/pez.png',
+  pez: '/animales/pez.jpg',
 };
 
 /** El retrato de la mascota: su foto en `public/animales/`, o el icono. */
