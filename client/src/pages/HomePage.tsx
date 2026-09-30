@@ -224,7 +224,21 @@ const ICONO_ANIMAL: Record<string, typeof Dog> = {
 const PRINCIPALES = ['perro', 'gato'];
 const COMPLEMENTARIAS = ['ave', 'roedor', 'pez'];
 
-/** El retrato de la mascota: foto en `public/animales/<slug>.webp`, o el icono. */
+/**
+ * Fotos reales de cada mascota en `public/animales/`, con su extensión REAL.
+ *
+ * Se guarda el fichero tal cual lo aporta la tienda (unas en .jpg, otras en
+ * .jpeg). Una mascota sin foto aquí cae al icono de reserva, sin hueco vacío.
+ */
+const FOTO_ANIMAL: Record<string, string> = {
+  perro: '/animales/perro.jpg',
+  gato: '/animales/gato.jpeg',
+  ave: '/animales/ave.jpeg',
+  roedor: '/animales/roedor.jpeg',
+  pez: '/animales/pez.png',
+};
+
+/** El retrato de la mascota: su foto en `public/animales/`, o el icono. */
 function RetratoAnimal({ slug, tamano }: { slug: string; tamano: number }) {
   const Icono = ICONO_ANIMAL[slug] ?? Dog;
   return (
@@ -233,7 +247,7 @@ function RetratoAnimal({ slug, tamano }: { slug: string; tamano: number }) {
       style={{ width: tamano, height: tamano }}
     >
       <ImagenConRespaldo
-        src={`/animales/${slug}.webp`}
+        src={FOTO_ANIMAL[slug] ?? `/animales/${slug}.webp`}
         alt=""
         width={tamano}
         height={tamano}
