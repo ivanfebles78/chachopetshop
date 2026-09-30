@@ -134,7 +134,9 @@ function Mapa({ direccion }: { direccion: string }) {
 }
 
 export function Footer() {
-  const contacto = datosDeContacto();
+  // El horario se muestra en la sección de contacto de cada página; en el pie
+  // sería una segunda vez redundante, así que aquí se omite.
+  const contacto = datosDeContacto().filter((c) => c.etiqueta !== 'Horario');
 
   return (
     <footer className="mt-section-lg border-t border-edge-subtle bg-surface-sunken">

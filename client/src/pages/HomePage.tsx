@@ -178,7 +178,6 @@ function Hero({ destacada }: { destacada?: Faceta }) {
                 className="inline-flex min-h-12 items-center gap-2 rounded-pill border border-cream/30 px-6 text-body font-semibold text-cream transition-colors hover:border-cream/60 hover:bg-cream/10"
               >
                 Todo para {destacada.nombre.toLowerCase()}
-                <span className="text-cream/60">({destacada.total})</span>
               </Link>
             )}
           </div>
@@ -487,44 +486,72 @@ const LOGO_MARCA: Record<string, string> = {
   nobleza: '/marcas/nobleza.jpg',
 };
 
+/** Cuántas marcas se ven a la vez en el carrusel y cada cuánto gira. */
+const MARCAS_A_LA_VEZ = 3;
+const CARRUSEL_MS = 1500;
+
+/** Una tarjeta de marca: su logotipo oficial si lo tenemos, o el nombre. */
+function TarjetaMarca({ marca }: { marca: { slug: string; nombre: string } }) {
+  const logo = LOGO_MARCA[marca.slug];
+  const nombre = (
+    <span className="text-center font-display text-body font-bold text-content-muted">
+      {marca.nombre}
+    </span>
+  );
+  return (
+    <Link
+      to={rutaCatalogo({ brand: marca.slug })}
+      aria-label={marca.nombre}
+      className="flex min-h-[4rem] items-center justify-center rounded-card border border-edge bg-surface px-4 py-3 transition-colors hover:border-brand-300 hover:bg-brand-50"
+    >
+      {logo ? (
+        <ImagenConRespaldo
+          src={logo}
+          alt={marca.nombre}
+          loading="lazy"
+          className="max-h-9 w-auto max-w-full object-contain"
+          respaldo={nombre}
+        />
+      ) : (
+        nombre
+      )}
+    </Link>
+  );
+}
+
+/**
+ * Carrusel de marcas: enseña {@link MARCAS_A_LA_VEZ} a la vez y va girando una
+ * posición cada {@link CARRUSEL_MS} ms, en bucle. Si hay tres o menos, no gira
+ * (no hay nada que rotar), y respeta `prefers-reduced-motion` parándose.
+ */
 function Marcas({ marcas }: { marcas: { slug: string; nombre: string }[] }) {
+  const total = marcas.length;
+  const gira = total > MARCAS_A_LA_VEZ;
+  const [inicio, setInicio] = useState(0);
+
+  useEffect(() => {
+    if (!gira) return;
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const id = window.setInterval(() => setInicio((i) => (i + 1) % total), CARRUSEL_MS);
+    return () => window.clearInterval(id);
+  }, [gira, total]);
+
+  const visibles = gira
+    ? Array.from({ length: MARCAS_A_LA_VEZ }, (_, k) => marcas[(inicio + k) % total]!)
+    : marcas;
+
   return (
     <section aria-labelledby="marcas" className="border-t border-edge-subtle bg-surface-sunken">
       <div className="container-page py-section-sm">
         <h2 id="marcas" className="font-display text-title font-extrabold tracking-tight text-content">
           Marcas en las que confiamos
         </h2>
-        <ul className="mt-5 grid list-none grid-cols-2 gap-3 p-0 sm:grid-cols-3 lg:grid-cols-4">
-          {marcas.map((m) => {
-            const logo = LOGO_MARCA[m.slug];
-            const nombre = (
-              <span className="text-center font-display text-body font-bold text-content-muted">
-                {m.nombre}
-              </span>
-            );
-            return (
-              <li key={m.slug}>
-                <Link
-                  to={rutaCatalogo({ brand: m.slug })}
-                  aria-label={m.nombre}
-                  className="flex min-h-[4rem] items-center justify-center rounded-card border border-edge bg-surface px-4 py-3 transition-colors hover:border-brand-300 hover:bg-brand-50"
-                >
-                  {/* Logotipo oficial si lo tenemos; si no, el nombre de la marca. */}
-                  {logo ? (
-                    <ImagenConRespaldo
-                      src={logo}
-                      alt={m.nombre}
-                      loading="lazy"
-                      className="max-h-9 w-auto max-w-full object-contain"
-                      respaldo={nombre}
-                    />
-                  ) : (
-                    nombre
-                  )}
-                </Link>
-              </li>
-            );
-          })}
+        <ul className="mt-5 grid list-none grid-cols-3 gap-3 p-0" aria-live="off">
+          {visibles.map((m) => (
+            <li key={m.slug}>
+              <TarjetaMarca marca={m} />
+            </li>
+          ))}
         </ul>
       </div>
     </section>
