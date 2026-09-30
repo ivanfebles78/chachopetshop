@@ -114,7 +114,7 @@ function useSeleccionPortada(): Product[] | undefined {
     let vivo = true;
     const pedir = (animal: string) =>
       api
-        .products({ animal, category: 'alimentacion-seca', pageSize: 12 })
+        .products({ animal, category: ['alimentacion-seca'], pageSize: 12 })
         .then((r) => r.items)
         .catch(() => [] as Product[]);
 

@@ -87,7 +87,7 @@ export function CatalogPage() {
     setParams(siguiente);
   };
 
-  const alternar = (clave: 'need' | 'brand' | 'line' | 'size', slug: string) => {
+  const alternar = (clave: 'need' | 'brand' | 'line' | 'size' | 'category', slug: string) => {
     const actuales = (params.get(clave)?.split(',') ?? []).filter(Boolean);
     const siguiente = actuales.includes(slug)
       ? actuales.filter((s) => s !== slug)
@@ -104,7 +104,7 @@ export function CatalogPage() {
       setParams(s);
       return;
     }
-    if (valor) alternar(clave as 'need' | 'brand' | 'line' | 'size', valor);
+    if (valor) alternar(clave as 'need' | 'brand' | 'line' | 'size' | 'category', valor);
     else poner(clave, null);
   };
 
@@ -226,8 +226,8 @@ export function CatalogPage() {
                 correcto sigue siendo el de siempre.
               */
               categoriaVacia={
-                filtros.category && !filtros.q
-                  ? facetas?.categories?.find((c) => c.slug === filtros.category)?.nombre
+                filtros.category?.length === 1 && !filtros.q
+                  ? facetas?.categories?.find((c) => c.slug === filtros.category![0])?.nombre
                   : undefined
               }
             />

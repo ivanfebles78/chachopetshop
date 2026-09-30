@@ -29,8 +29,8 @@ type Props = {
   filtros: ProductFilters;
   /** Cambia un filtro de valor único (animal, categoría, oferta). */
   poner: (clave: string, valor: string | null) => void;
-  /** Marca o desmarca uno de los que admiten varios (necesidad, marca, tamaño). */
-  alternar: (clave: 'need' | 'brand' | 'size', slug: string) => void;
+  /** Marca o desmarca uno de los que admiten varios (categoría, necesidad, marca, tamaño). */
+  alternar: (clave: 'need' | 'brand' | 'size' | 'category', slug: string) => void;
 };
 
 /** Las opciones que merecen enseñarse: con producto, o ya seleccionadas. */
@@ -187,7 +187,7 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
   }
 
   const animales = visibles(facetas.animals, filtros.animal ? [filtros.animal] : []);
-  const categorias = visibles(facetas.categories, filtros.category ? [filtros.category] : []);
+  const categorias = visibles(facetas.categories, filtros.category ?? []);
   const necesidades = visibles(facetas.needs, filtros.need ?? []);
   const marcas = visibles(facetas.brands, filtros.brand ?? []);
   const tamanos = visibles(facetas.sizes, filtros.size ?? []);
@@ -234,8 +234,8 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
                 key={c.slug}
                 nombre="category"
                 faceta={c}
-                marcada={filtros.category === c.slug}
-                onChange={() => poner('category', filtros.category === c.slug ? null : c.slug)}
+                marcada={(filtros.category ?? []).includes(c.slug)}
+                onChange={() => alternar('category', c.slug)}
               />
             ))}
           </div>

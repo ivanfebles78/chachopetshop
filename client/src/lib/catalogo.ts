@@ -55,7 +55,7 @@ export function filtrosDeParams(params: URLSearchParams): ProductFilters {
 
   return {
     animal: params.get('animal') || undefined,
-    category: params.get('category') || undefined,
+    category: lista('category'),
     need: lista('need'),
     brand: lista('brand'),
     line: lista('line'),
@@ -75,7 +75,7 @@ export function filtrosDeParams(params: URLSearchParams): ProductFilters {
 export function cuantosFiltros(f: ProductFilters): number {
   return (
     (f.animal ? 1 : 0) +
-    (f.category ? 1 : 0) +
+    (f.category?.length ?? 0) +
     (f.oferta ? 1 : 0) +
     (f.q ? 1 : 0) +
     (f.minPrice !== undefined || f.maxPrice !== undefined ? 1 : 0) +
@@ -101,7 +101,9 @@ export function filtrosPuestos(f: ProductFilters, facetas: Facetas | undefined):
   const puestos: Puesto[] = [];
   if (f.q) puestos.push({ clave: 'q', etiqueta: `«${f.q}»` });
   if (f.animal) puestos.push({ clave: 'animal', etiqueta: nombre(facetas?.animals, f.animal) });
-  if (f.category) puestos.push({ clave: 'category', etiqueta: nombre(facetas?.categories, f.category) });
+  // Categoría es multi-selección: una ficha por cada una, con su `valor` para
+  // poder soltarlas de una en una (como marcas o necesidades).
+  for (const s of f.category ?? []) puestos.push({ clave: 'category', valor: s, etiqueta: nombre(facetas?.categories, s) });
   for (const s of f.need ?? []) puestos.push({ clave: 'need', valor: s, etiqueta: nombre(facetas?.needs, s) });
   for (const s of f.brand ?? []) puestos.push({ clave: 'brand', valor: s, etiqueta: nombre(facetas?.brands, s) });
   // La línea es un texto legible en sí mismo («Grain Free»), no un slug.
@@ -132,7 +134,10 @@ export function tituloDe(f: ProductFilters, facetas: Facetas | undefined): strin
   if (f.q) return `Resultados para «${f.q}»`;
 
   const animal = nombre(facetas?.animals, f.animal);
-  const categoria = nombre(facetas?.categories, f.category);
+  // El titular usa la categoría solo cuando hay UNA elegida («Alimentación seca
+  // para perros»). Con varias marcadas, no hay un titular único que las resuma,
+  // así que cae al del animal o al genérico.
+  const categoria = f.category?.length === 1 ? nombre(facetas?.categories, f.category[0]) : undefined;
 
   if (f.oferta) return animal ? `Ofertas para ${animal.toLowerCase()}` : 'Ofertas';
   if (categoria && animal) return `${categoria} para ${animal.toLowerCase()}`;
@@ -148,7 +153,7 @@ export function migasDe(f: ProductFilters, titulo: string): { etiqueta: string; 
     { etiqueta: 'Tienda', href: '/tienda' },
   ];
   // Con animal Y categoría, el animal es un escalón intermedio real.
-  if (f.animal && f.category && !f.q) {
+  if (f.animal && f.category?.length && !f.q) {
     migas.push({ etiqueta: titulo.split(' para ')[1] ?? '', href: `/tienda?animal=${f.animal}` });
   }
   if (titulo !== 'Toda la tienda') migas.push({ etiqueta: titulo });

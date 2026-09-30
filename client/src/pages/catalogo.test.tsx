@@ -136,7 +136,7 @@ describe('semántica y teclado', () => {
     montar('/tienda?animal=perro&category=alimentacion-seca&brand=ownat');
     await screen.findByRole('heading', { level: 1 });
     expect(vi.mocked(api.products).mock.calls[0]![0]).toMatchObject({
-      animal: 'perro', category: 'alimentacion-seca', brand: ['ownat'],
+      animal: 'perro', category: ['alimentacion-seca'], brand: ['ownat'],
     });
   });
 });
