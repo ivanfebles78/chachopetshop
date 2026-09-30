@@ -184,7 +184,12 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
 
       {marcas.length > 0 && (
         <Grupo titulo="Marca">
-          <div className="-mx-2 max-h-72 overflow-y-auto">
+          {/*
+           * Sin tope de alto ni scroll propio: la lista se ve entera y se recorre
+           * con el scroll normal de la página. Antes (`max-h-72 overflow-y-auto`)
+           * era una segunda barra dentro del panel, difícil de usar.
+           */}
+          <div className="-mx-2">
             {marcas.map((m) => (
               <Opcion
                 key={m.slug}
