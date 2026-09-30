@@ -159,7 +159,12 @@ export function CatalogPage() {
 
       <div className="mt-6 flex gap-8">
         <aside className="hidden w-60 shrink-0 lg:block" aria-label="Filtros">
-          <div className="sticky top-24">
+          {/*
+           * Alto acotado al viewport (top-24 = 6rem) y scroll propio: con muchas
+           * marcas la lista supera la pantalla, y sin esto su parte inferior
+           * quedaba cortada y era imposible llegar a los últimos fabricantes.
+           */}
+          <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto overscroll-contain pr-1">
             <Filtros facetas={facetas} filtros={filtros} poner={poner} alternar={alternar} />
           </div>
         </aside>
