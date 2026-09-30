@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
 import type { ProductFilters } from '@/lib/api';
 import type { Faceta, Facetas } from '@/lib/types';
@@ -96,6 +97,81 @@ function Opcion({
         {faceta.total}
       </span>
     </label>
+  );
+}
+
+/**
+ * Rango de precio (desde–hasta). Los inputs guardan su valor en estado LOCAL y
+ * solo CONFIRMAN el filtro al salir del campo (blur) o con Enter.
+ *
+ * Antes confirmaban en cada tecla: al pulsar «1» ya se re-pedían productos, el
+ * grupo «Precio» se desmontaba a mitad (mientras `facetas` recargaba) y el input
+ * perdía el foco, así que era imposible escribir «10». Con estado local se
+ * teclea entero y el filtro se aplica una sola vez, al terminar.
+ */
+function RangoPrecio({
+  min,
+  max,
+  phMin,
+  phMax,
+  poner,
+}: {
+  min: number | null;
+  max: number | null;
+  phMin: string;
+  phMax: string;
+  poner: (clave: string, valor: string | null) => void;
+}) {
+  const texto = (n: number | null) => (n == null ? '' : String(n));
+  const [desde, setDesde] = useState(texto(min));
+  const [hasta, setHasta] = useState(texto(max));
+
+  // Reflejar cambios que vengan de fuera (p. ej. el botón «Limpiar»).
+  useEffect(() => setDesde(texto(min)), [min]);
+  useEffect(() => setHasta(texto(max)), [max]);
+
+  const confirmar = (clave: string, valor: string) =>
+    poner(clave, valor.trim() === '' ? null : valor.trim());
+
+  const alPulsar = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') e.currentTarget.blur();
+  };
+
+  return (
+    <div className="flex items-center gap-2 px-2">
+      <label className="flex-1">
+        <span className="sr-only">Precio mínimo en euros</span>
+        <input
+          type="number"
+          inputMode="decimal"
+          min={0}
+          step="0.01"
+          placeholder={phMin}
+          value={desde}
+          onChange={(e) => setDesde(e.target.value)}
+          onBlur={() => confirmar('minPrice', desde)}
+          onKeyDown={alPulsar}
+          className="field h-10 w-full"
+        />
+      </label>
+      <span className="text-content-subtle" aria-hidden="true">–</span>
+      <label className="flex-1">
+        <span className="sr-only">Precio máximo en euros</span>
+        <input
+          type="number"
+          inputMode="decimal"
+          min={0}
+          step="0.01"
+          placeholder={phMax}
+          value={hasta}
+          onChange={(e) => setHasta(e.target.value)}
+          onBlur={() => confirmar('maxPrice', hasta)}
+          onKeyDown={alPulsar}
+          className="field h-10 w-full"
+        />
+      </label>
+      <span className="text-body-sm text-content-subtle">€</span>
+    </div>
   );
 }
 
@@ -231,36 +307,13 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
       */}
       {facetas.precio && facetas.precio.min !== facetas.precio.max && (
         <Grupo titulo="Precio">
-          <div className="flex items-center gap-2 px-2">
-            <label className="flex-1">
-              <span className="sr-only">Precio mínimo en euros</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step="0.01"
-                placeholder={`${Math.floor(facetas.precio.min)}`}
-                value={filtros.minPrice ?? ''}
-                onChange={(e) => poner('minPrice', e.target.value || null)}
-                className="field h-10 w-full"
-              />
-            </label>
-            <span className="text-content-subtle" aria-hidden="true">–</span>
-            <label className="flex-1">
-              <span className="sr-only">Precio máximo en euros</span>
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step="0.01"
-                placeholder={`${Math.ceil(facetas.precio.max)}`}
-                value={filtros.maxPrice ?? ''}
-                onChange={(e) => poner('maxPrice', e.target.value || null)}
-                className="field h-10 w-full"
-              />
-            </label>
-            <span className="text-body-sm text-content-subtle">€</span>
-          </div>
+          <RangoPrecio
+            min={filtros.minPrice ?? null}
+            max={filtros.maxPrice ?? null}
+            phMin={`${Math.floor(facetas.precio.min)}`}
+            phMax={`${Math.ceil(facetas.precio.max)}`}
+            poner={poner}
+          />
         </Grupo>
       )}
     </div>
