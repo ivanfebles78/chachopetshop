@@ -237,6 +237,15 @@ const FOTO_ANIMAL: Record<string, string> = {
   pez: '/animales/pez.jpg',
 };
 
+/**
+ * Encuadre de cada foto dentro del círculo. Por defecto, centrado. El perro es
+ * un retrato vertical y, centrado, el círculo le cortaba la cabeza; con `top` se
+ * baja la imagen y la cabeza entra completa.
+ */
+const ENCUADRE_ANIMAL: Record<string, string> = {
+  perro: 'object-top',
+};
+
 /** El retrato de la mascota: su foto en `public/animales/`, o el icono. */
 function RetratoAnimal({ slug, tamano }: { slug: string; tamano: number }) {
   const Icono = ICONO_ANIMAL[slug] ?? Dog;
@@ -251,7 +260,7 @@ function RetratoAnimal({ slug, tamano }: { slug: string; tamano: number }) {
         width={tamano}
         height={tamano}
         loading="lazy"
-        className="h-full w-full object-cover"
+        className={`h-full w-full object-cover ${ENCUADRE_ANIMAL[slug] ?? ''}`}
         respaldo={<Icono className="h-1/2 w-1/2" strokeWidth={1.75} aria-hidden="true" />}
       />
     </span>
@@ -300,9 +309,9 @@ function PorQuien({ animales }: { animales: Faceta[] }) {
             <li key={a.slug}>
               <Link
                 to={a.href}
-                className="group flex min-h-[3.5rem] items-center gap-3 rounded-card border border-edge bg-surface px-4 py-2.5 transition-colors hover:border-brand-300 hover:bg-brand-50"
+                className="group flex items-center gap-3 rounded-card border border-edge bg-surface px-4 py-2 transition-colors hover:border-brand-300 hover:bg-brand-50"
               >
-                <RetratoAnimal slug={a.slug} tamano={44} />
+                <RetratoAnimal slug={a.slug} tamano={64} />
                 <span className="flex-1 font-semibold text-content">{a.nombre}</span>
                 <ArrowRight
                   className="h-4 w-4 shrink-0 text-content-subtle transition-transform group-hover:translate-x-1"

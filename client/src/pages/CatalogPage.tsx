@@ -160,13 +160,12 @@ export function CatalogPage() {
       <div className="mt-6 flex gap-8">
         <aside className="hidden w-60 shrink-0 lg:block" aria-label="Filtros">
           {/*
-           * Alto acotado al viewport (top-24 = 6rem) y scroll propio: con muchas
-           * marcas la lista supera la pantalla, y sin esto su parte inferior
-           * quedaba cortada y era imposible llegar a los últimos fabricantes.
+           * Sin `sticky`: la lista de filtros (marcas, categorías, tallas…) es más
+           * alta que la pantalla, y fijarla obligaba a un scroll interno propio
+           * —una segunda barra, incómoda—. Fluyendo con la página se llega a
+           * todos los fabricantes con el scroll normal, con una sola barra.
            */}
-          <div className="sticky top-24 max-h-[calc(100vh-7rem)] overflow-y-auto overscroll-contain pr-1">
-            <Filtros facetas={facetas} filtros={filtros} poner={poner} alternar={alternar} />
-          </div>
+          <Filtros facetas={facetas} filtros={filtros} poner={poner} alternar={alternar} />
         </aside>
 
         <div className="min-w-0 flex-1">
