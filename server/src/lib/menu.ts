@@ -27,6 +27,45 @@ export type MarcaMenu = { slug: string; nombre: string; total: number; lineas: L
 export type CategoriaMenu = { slug: string; nombre: string; sortOrder: number; total: number; marcas: MarcaMenu[] };
 export type AnimalMenu = { slug: string; nombre: string; total: number; categorias: CategoriaMenu[] };
 
+/**
+ * EL MENÚ DE CABECERA DE PERROS Y GATOS ENSEÑA SOLO ESTAS CINCO CATEGORÍAS,
+ * EN ESTE ORDEN —aunque alguna no tenga productos todavía—.
+ *
+ * Es una decisión de escaparate de Ivan: el menú de perros/gatos se centra en
+ * la alimentación y los suplementos, y deja el resto (accesorios, semillas…)
+ * para la búsqueda y los filtros del catálogo, que NO se tocan. «Semihúmeda»
+ * vuelve como sección aunque hoy esté vacía. El nombre se fija aquí para que
+ * «Suplementos y cosmética» salga bien aun antes de que la migración renombre la
+ * categoría en la base de datos.
+ */
+const CATEGORIAS_CABECERA: { slug: string; nombre: string }[] = [
+  { slug: 'alimentacion-seca', nombre: 'Alimentación seca' },
+  { slug: 'alimentacion-humeda', nombre: 'Alimentación húmeda' },
+  { slug: 'alimentacion-semihumeda', nombre: 'Alimentación semihúmeda' },
+  { slug: 'snacks-y-premios', nombre: 'Snacks y premios' },
+  { slug: 'higiene-y-cosmetica', nombre: 'Suplementos y cosmética' },
+];
+const ANIMALES_CABECERA = new Set(['perro', 'gato']);
+
+/**
+ * Acota el menú de perros y gatos a {@link CATEGORIAS_CABECERA}, en ese orden,
+ * conservando sus marcas reales e inyectando como vacías las que aún no tienen
+ * producto. Los demás animales se devuelven tal cual. Sólo afecta al menú.
+ */
+export function restringirCabecera(menu: AnimalMenu[]): AnimalMenu[] {
+  return menu.map((a) => {
+    if (!ANIMALES_CABECERA.has(a.slug)) return a;
+    const porSlug = new Map(a.categorias.map((c) => [c.slug, c]));
+    const categorias = CATEGORIAS_CABECERA.map(({ slug, nombre }, i) => {
+      const existente = porSlug.get(slug);
+      return existente
+        ? { ...existente, nombre, sortOrder: i }
+        : { slug, nombre, sortOrder: i, total: 0, marcas: [] };
+    });
+    return { ...a, categorias };
+  });
+}
+
 type NodoMarca = { nombre: string; total: number; lineas: Map<string, number> };
 type NodoCat = { nombre: string; sortOrder: number; total: number; marcas: Map<string, NodoMarca> };
 type NodoAnimal = { total: number; categorias: Map<string, NodoCat> };

@@ -17,6 +17,7 @@ import {
 import { useCatalogo } from '@/lib/useCatalogo';
 import { categorias, mascotas, type Faceta } from '@/lib/portada';
 import { rutaCatalogo } from '@/lib/navigation';
+import { LOGO_MARCA } from '@/lib/marcas';
 import { EMPRESA, enlaceTelefono, enlaceWhatsApp } from '@/lib/empresa';
 import { api } from '@/lib/api';
 import { eur } from '@/lib/cn';
@@ -476,24 +477,6 @@ function Seleccion({ productos }: { productos?: Product[] }) {
 /* ══════════════════════════════════════════════════════════════════════
    MARCAS  — logotipo si existe el fichero, si no el nombre
    ══════════════════════════════════════════════════════════════════════ */
-
-/**
- * Logos oficiales disponibles en `public/marcas/`, con su extensión REAL.
- *
- * Se guarda el formato nativo de cada marca (SVG cuando la web oficial lo da —es
- * nítido a cualquier tamaño— y PNG cuando no). Una marca sin entrada aquí enseña
- * su nombre en texto, que es lo honesto: mejor el nombre que el logo de otro.
- */
-const LOGO_MARCA: Record<string, string> = {
-  gosbi: '/marcas/gosbi.svg',
-  freedog: '/marcas/freedog.svg',
-  ownat: '/marcas/ownat.svg',
-  bubimex: '/marcas/bubimex.png',
-  disugual: '/marcas/disugual.png',
-  atlantic: '/marcas/atlantic.png',
-  duvo: '/marcas/duvo.jpg',
-  nobleza: '/marcas/nobleza.jpg',
-};
 
 /** Cuántas marcas se ven a la vez en el carrusel y cada cuánto gira. */
 const MARCAS_A_LA_VEZ = 3;

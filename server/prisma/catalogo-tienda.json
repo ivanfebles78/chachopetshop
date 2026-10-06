@@ -231,40 +231,46 @@
    "sortOrder": 2
   },
   {
+   "slug": "alimentacion-semihumeda",
+   "name": "Alimentación semihúmeda",
+   "type": "SEMIMOIST",
+   "sortOrder": 3
+  },
+  {
    "slug": "snacks-y-premios",
    "name": "Snacks y premios",
    "type": "SNACKS",
-   "sortOrder": 3
+   "sortOrder": 4
   },
   {
    "slug": "semillas-y-forraje",
    "name": "Semillas y forraje",
    "type": "DRY_FOOD",
-   "sortOrder": 4
+   "sortOrder": 5
   },
   {
    "slug": "salud-y-antiparasitarios",
    "name": "Salud y antiparasitarios",
    "type": "SUPPLEMENTS",
-   "sortOrder": 5
+   "sortOrder": 6
   },
   {
    "slug": "higiene-y-cosmetica",
-   "name": "Higiene y cosmética",
+   "name": "Suplementos y cosmética",
    "type": "HYGIENE",
-   "sortOrder": 6
+   "sortOrder": 7
   },
   {
    "slug": "accesorios",
    "name": "Accesorios",
    "type": "ACCESSORIES",
-   "sortOrder": 7
+   "sortOrder": 8
   },
   {
    "slug": "otros",
    "name": "Otros",
    "type": "OTHER",
-   "sortOrder": 8
+   "sortOrder": 9
   }
  ],
  "products": [

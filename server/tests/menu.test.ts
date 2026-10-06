@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { construirMenu, type ProductoMenu } from '../src/lib/menu.js';
+import { construirMenu, restringirCabecera, type ProductoMenu } from '../src/lib/menu.js';
 
 const prod = (
   animals: string[],
@@ -79,5 +79,43 @@ describe('construirMenu', () => {
 
   it('un catálogo vacío no produce menú', () => {
     expect(construirMenu([], ANIMALES)).toEqual([]);
+  });
+});
+
+describe('restringirCabecera (menú de perros/gatos: 5 categorías fijas)', () => {
+  const menu = restringirCabecera(construirMenu(PRODUCTOS, ANIMALES));
+  const perro = menu.find((a) => a.slug === 'perro')!;
+
+  it('perro muestra exactamente las 5 categorías en orden', () => {
+    expect(perro.categorias.map((c) => c.slug)).toEqual([
+      'alimentacion-seca',
+      'alimentacion-humeda',
+      'alimentacion-semihumeda',
+      'snacks-y-premios',
+      'higiene-y-cosmetica',
+    ]);
+  });
+
+  it('conserva las marcas de las categorías que sí tienen producto', () => {
+    const seca = perro.categorias.find((c) => c.slug === 'alimentacion-seca')!;
+    expect(seca.marcas.length).toBeGreaterThan(0);
+  });
+
+  it('inyecta como vacías las categorías sin producto (p. ej. semihúmeda)', () => {
+    const semi = perro.categorias.find((c) => c.slug === 'alimentacion-semihumeda')!;
+    expect(semi.total).toBe(0);
+    expect(semi.marcas).toEqual([]);
+  });
+
+  it('«Suplementos y cosmética» es el nombre de higiene-y-cosmetica', () => {
+    const sup = perro.categorias.find((c) => c.slug === 'higiene-y-cosmetica')!;
+    expect(sup.nombre).toBe('Suplementos y cosmética');
+  });
+
+  it('no toca a otros animales (sólo perro y gato)', () => {
+    const otros = restringirCabecera([
+      { slug: 'ave', nombre: 'Aves', total: 3, categorias: [] },
+    ]);
+    expect(otros[0]!.categorias).toEqual([]);
   });
 });

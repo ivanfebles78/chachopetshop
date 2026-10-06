@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import type { MenuAnimal, MenuMarca } from '@/lib/types';
 import { rutaCatalogo } from '@/lib/navigation';
+import { logoDeMarca } from '@/lib/marcas';
 
 /**
  * EL MENÚ DE UN ANIMAL: niveles COLAPSADOS que se abren hacia la derecha.
@@ -37,6 +38,22 @@ export function MegaMenu({ animal, onNavegar }: { animal: MenuAnimal; onNavegar:
   return (
     <ul className="w-64 list-none space-y-1 p-0">
       {animal.categorias.map((cat) => {
+        const hrefCat = rutaCatalogo({ animal: animal.slug, category: cat.slug });
+        // Una categoría sin marcas (p. ej. «semihúmeda» aún vacía) no es un
+        // desplegable: es un enlace directo, sin flecha ni «(0)».
+        if (cat.marcas.length === 0) {
+          return (
+            <li key={cat.slug}>
+              <Link
+                to={hrefCat}
+                onClick={onNavegar}
+                className="flex min-h-11 w-full items-center rounded-control border border-edge bg-surface px-3 text-body font-semibold text-content transition-colors hover:bg-brand-50"
+              >
+                {cat.nombre}
+              </Link>
+            </li>
+          );
+        }
         const expandida = catAbierta === cat.slug;
         return (
           <li key={cat.slug} className="relative">
@@ -104,6 +121,13 @@ function MarcaItem({
   onNavegar: () => void;
 }) {
   const base = { animal: animalSlug, category: categorySlug, brand: marca.slug };
+  const logo = logoDeMarca(marca.slug);
+  // El logo oficial si lo tenemos (más reconocible); si no, el nombre.
+  const etiqueta = logo ? (
+    <img src={logo} alt={marca.nombre} loading="lazy" className="h-5 max-w-[6.5rem] object-contain" />
+  ) : (
+    <span>{marca.nombre}</span>
+  );
 
   if (marca.lineas.length === 0) {
     return (
@@ -111,9 +135,9 @@ function MarcaItem({
         <Link
           to={rutaCatalogo(base)}
           onClick={onNavegar}
-          className="flex min-h-9 items-center justify-between gap-2 rounded-control px-3 text-body-sm text-content hover:bg-brand-50"
+          className="flex min-h-10 items-center justify-between gap-2 rounded-control px-3 text-body-sm text-content hover:bg-brand-50"
         >
-          <span>{marca.nombre}</span>
+          <span className="flex-1">{etiqueta}</span>
           <span className="text-caption tabular-nums text-content-subtle" aria-hidden="true">{marca.total}</span>
         </Link>
       </li>
@@ -126,11 +150,11 @@ function MarcaItem({
         type="button"
         aria-expanded={abierta}
         onClick={onAlternar}
-        className={`flex min-h-9 w-full items-center gap-2 rounded-control px-3 text-left text-body-sm transition-colors ${
+        className={`flex min-h-10 w-full items-center gap-2 rounded-control px-3 text-left text-body-sm transition-colors ${
           abierta ? 'bg-brand-100 font-semibold text-brand-800' : 'text-content hover:bg-brand-50'
         }`}
       >
-        <span className="flex-1">{marca.nombre}</span>
+        <span className="flex-1">{etiqueta}</span>
         <span className="text-caption tabular-nums text-content-subtle" aria-hidden="true">{marca.total}</span>
         <ChevronRight className="h-4 w-4 shrink-0 text-content-subtle" aria-hidden="true" />
       </button>
