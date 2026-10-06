@@ -10,6 +10,9 @@ import { AccountPage } from './pages/AccountPage';
 import { AdminPage } from './pages/AdminPage';
 import { ConocenosPage } from './pages/ConocenosPage';
 import { ContactoPage } from './pages/ContactoPage';
+import { MarcaOwnatPage } from './pages/ownat/MarcaOwnatPage';
+import { LineaOwnatPage } from './pages/ownat/LineaOwnatPage';
+import { ProductoOwnatPage } from './pages/ownat/ProductoOwnatPage';
 import { AvisoLegalPage } from './pages/legal/AvisoLegalPage';
 import { PrivacidadPage } from './pages/legal/PrivacidadPage';
 import { CookiesPage } from './pages/legal/CookiesPage';
@@ -23,6 +26,9 @@ export const router = createBrowserRouter([
       { path: '/', element: <HomePage /> },
       { path: '/tienda', element: <CatalogPage /> },
       { path: '/producto/:slug', element: <ProductPage /> },
+      { path: '/marca/ownat', element: <MarcaOwnatPage /> },
+      { path: '/marca/ownat/:linea', element: <LineaOwnatPage /> },
+      { path: '/marca/ownat/:linea/:producto', element: <ProductoOwnatPage /> },
       { path: '/checkout', element: <CheckoutPage /> },
       { path: '/checkout/success', element: <CheckoutResultPage kind="success" /> },
       { path: '/checkout/cancel', element: <CheckoutResultPage kind="cancel" /> },

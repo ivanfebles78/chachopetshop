@@ -91,7 +91,7 @@ export const MENU_PRINCIPAL: ItemMenu[] = [
       { etiqueta: 'Purina', href: '/tienda?brand=purina' },
       { etiqueta: 'Gosbi', href: '/tienda?brand=gosbi' },
       { etiqueta: 'Atlantic Pet', href: '/tienda?brand=atlantic' },
-      { etiqueta: 'Ownat', href: '/tienda?brand=ownat' },
+      { etiqueta: 'Ownat', href: '/marca/ownat' },
       { etiqueta: 'Freedog', href: '/tienda?brand=freedog' },
       { etiqueta: 'Duvo+', href: '/tienda?brand=duvo' },
       { etiqueta: 'Nobleza', href: '/tienda?brand=nobleza' },

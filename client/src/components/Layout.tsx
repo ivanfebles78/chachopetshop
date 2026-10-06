@@ -30,6 +30,11 @@ function ScrollToTop() {
 }
 
 export function Layout() {
+  const { pathname } = useLocation();
+  // En la portada, la sección «¿Hablamos?» ya cierra la página con el contacto y
+  // el mapa, así que el pie sobraría debajo. En el resto de páginas sí se muestra.
+  const enPortada = pathname === '/';
+
   return (
     <div className="flex min-h-screen flex-col">
       <ScrollToTop />
@@ -54,7 +59,7 @@ export function Layout() {
           <Outlet />
         </ErrorBoundary>
       </main>
-      <Footer />
+      {!enPortada && <Footer />}
       <CartDrawer />
       <Toaster />
       <BotonWhatsApp />
