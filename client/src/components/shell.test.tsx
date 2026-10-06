@@ -376,12 +376,19 @@ describe('pie', () => {
     }
   });
 
-  it('enseña los animales que tienen producto, incluidos los residuales', () => {
-    // Roedores y peces faltaban aunque tienen catálogo.
+  it('enseña dónde está la tienda y cómo llegar', () => {
     pintarPie();
-    for (const etiqueta of ['Perros', 'Gatos', 'Aves', 'Roedores', 'Peces']) {
-      expect(screen.getByRole('link', { name: etiqueta })).toBeInTheDocument();
-    }
+    expect(screen.getByRole('link', { name: /cómo llegar/i })).toBeInTheDocument();
+    expect(screen.getByText(/San Francisco de Paula/i)).toBeInTheDocument();
+  });
+
+  it('ya no lista columnas de enlaces (Comprar / Ayuda / Legal)', () => {
+    // Se retiraron a petición de Ivan: la navegación vive en la cabecera y el
+    // pie se reserva para quiénes somos y cómo encontrarnos.
+    pintarPie();
+    expect(screen.queryByRole('link', { name: 'Perros' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Aviso legal' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Mi cuenta' })).not.toBeInTheDocument();
   });
 
   it('no promete la página de envíos hasta que exista', () => {

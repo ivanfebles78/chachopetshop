@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../db.js';
-import { construirMenu } from '../lib/menu.js';
+import { construirMenu, restringirCabecera } from '../lib/menu.js';
 
 export const taxonomyRouter = Router();
 
@@ -23,7 +23,7 @@ taxonomyRouter.get('/menu', async (_req, res, next) => {
       }),
       prisma.animal.findMany({ orderBy: { sortOrder: 'asc' }, select: { slug: true, name: true, sortOrder: true } }),
     ]);
-    res.json({ animales: construirMenu(productos, animales) });
+    res.json({ animales: restringirCabecera(construirMenu(productos, animales)) });
   } catch (err) {
     next(err);
   }

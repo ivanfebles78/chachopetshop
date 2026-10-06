@@ -36,13 +36,29 @@ export function MenuArbol({ animal, onNavegar }: { animal: MenuAnimal; onNavegar
   return (
     <ul className="list-none space-y-0.5 p-0">
       {animal.categorias.map((cat) => {
+        const href = rutaCatalogo({ animal: animal.slug, category: cat.slug });
+        // Categoría sin marcas (p. ej. «semihúmeda» vacía): enlace directo, sin
+        // flecha ni recuento «(0)».
+        if (cat.marcas.length === 0) {
+          return (
+            <li key={cat.slug}>
+              <Link
+                to={href}
+                onClick={onNavegar}
+                className="flex min-h-11 items-center rounded-control px-3 text-body font-semibold text-content hover:bg-brand-50"
+              >
+                {cat.nombre}
+              </Link>
+            </li>
+          );
+        }
         const abierta = catAbierta === cat.slug;
         return (
           <li key={cat.slug}>
             <FilaConHijos
               nombre={cat.nombre}
               total={cat.total}
-              href={rutaCatalogo({ animal: animal.slug, category: cat.slug })}
+              href={href}
               abierta={abierta}
               onAlternar={() => alternarCategoria(cat.slug)}
               onNavegar={onNavegar}
