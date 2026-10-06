@@ -620,6 +620,21 @@ function Contacto() {
   const whatsapp = enlaceWhatsApp('¡Hola! ¿Me ayudáis a elegir la alimentación de mi mascota?');
   const telefono = enlaceTelefono();
 
+  // Mapa de la tienda (OpenStreetMap, sin clave de API), adaptado a esta columna.
+  const geo = EMPRESA.geo;
+  const d = 0.004;
+  const mapaSrc =
+    EMPRESA.direccion && geo
+      ? `https://www.openstreetmap.org/export/embed.html?bbox=${geo.lon - d}%2C${geo.lat - d}%2C${
+          geo.lon + d
+        }%2C${geo.lat + d}&layer=mapnik&marker=${geo.lat}%2C${geo.lon}`
+      : null;
+  const comoLlegar = geo
+    ? `https://www.google.com/maps/search/?api=1&query=${geo.lat},${geo.lon}`
+    : EMPRESA.direccion
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(EMPRESA.direccion)}`
+      : null;
+
   return (
     <section aria-labelledby="contacto" className="border-t border-edge-subtle bg-surface-sunken">
       <div className="container-page grid gap-8 py-section lg:grid-cols-2 lg:gap-12">
@@ -657,20 +672,46 @@ function Contacto() {
             )}
           </div>
 
+          {/* Primero el horario, luego la dirección; y justo debajo, el mapa. */}
           <dl className="mt-7 space-y-3 text-body-sm">
-            {EMPRESA.direccion && (
-              <div className="flex items-start gap-2.5">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden="true" />
-                <span className="text-content-muted">{EMPRESA.direccion}</span>
-              </div>
-            )}
             {EMPRESA.horario && (
               <div className="flex items-start gap-2.5">
                 <Clock className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden="true" />
                 <span className="whitespace-pre-line text-content-muted">{EMPRESA.horario}</span>
               </div>
             )}
+            {EMPRESA.direccion && (
+              <div className="flex items-start gap-2.5">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-brand-600" aria-hidden="true" />
+                <span className="text-content-muted">{EMPRESA.direccion}</span>
+              </div>
+            )}
           </dl>
+
+          {mapaSrc && (
+            <div className="mt-5">
+              <div className="overflow-hidden rounded-card border border-edge-subtle">
+                <iframe
+                  title={`Mapa de ${EMPRESA.nombreComercial} en ${EMPRESA.direccion}`}
+                  src={mapaSrc}
+                  className="h-56 w-full border-0"
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
+              {comoLlegar && (
+                <a
+                  href={comoLlegar}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-control bg-brand-700 px-4 text-body-sm font-semibold text-content-inverse transition-colors hover:bg-brand-800"
+                >
+                  <MapPin className="h-4 w-4" aria-hidden="true" />
+                  Cómo llegar
+                </a>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Columna derecha: formulario de contacto (usa el endpoint existente) */}
