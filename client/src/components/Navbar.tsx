@@ -1,34 +1,18 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronDown, Menu, Search, ShoppingBag, Truck, User, X } from 'lucide-react';
+import { Menu, Search, ShoppingBag, Truck, User } from 'lucide-react';
 import { selectCount, useCart } from '@/store/cart';
 import { useAuth } from '@/store/auth';
-import { useNavegacion } from '@/lib/useNavegacion';
-import { rutaCatalogo } from '@/lib/navigation';
-import type { MenuAnimal } from '@/lib/types';
-import { MegaMenu } from './MegaMenu';
+import { MenuPrincipal } from './MenuPrincipal';
 import { MobileNav } from './MobileNav';
 
 /**
  * CABECERA DE LA TIENDA.
  *
- * Tres correcciones de fondo respecto a la anterior:
- *
- *   1. El menú SALE DEL CATÁLOGO (ver `lib/navigation.ts`). Antes era una lista
- *      escrita a mano con dos destinos que no llevaban a ningún producto.
- *
- *   2. Los desplegables se anuncian. Antes eran `<button>` sin ninguna relación
- *      declarada con el panel que abrían: quien no ve la pantalla no sabía que
- *      existía un submenú, ni si estaba abierto.
- *
- *      Se usa el patrón de DIVULGACIÓN —`aria-expanded` + `aria-controls` sobre
- *      un botón, y una lista de enlaces normal— y no `role="menu"`. Un menú
- *      ARIA es para acciones de aplicación y obliga a navegar con flechas; esto
- *      son enlaces de navegación, y el tabulador es lo que la gente espera.
- *
- *   3. El buscador está SIEMPRE, también en móvil. Antes sólo aparecía a partir
- *      de `lg` y en el cajón lateral: en el dispositivo donde más se compra
- *      había que abrir un menú para poder buscar.
+ * El menú superior es ahora una estructura FIJA y curada (ver `MenuPrincipal` y
+ * `lib/menuPrincipal`): Alimentación, Cosméticos, Accesorios, Antiparasitarios,
+ * Marcas y Contacto, con sus submenús en cascada que se abren a la derecha. El
+ * buscador está siempre, también en móvil.
  */
 
 function Logo() {
@@ -49,156 +33,10 @@ function Logo() {
   );
 }
 
-/**
- * Un desplegable de la cabecera. Genérico: la cabecera decide qué va dentro
- * (las categorías de un animal, la lista de otras mascotas, o las marcas).
- *
- * ABRE Y CIERRA CON CLIC, no al pasar el ratón: dentro hay que recorrer varios
- * niveles con más clics, y si se cerrara al salir el puntero, bastaría rozar el
- * borde para perderlo todo. Se cierra con Escape, con un clic fuera o al seguir
- * un enlace. El contenido recibe `cerrar` para cerrarse al navegar.
- */
-function Desplegable({
-  titulo,
-  children,
-}: {
-  titulo: string;
-  children: (cerrar: () => void) => React.ReactNode;
-}) {
-  const [abierto, setAbierto] = useState(false);
-  const contenedor = useRef<HTMLDivElement>(null);
-  const disparador = useRef<HTMLButtonElement>(null);
-  const panelId = useId();
-
-  useEffect(() => {
-    if (!abierto) return;
-    const alPulsar = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setAbierto(false);
-        disparador.current?.focus();
-      }
-    };
-    const alPincharFuera = (e: MouseEvent) => {
-      if (!contenedor.current?.contains(e.target as Node)) setAbierto(false);
-    };
-    document.addEventListener('keydown', alPulsar);
-    document.addEventListener('mousedown', alPincharFuera);
-    return () => {
-      document.removeEventListener('keydown', alPulsar);
-      document.removeEventListener('mousedown', alPincharFuera);
-    };
-  }, [abierto]);
-
-  const alPerderFoco = (e: React.FocusEvent<HTMLDivElement>) => {
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) setAbierto(false);
-  };
-
-  return (
-    <div ref={contenedor} className="relative" onBlur={alPerderFoco}>
-      <button
-        ref={disparador}
-        type="button"
-        className="nav-link"
-        aria-expanded={abierto}
-        aria-controls={panelId}
-        onClick={() => setAbierto((v) => !v)}
-      >
-        {titulo}
-        <ChevronDown className={`h-4 w-4 transition-transform ${abierto ? 'rotate-180' : ''}`} aria-hidden="true" />
-      </button>
-
-      {abierto && (
-        <div
-          id={panelId}
-          // `overflow` visible a propósito: las marcas de una categoría se abren
-          // en un panel flotante a la derecha (ver `MegaMenu`) y no deben quedar
-          // recortadas por el borde del desplegable.
-          className="absolute left-0 top-full z-50 mt-1 animate-slide-up rounded-card border border-edge-subtle bg-surface p-3 shadow-raised"
-        >
-          {children(() => setAbierto(false))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/** «Otras mascotas»: enlaces directos a cada animal (aves, roedores, peces…). */
-function ListaAnimales({ animales, onNavegar }: { animales: MenuAnimal[]; onNavegar: () => void }) {
-  return (
-    <ul className="w-56 list-none space-y-0.5 p-0">
-      {animales.map((a) => (
-        <li key={a.slug}>
-          <Link
-            to={rutaCatalogo({ animal: a.slug })}
-            onClick={onNavegar}
-            className="flex min-h-11 items-center justify-between gap-2 rounded-control px-3 text-body font-semibold text-content hover:bg-brand-50"
-          >
-            <span>{a.nombre}</span>
-            <span className="text-caption tabular-nums text-content-subtle" aria-hidden="true">{a.total}</span>
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/** «Marcas»: todas las del catálogo, en dos columnas, cada una un enlace. */
-function ListaMarcas({
-  marcas,
-  onNavegar,
-}: {
-  marcas: { slug: string; nombre: string; total: number }[];
-  onNavegar: () => void;
-}) {
-  return (
-    <ul className="grid max-h-[60vh] w-[28rem] max-w-[80vw] list-none grid-cols-2 gap-x-3 gap-y-0.5 overflow-y-auto p-0">
-      {marcas.map((m) => (
-        <li key={m.slug}>
-          <Link
-            to={rutaCatalogo({ brand: m.slug })}
-            onClick={onNavegar}
-            className="flex min-h-9 items-center justify-between gap-2 rounded-control px-3 text-body-sm text-content hover:bg-brand-50"
-          >
-            <span className="truncate">{m.nombre}</span>
-            <span className="text-caption tabular-nums text-content-subtle" aria-hidden="true">{m.total}</span>
-          </Link>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/**
- * Todas las marcas del catálogo, a partir del árbol del menú: se recorren todas
- * las categorías de todos los animales, se juntan las marcas por `slug` y se
- * suman sus totales. Ordenadas por nombre.
- */
-function marcasDe(animales: MenuAnimal[]): { slug: string; nombre: string; total: number }[] {
-  const mapa = new Map<string, { slug: string; nombre: string; total: number }>();
-  for (const animal of animales) {
-    for (const cat of animal.categorias) {
-      for (const marca of cat.marcas) {
-        const previa = mapa.get(marca.slug);
-        if (previa) previa.total += marca.total;
-        else mapa.set(marca.slug, { slug: marca.slug, nombre: marca.nombre, total: marca.total });
-      }
-    }
-  }
-  return [...mapa.values()].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
-}
-
 export function Navbar() {
   const count = useCart(selectCount);
   const openCart = useCart((s) => s.open);
   const { user } = useAuth();
-  const animales = useNavegacion();
-  // Los cinco elementos de la cabecera: Perros y Gatos con su menú completo, el
-  // resto de animales agrupados en «Otras mascotas», todas las marcas juntas, y
-  // «Ofertas» como enlace directo.
-  const perro = animales.find((a) => a.slug === 'perro');
-  const gato = animales.find((a) => a.slug === 'gato');
-  const otras = animales.filter((a) => a.slug !== 'perro' && a.slug !== 'gato');
-  const marcas = marcasDe(animales);
   const [movilAbierto, setMovilAbierto] = useState(false);
   const [q, setQ] = useState('');
   const navigate = useNavigate();
@@ -213,11 +51,7 @@ export function Navbar() {
 
   return (
     <header className="site-header">
-      {/*
-        Barra de utilidad. El teléfono de relleno («922 00 00 00») se ha
-        retirado: era un dato inventado y estaba publicado. Cuando exista el
-        número real se añade aquí, junto a «Contacto». Ver el informe.
-      */}
+      {/* Barra de utilidad. */}
       <div className="bg-brand-800 text-content-inverse">
         <div className="container-page flex min-h-9 flex-wrap items-center justify-between gap-x-4 py-1.5 text-caption">
           <span className="flex items-center gap-2">
@@ -235,31 +69,7 @@ export function Navbar() {
       <div className="container-page flex h-16 items-center gap-3 lg:h-20 lg:gap-5">
         <Logo />
 
-        <nav aria-label="Catálogo" className="hidden items-center lg:flex">
-          {perro && (
-            <Desplegable titulo="Perros">
-              {(cerrar) => <MegaMenu animal={perro} onNavegar={cerrar} />}
-            </Desplegable>
-          )}
-          {gato && (
-            <Desplegable titulo="Gatos">
-              {(cerrar) => <MegaMenu animal={gato} onNavegar={cerrar} />}
-            </Desplegable>
-          )}
-          {otras.length > 0 && (
-            <Desplegable titulo="Otras mascotas">
-              {(cerrar) => <ListaAnimales animales={otras} onNavegar={cerrar} />}
-            </Desplegable>
-          )}
-          {marcas.length > 0 && (
-            <Desplegable titulo="Marcas">
-              {(cerrar) => <ListaMarcas marcas={marcas} onNavegar={cerrar} />}
-            </Desplegable>
-          )}
-          <Link to="/tienda?oferta=1" className="nav-link">
-            Ofertas
-          </Link>
-        </nav>
+        <MenuPrincipal />
 
         {/*
           El buscador va a partir de `sm`. Por debajo, el ancho no da para el
@@ -328,7 +138,6 @@ export function Navbar() {
 
       {movilAbierto && (
         <MobileNav
-          animales={animales}
           conSesion={Boolean(user)}
           onClose={() => {
             setMovilAbierto(false);
@@ -339,5 +148,3 @@ export function Navbar() {
     </header>
   );
 }
-
-export { X };

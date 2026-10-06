@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { Navbar } from './Navbar';
@@ -26,6 +26,7 @@ import { Footer } from './Footer';
 import fuenteNavbar from './Navbar.tsx?raw';
 import fuenteFooter from './Footer.tsx?raw';
 import fuenteMobileNav from './MobileNav.tsx?raw';
+import fuenteMenuPrincipal from './MenuPrincipal.tsx?raw';
 
 /** El mismo texto sin comentarios: lo que se prohíbe es el código, no la nota. */
 const sinComentarios = (fuente: string) =>
@@ -117,156 +118,99 @@ afterEach(() => vi.clearAllMocks());
 
 const pintarCabecera = () => render(<MemoryRouter><Navbar /></MemoryRouter>);
 
-/* ══ 1. Semántica del desplegable ══════════════════════════════════════ */
+/* ══ 1. Semántica del menú superior ════════════════════════════════════ */
 
-describe('los desplegables se anuncian', () => {
-  it('el disparador declara si está abierto, y cambia al pulsarlo', async () => {
-    /*
-     * Antes: `<button>` sin `aria-expanded` ni `aria-controls`. Quien no ve la
-     * pantalla no sabía que existía un submenú, ni si estaba desplegado.
-     */
+const abrirSeccion = async (user: ReturnType<typeof userEvent.setup>, nombre: string) => {
+  pintarCabecera();
+  const boton = await screen.findByRole('button', { name: nombre });
+  await user.hover(boton);
+  return boton;
+};
+
+describe('el menú superior se anuncia y es navegable', () => {
+  it('una sección con hijos es un botón que declara si está abierto', async () => {
     const user = userEvent.setup();
     pintarCabecera();
+    const alim = await screen.findByRole('button', { name: 'Alimentación' });
+    expect(alim).toHaveAttribute('aria-haspopup', 'true');
+    expect(alim).toHaveAttribute('aria-expanded', 'false');
 
-    const disparador = await screen.findByRole('button', { name: /perros/i });
-    expect(disparador).toHaveAttribute('aria-expanded', 'false');
-
-    await user.click(disparador);
-    expect(disparador).toHaveAttribute('aria-expanded', 'true');
+    await user.hover(alim);
+    expect(alim).toHaveAttribute('aria-expanded', 'true');
   });
 
-  it('el disparador apunta al panel que abre', async () => {
+  it('al abrir Alimentación salen Perros, Gatos y Conejos', async () => {
     const user = userEvent.setup();
-    pintarCabecera();
-    const disparador = await screen.findByRole('button', { name: /perros/i });
-    await user.click(disparador);
-
-    const id = disparador.getAttribute('aria-controls');
-    expect(id).toBeTruthy();
-    expect(document.getElementById(id as string)).toBeTruthy();
+    await abrirSeccion(user, 'Alimentación');
+    expect(screen.getByRole('link', { name: 'Perros' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Gatos' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Conejos' })).toBeInTheDocument();
   });
 
-  it('con el ratón encima, el clic ABRE (no cierra lo que abrió el puntero)', async () => {
-    /*
-     * REGRESIÓN. El puntero abría al pasar por encima y el clic alternaba, y
-     * para pulsar hay que estar encima: al llegar al botón el ratón ya lo había
-     * abierto, así que el clic lo volvía a cerrar. Resultado: con ratón el
-     * desplegable NO SE PODÍA ABRIR. Con teclado sí, porque no hay `mouseenter`,
-     * y por eso el fallo no se veía revisando la navegación con el tabulador.
-     */
+  it('Escape cierra el menú abierto', async () => {
     const user = userEvent.setup();
-    pintarCabecera();
-    const disparador = await screen.findByRole('button', { name: /perros/i });
-
-    await user.hover(disparador);
-    await user.click(disparador);
-    expect(disparador).toHaveAttribute('aria-expanded', 'true');
-
-    // Y el segundo clic sí cierra: lo que abrió el clic, el clic lo cierra.
-    await user.click(disparador);
-    expect(disparador).toHaveAttribute('aria-expanded', 'false');
-  });
-
-  it('Escape cierra y devuelve el foco al disparador', async () => {
-    const user = userEvent.setup();
-    pintarCabecera();
-    const disparador = await screen.findByRole('button', { name: /perros/i });
-
-    await user.click(disparador);
+    const alim = await abrirSeccion(user, 'Alimentación');
+    expect(alim).toHaveAttribute('aria-expanded', 'true');
     await user.keyboard('{Escape}');
-
-    expect(disparador).toHaveAttribute('aria-expanded', 'false');
-    expect(document.activeElement).toBe(disparador);
+    expect(alim).toHaveAttribute('aria-expanded', 'false');
   });
 
-  it('el panel son ENLACES, no un menú de aplicación', () => {
-    /*
-     * `role="menu"` obliga a navegar con flechas y es para acciones, no para
-     * navegar. Aquí lo correcto es una lista de enlaces y el tabulador, que es
-     * lo que cualquiera espera de la navegación de una tienda.
-     */
-    const fuente = sinComentarios(fuenteNavbar);
-    expect(fuente).not.toMatch(/role=["']menu["']/);
-    expect(fuente).not.toMatch(/role=["']menuitem["']/);
+  it('las secciones son ENLACES, no un menú de aplicación (role=menu)', () => {
+    for (const [nombre, fuente] of [
+      ['Navbar.tsx', fuenteNavbar],
+      ['MenuPrincipal.tsx', fuenteMenuPrincipal],
+    ] as [string, string][]) {
+      expect(sinComentarios(fuente), nombre).not.toMatch(/role=["']menu["']/);
+      expect(sinComentarios(fuente), nombre).not.toMatch(/role=["']menuitem["']/);
+    }
   });
 });
 
-/* ══ 2. El menú refleja el catálogo ════════════════════════════════════ */
+/* ══ 2. La estructura fija del menú ═════════════════════════════════════ */
 
-describe('la cabecera pinta el menú real', () => {
-  it('enseña los animales que tienen producto', async () => {
+describe('el menú superior tiene las secciones fijas', () => {
+  it('Antiparasitarios y Contacto son enlaces directos (sin desplegable)', async () => {
     pintarCabecera();
-    expect(await screen.findByRole('button', { name: /perros/i })).toBeInTheDocument();
+    const nav = await screen.findByRole('navigation', { name: 'Catálogo' });
+    expect(within(nav).getByRole('link', { name: /antiparasitarios/i }).getAttribute('href')).toContain(
+      'salud-y-antiparasitarios',
+    );
+    expect(within(nav).getByRole('link', { name: /contacto/i }).getAttribute('href')).toContain('/contacto');
+    // No son desplegables: no hay botón con ese nombre.
+    expect(within(nav).queryByRole('button', { name: /antiparasitarios/i })).not.toBeInTheDocument();
   });
 
-  it('no enseña los que no lo tienen', async () => {
-    pintarCabecera();
-    await screen.findByRole('button', { name: /perros/i });
-    // Gatos está en la taxonomía pero el catálogo de prueba no tiene ninguno.
-    expect(screen.queryByRole('button', { name: /^gatos$/i })).not.toBeInTheDocument();
+  it('Marcas despliega la lista de marcas', async () => {
+    const user = userEvent.setup();
+    await abrirSeccion(user, 'Marcas');
+    expect(screen.getByRole('link', { name: 'Gosbi' }).getAttribute('href')).toContain('brand=gosbi');
+    expect(screen.getByRole('link', { name: 'Purina' })).toBeInTheDocument();
   });
 });
 
-/* ══ 2b. El menú de escritorio: categorías colapsadas, flyout a la derecha ═ */
+/* ══ 2b. Las subcategorías se abren a la DERECHA, nunca hacia abajo ═════ */
 
-describe('el menú de escritorio se abre por clic, hacia la derecha', () => {
-  const abrirPerros = async (user: ReturnType<typeof userEvent.setup>) => {
-    pintarCabecera();
-    await user.click(await screen.findByRole('button', { name: /^perros$/i }));
-  };
-
-  it('al abrir «Perros», las categorías salen COLAPSADAS (sin marcas a la vista)', async () => {
+describe('las subcategorías se abren a la derecha', () => {
+  it('Perros está colapsado y, al pasar por encima, abre sus categorías', async () => {
     const user = userEvent.setup();
-    await abrirPerros(user);
-    // Cada categoría es un botón que despliega, colapsado de entrada.
-    const cat = screen.getByRole('button', { name: /alimentación seca/i });
-    expect(cat).toHaveAttribute('aria-expanded', 'false');
-    // Ninguna marca se ve hasta pulsar una categoría.
-    expect(screen.queryByRole('link', { name: /^atlanticpet/i })).not.toBeInTheDocument();
+    await abrirSeccion(user, 'Alimentación');
+    const perros = screen.getByRole('link', { name: 'Perros' });
+    expect(perros).toHaveAttribute('aria-haspopup', 'true');
+    // Colapsado de entrada: sus categorías no se ven aún.
+    expect(screen.queryByRole('link', { name: 'Seca' })).not.toBeInTheDocument();
+
+    // Al entrar el ratón en la fila de Perros, se abre su submenú.
+    fireEvent.mouseEnter(perros.closest('li')!);
+    expect(screen.getByRole('link', { name: 'Seca' }).getAttribute('href')).toContain(
+      'category=alimentacion-seca',
+    );
+    expect(screen.getByRole('link', { name: 'Semihúmeda' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Snacks y premios' })).toBeInTheDocument();
   });
 
-  it('al pulsar una categoría, sus marcas se abren a la derecha (sin «Ver todo»)', async () => {
-    const user = userEvent.setup();
-    await abrirPerros(user);
-    await user.click(screen.getByRole('button', { name: /alimentación seca/i }));
-    // AtlanticPet tiene líneas → es un desplegable (botón), colapsado. Ownat no
-    // tiene líneas → es un enlace directo a su página.
-    expect(screen.getByRole('button', { name: /atlanticpet/i })).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.getByRole('link', { name: /^ownat/i }).getAttribute('href')).toContain('brand=ownat');
-    // Ni «Ver todo» ni líneas a la vista hasta pulsar la marca.
-    expect(screen.queryByRole('link', { name: /ver todo/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /grain free/i })).not.toBeInTheDocument();
-  });
-
-  it('una marca CON líneas abre un nivel más a la derecha', async () => {
-    const user = userEvent.setup();
-    await abrirPerros(user);
-    await user.click(screen.getByRole('button', { name: /alimentación seca/i }));
-    await user.click(screen.getByRole('button', { name: /atlanticpet/i }));
-    // Ahora salen sus líneas como enlaces al catálogo filtrado por línea.
-    const grainFree = screen.getByRole('link', { name: /grain free/i });
-    expect(grainFree.getAttribute('href')).toContain('line=Grain');
-  });
-
-  it('sólo una categoría abierta a la vez; volver a pulsarla la cierra', async () => {
-    const user = userEvent.setup();
-    await abrirPerros(user);
-    const seca = screen.getByRole('button', { name: /alimentación seca/i });
-    const humeda = screen.getByRole('button', { name: /alimentación húmeda/i });
-
-    await user.click(seca);
-    expect(seca).toHaveAttribute('aria-expanded', 'true');
-    // AtlanticPet (con líneas) aparece como desplegable dentro de seca.
-    expect(screen.getByRole('button', { name: /atlanticpet/i })).toBeInTheDocument();
-
-    // Abrir húmeda cierra seca (y sus marcas).
-    await user.click(humeda);
-    expect(seca).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByText('AtlanticPet')).not.toBeInTheDocument();
-
-    // Volver a pulsar húmeda la cierra: nada queda abierto.
-    await user.click(humeda);
-    expect(humeda).toHaveAttribute('aria-expanded', 'false');
+  it('el flyout de la subcategoría se posiciona a la derecha (left-full), no abajo', () => {
+    // El panel de segundo nivel se abre con `left-full` (a la derecha de su fila).
+    expect(sinComentarios(fuenteMenuPrincipal)).toMatch(/left-full/);
   });
 });
 
@@ -313,19 +257,19 @@ describe('menú móvil', () => {
     expect(document.activeElement).toBe(abrir);
   });
 
-  it('se navega por niveles, no volcando todo de golpe', async () => {
+  it('se navega por niveles (Alimentación → Perros → categorías)', async () => {
     const user = userEvent.setup();
     pintarCabecera();
     await user.click(await screen.findByRole('button', { name: /abrir menú/i }));
 
     const dialogo = screen.getByRole('dialog');
-    // Primer nivel: los animales, sin sus categorías todavía.
-    expect(within(dialogo).queryByText(/alimentación seca/i)).not.toBeInTheDocument();
+    // Primer nivel: las secciones, sin las categorías todavía.
+    expect(within(dialogo).queryByText('Seca')).not.toBeInTheDocument();
 
-    await user.click(within(dialogo).getByRole('button', { name: /perros/i }));
-    // La categoría aparece como título de columna y como enlace «Todo en…»:
-    // con dos apariciones, `getByText` sería ambiguo, así que basta con que haya.
-    expect(within(dialogo).getAllByText(/alimentación seca/i).length).toBeGreaterThan(0);
+    await user.click(within(dialogo).getByRole('button', { name: 'Alimentación' }));
+    await user.click(within(dialogo).getByRole('button', { name: 'Perros' }));
+    // Ya en el tercer nivel: las categorías como enlaces.
+    expect(within(dialogo).getByRole('link', { name: 'Seca' })).toBeInTheDocument();
   });
 
   it('bloquea el desplazamiento de la página de detrás', async () => {
