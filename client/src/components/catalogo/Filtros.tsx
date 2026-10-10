@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Check } from 'lucide-react';
+import { useEffect, useId, useState } from 'react';
+import { Check, ChevronDown } from 'lucide-react';
 import type { ProductFilters } from '@/lib/api';
 import type { Faceta, Facetas } from '@/lib/types';
 
@@ -38,13 +38,46 @@ function visibles(lista: Faceta[] | undefined, puestas: string[]): Faceta[] {
   return (lista ?? []).filter((f) => f.total > 0 || puestas.includes(f.slug));
 }
 
-function Grupo({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+/**
+ * Un grupo de filtros PLEGABLE.
+ *
+ * El título es un botón de verdad (`aria-expanded` + `aria-controls`), así que
+ * un lector de pantalla anuncia «contraído/expandido» y el teclado lo abre con
+ * Enter o Espacio. Empieza abierto; al plegarlo, su contenido se oculta de
+ * verdad (`hidden`), no sólo visualmente, para que el tabulador no entre en
+ * opciones que no se ven.
+ */
+function Grupo({
+  titulo,
+  children,
+  defaultOpen = true,
+}: {
+  titulo: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [abierto, setAbierto] = useState(defaultOpen);
+  const idContenido = useId();
   return (
     <fieldset className="border-0 p-0">
-      <legend className="mb-2 text-overline font-bold uppercase tracking-[0.12em] text-content-subtle">
-        {titulo}
+      <legend className="w-full p-0">
+        <button
+          type="button"
+          onClick={() => setAbierto((v) => !v)}
+          aria-expanded={abierto}
+          aria-controls={idContenido}
+          className="-mx-1 flex w-[calc(100%+0.5rem)] items-center justify-between rounded-control px-1 py-1 text-overline font-bold uppercase tracking-[0.12em] text-content-subtle transition-colors hover:text-content"
+        >
+          <span>{titulo}</span>
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 transition-transform duration-200 ${abierto ? '' : '-rotate-90'}`}
+            aria-hidden="true"
+          />
+        </button>
       </legend>
-      {children}
+      <div id={idContenido} hidden={!abierto} className="mt-2">
+        {children}
+      </div>
     </fieldset>
   );
 }
