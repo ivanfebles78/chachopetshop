@@ -32,6 +32,8 @@ export type Facetas = {
   categories: Faceta[];
   needs: Faceta[];
   brands: Faceta[];
+  /** Líneas de marca presentes en el resultado (atributo `line` del producto). */
+  lines: Faceta[];
   /** Rangos de tamaño por peso (ver `lib/tamanos.ts`). */
   sizes: Faceta[];
   /** Cuántos hay rebajados de verdad, con los demás filtros puestos. */
@@ -46,6 +48,8 @@ export type Condiciones = {
   category?: Prisma.ProductWhereInput;
   need?: Prisma.ProductWhereInput[];
   brand?: Prisma.ProductWhereInput;
+  /** Línea de marca (atributo `line` del producto). */
+  line?: Prisma.ProductWhereInput;
   /** Tamaño: OR de los rangos elegidos (ver `lib/tamanos.ts`). */
   size?: Prisma.ProductWhereInput;
   oferta?: Prisma.ProductWhereInput[];
@@ -60,6 +64,7 @@ function salvo(c: Condiciones, dimension: keyof Condiciones | null): Prisma.Prod
   if (dimension !== 'category' && c.category) and.push(c.category);
   if (dimension !== 'need' && c.need) and.push(...c.need);
   if (dimension !== 'brand' && c.brand) and.push(c.brand);
+  if (dimension !== 'line' && c.line) and.push(c.line);
   if (dimension !== 'size' && c.size) and.push(c.size);
   if (dimension !== 'oferta' && c.oferta) and.push(...c.oferta);
   return { active: true, ...(and.length ? { AND: and } : {}) };
@@ -82,7 +87,7 @@ const aFaceta = (f: { slug: string; name: string; _count: { products: number } }
 });
 
 export async function calcularFacetas(c: Condiciones): Promise<Facetas> {
-  const [animals, categories, needs, brands, sizes, ofertas, precios] = await Promise.all([
+  const [animals, categories, needs, brands, lines, sizes, ofertas, precios] = await Promise.all([
     prisma.animal.findMany({
       select: { slug: true, name: true, _count: { select: { products: { where: salvo(c, 'animal') } } } },
       orderBy: { sortOrder: 'asc' },
@@ -99,6 +104,18 @@ export async function calcularFacetas(c: Condiciones): Promise<Facetas> {
       select: { slug: true, name: true, _count: { select: { products: { where: salvo(c, 'brand') } } } },
       orderBy: { name: 'asc' },
     }).then((f) => f.map(aFaceta)),
+    // Línea de marca: el campo `line` es un atributo del producto, no una tabla,
+    // así que se agrupa por valor. Sólo salen las líneas con producto en el
+    // contexto actual (las de 0 no las devuelve `groupBy`), que es justo lo que
+    // el panel quiere pintar. El `slug` de la faceta ES el valor de la línea.
+    prisma.product
+      .groupBy({ by: ['line'], where: salvo(c, 'line'), _count: { _all: true } })
+      .then((filas) =>
+        filas
+          .filter((f): f is typeof f & { line: string } => f.line != null && f.line !== '')
+          .map((f) => ({ slug: f.line, nombre: f.line, total: f._count._all }))
+          .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es')),
+      ),
     // Tamaño: un recuento por rango, contando productos con algún formato en él.
     Promise.all(
       TAMANOS.map(async (t) => ({
@@ -134,6 +151,7 @@ export async function calcularFacetas(c: Condiciones): Promise<Facetas> {
     categories,
     needs,
     brands,
+    lines,
     sizes,
     ofertas,
     precio: min != null && max != null ? { min: Number(min), max: Number(max) } : null,

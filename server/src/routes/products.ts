@@ -95,14 +95,14 @@ productsRouter.get('/', async (req, res, next) => {
       and.push(cond.brand);
     }
 
-    // Línea: atributo del producto. Se aplica como condición base (afecta a todas
-    // las facetas) porque el menú llega con marca+línea juntas y no hay todavía un
-    // filtro de línea independiente en el panel.
+    // Línea: atributo del producto, y su propia dimensión de faceta (el panel
+    // tiene filtro de «Línea»). Como faceta, sus recuentos se calculan sin su
+    // propia dimensión; marcar «Premium Recetas» no debe poner a 0 el resto de
+    // líneas de la misma marca.
     const lineas = csv(p.line);
     if (lineas.length) {
-      const c = { line: { in: lineas } };
-      cond.base.push(c);
-      and.push(c);
+      cond.line = { line: { in: lineas } };
+      and.push(cond.line);
     }
 
     // Tamaño: rangos de peso (OR entre ellos). Es su propia dimensión de faceta,

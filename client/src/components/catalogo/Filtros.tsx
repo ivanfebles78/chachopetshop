@@ -29,8 +29,8 @@ type Props = {
   filtros: ProductFilters;
   /** Cambia un filtro de valor único (animal, categoría, oferta). */
   poner: (clave: string, valor: string | null) => void;
-  /** Marca o desmarca uno de los que admiten varios (categoría, necesidad, marca, tamaño). */
-  alternar: (clave: 'need' | 'brand' | 'size' | 'category', slug: string) => void;
+  /** Marca o desmarca uno de los que admiten varios (categoría, necesidad, marca, línea, tamaño). */
+  alternar: (clave: 'need' | 'brand' | 'line' | 'size' | 'category', slug: string) => void;
 };
 
 /** Las opciones que merecen enseñarse: con producto, o ya seleccionadas. */
@@ -190,6 +190,7 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
   const categorias = visibles(facetas.categories, filtros.category ?? []);
   const necesidades = visibles(facetas.needs, filtros.need ?? []);
   const marcas = visibles(facetas.brands, filtros.brand ?? []);
+  const lineas = visibles(facetas.lines, filtros.line ?? []);
   const tamanos = visibles(facetas.sizes, filtros.size ?? []);
 
   return (
@@ -273,6 +274,30 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
                 faceta={m}
                 marcada={(filtros.brand ?? []).includes(m.slug)}
                 onChange={() => alternar('brand', m.slug)}
+              />
+            ))}
+          </div>
+        </Grupo>
+      )}
+
+      {/*
+        Línea de marca (Premium Recetas, Profesional, Ultra Premium…). La línea
+        DEPENDE DE LA MARCA: cada fabricante tiene las suyas, así que mezclarlas
+        sin marca elegida no significa nada. Por eso sólo se ofrece cuando hay
+        una marca seleccionada, y entonces muestra las líneas de ESA marca (sus
+        recuentos ya se calculan dentro de la marca). El `slug` de la faceta es
+        el nombre de la línea tal cual.
+      */}
+      {(filtros.brand?.length ?? 0) > 0 && lineas.length > 0 && (
+        <Grupo titulo="Línea">
+          <div className="-mx-2">
+            {lineas.map((l) => (
+              <Opcion
+                key={l.slug}
+                nombre="line"
+                faceta={l}
+                marcada={(filtros.line ?? []).includes(l.slug)}
+                onChange={() => alternar('line', l.slug)}
               />
             ))}
           </div>

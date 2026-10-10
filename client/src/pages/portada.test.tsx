@@ -66,6 +66,7 @@ const montar = (productos: unknown[]) => {
     categories: cuenta(TAX.categories, 'categories'),
     needs: [],
     brands: [],
+    lines: [],
     sizes: [],
     ofertas: 0,
     precio: null,
