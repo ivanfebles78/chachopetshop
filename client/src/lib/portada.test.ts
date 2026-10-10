@@ -100,6 +100,7 @@ function facetasDe(productos: Product[]): Facetas {
     categories: cuenta(TAX.categories, 'categories'),
     needs: [],
     brands: [],
+    lines: [],
     sizes: [],
     ofertas: 0,
     precio: null,

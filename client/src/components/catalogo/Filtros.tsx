@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { Check } from 'lucide-react';
+import { useEffect, useId, useState } from 'react';
+import { Check, ChevronDown } from 'lucide-react';
 import type { ProductFilters } from '@/lib/api';
 import type { Faceta, Facetas } from '@/lib/types';
 
@@ -29,8 +29,8 @@ type Props = {
   filtros: ProductFilters;
   /** Cambia un filtro de valor único (animal, categoría, oferta). */
   poner: (clave: string, valor: string | null) => void;
-  /** Marca o desmarca uno de los que admiten varios (categoría, necesidad, marca, tamaño). */
-  alternar: (clave: 'need' | 'brand' | 'size' | 'category', slug: string) => void;
+  /** Marca o desmarca uno de los que admiten varios (categoría, necesidad, marca, línea, tamaño). */
+  alternar: (clave: 'need' | 'brand' | 'line' | 'size' | 'category', slug: string) => void;
 };
 
 /** Las opciones que merecen enseñarse: con producto, o ya seleccionadas. */
@@ -38,13 +38,46 @@ function visibles(lista: Faceta[] | undefined, puestas: string[]): Faceta[] {
   return (lista ?? []).filter((f) => f.total > 0 || puestas.includes(f.slug));
 }
 
-function Grupo({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+/**
+ * Un grupo de filtros PLEGABLE.
+ *
+ * El título es un botón de verdad (`aria-expanded` + `aria-controls`), así que
+ * un lector de pantalla anuncia «contraído/expandido» y el teclado lo abre con
+ * Enter o Espacio. Empieza abierto; al plegarlo, su contenido se oculta de
+ * verdad (`hidden`), no sólo visualmente, para que el tabulador no entre en
+ * opciones que no se ven.
+ */
+function Grupo({
+  titulo,
+  children,
+  defaultOpen = true,
+}: {
+  titulo: string;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}) {
+  const [abierto, setAbierto] = useState(defaultOpen);
+  const idContenido = useId();
   return (
     <fieldset className="border-0 p-0">
-      <legend className="mb-2 text-overline font-bold uppercase tracking-[0.12em] text-content-subtle">
-        {titulo}
+      <legend className="w-full p-0">
+        <button
+          type="button"
+          onClick={() => setAbierto((v) => !v)}
+          aria-expanded={abierto}
+          aria-controls={idContenido}
+          className="-mx-1 flex w-[calc(100%+0.5rem)] items-center justify-between rounded-control px-1 py-1 text-overline font-bold uppercase tracking-[0.12em] text-content-subtle transition-colors hover:text-content"
+        >
+          <span>{titulo}</span>
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 transition-transform duration-200 ${abierto ? '' : '-rotate-90'}`}
+            aria-hidden="true"
+          />
+        </button>
       </legend>
-      {children}
+      <div id={idContenido} hidden={!abierto} className="mt-2">
+        {children}
+      </div>
     </fieldset>
   );
 }
@@ -190,6 +223,7 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
   const categorias = visibles(facetas.categories, filtros.category ?? []);
   const necesidades = visibles(facetas.needs, filtros.need ?? []);
   const marcas = visibles(facetas.brands, filtros.brand ?? []);
+  const lineas = visibles(facetas.lines, filtros.line ?? []);
   const tamanos = visibles(facetas.sizes, filtros.size ?? []);
 
   return (
@@ -273,6 +307,30 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
                 faceta={m}
                 marcada={(filtros.brand ?? []).includes(m.slug)}
                 onChange={() => alternar('brand', m.slug)}
+              />
+            ))}
+          </div>
+        </Grupo>
+      )}
+
+      {/*
+        Línea de marca (Premium Recetas, Profesional, Ultra Premium…). La línea
+        DEPENDE DE LA MARCA: cada fabricante tiene las suyas, así que mezclarlas
+        sin marca elegida no significa nada. Por eso sólo se ofrece cuando hay
+        una marca seleccionada, y entonces muestra las líneas de ESA marca (sus
+        recuentos ya se calculan dentro de la marca). El `slug` de la faceta es
+        el nombre de la línea tal cual.
+      */}
+      {(filtros.brand?.length ?? 0) > 0 && lineas.length > 0 && (
+        <Grupo titulo="Línea">
+          <div className="-mx-2">
+            {lineas.map((l) => (
+              <Opcion
+                key={l.slug}
+                nombre="line"
+                faceta={l}
+                marcada={(filtros.line ?? []).includes(l.slug)}
+                onChange={() => alternar('line', l.slug)}
               />
             ))}
           </div>

@@ -32,6 +32,7 @@ const FACETAS = {
   ],
   needs: [{ slug: 'digestivo', nombre: 'Digestivo sensible', total: 6 }],
   brands: [{ slug: 'ownat', nombre: 'Ownat', total: 3 }],
+  lines: [],
   sizes: [
     { slug: '3-7kg', nombre: '3 – 7 kg', total: 4 },
     // Existe pero sin producto: no debe pintarse salvo que esté marcado.

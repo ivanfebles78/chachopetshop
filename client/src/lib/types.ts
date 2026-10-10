@@ -92,6 +92,8 @@ export type Facetas = {
   categories: Faceta[];
   needs: Faceta[];
   brands: Faceta[];
+  /** Líneas de marca presentes (atributo `line` del producto). */
+  lines: Faceta[];
   /** Rangos de tamaño por peso (Hasta 1 kg, 1–3 kg…). */
   sizes: Faceta[];
   ofertas: number;
