@@ -130,14 +130,14 @@ describe('semántica y teclado', () => {
     await screen.findByRole('heading', { level: 1 });
     await user.click(screen.getByRole('checkbox', { name: /gatos/i }));
     // La petición siguiente lleva el filtro: es el contrato que importa.
-    expect(vi.mocked(api.products).mock.calls.at(-1)![0]).toMatchObject({ animal: 'gato' });
+    expect(vi.mocked(api.products).mock.calls.at(-1)![0]).toMatchObject({ animal: ['gato'] });
   });
 
   it('los filtros llegan al servidor combinados', async () => {
     montar('/tienda?animal=perro&category=alimentacion-seca&brand=ownat');
     await screen.findByRole('heading', { level: 1 });
     expect(vi.mocked(api.products).mock.calls[0]![0]).toMatchObject({
-      animal: 'perro', category: ['alimentacion-seca'], brand: ['ownat'],
+      animal: ['perro'], category: ['alimentacion-seca'], brand: ['ownat'],
     });
   });
 });
@@ -162,7 +162,7 @@ describe('filtros puestos', () => {
     await screen.findByRole('heading', { level: 1 });
     await user.click(screen.getByRole('button', { name: /Ownat.*Quitar este filtro/is }));
     const ultima = vi.mocked(api.products).mock.calls.at(-1)![0];
-    expect(ultima).toMatchObject({ animal: 'perro' });
+    expect(ultima).toMatchObject({ animal: ['perro'] });
     expect(ultima!.brand).toEqual([]);
   });
 });

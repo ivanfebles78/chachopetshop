@@ -76,8 +76,10 @@ productsRouter.get('/', async (req, res, next) => {
      */
     const cond: Condiciones = { base: [], need: [], oferta: [] };
 
-    if (p.animal) {
-      cond.animal = { animals: { some: { slug: p.animal } } };
+    // Mascota: multi-selección (OR entre las elegidas), igual que la categoría.
+    const animales = csv(p.animal);
+    if (animales.length) {
+      cond.animal = { animals: { some: { slug: { in: animales } } } };
       and.push(cond.animal);
     }
     // Categoría: multi-selección (OR entre las elegidas). Marcar «Alimentación»

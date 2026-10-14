@@ -44,13 +44,13 @@ describe('el filtro de ofertas llega hasta el servidor', () => {
 
   it('sin `oferta` no se cuela sola', async () => {
     const urls = espiarPeticiones();
-    await api.products({ animal: 'perro' });
+    await api.products({ animal: ['perro'] });
     expect(urls[0]).not.toMatch(/oferta/);
   });
 
   it('se combina con el resto de filtros, no los sustituye', async () => {
     const urls = espiarPeticiones();
-    await api.products({ oferta: true, animal: 'perro', sort: 'price_asc' });
+    await api.products({ oferta: true, animal: ['perro'], sort: 'price_asc' });
     expect(urls[0]).toMatch(/oferta=1/);
     expect(urls[0]).toMatch(/animal=perro/);
     expect(urls[0]).toMatch(/sort=price_asc/);
@@ -66,7 +66,7 @@ describe('el filtro de ofertas llega hasta el servidor', () => {
     const params = new URLSearchParams(href.split('?')[1]);
 
     const filtros: ProductFilters = {
-      animal: params.get('animal') ?? undefined,
+      animal: params.get('animal')?.split(',').filter(Boolean) ?? undefined,
       category: params.get('category')?.split(',').filter(Boolean) ?? undefined,
       oferta: params.get('oferta') === '1' || undefined,
     };

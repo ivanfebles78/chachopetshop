@@ -87,7 +87,7 @@ export function CatalogPage() {
     setParams(siguiente);
   };
 
-  const alternar = (clave: 'need' | 'brand' | 'line' | 'size' | 'category', slug: string) => {
+  const alternar = (clave: 'animal' | 'need' | 'brand' | 'line' | 'size' | 'category', slug: string) => {
     const actuales = (params.get(clave)?.split(',') ?? []).filter(Boolean);
     const siguiente = actuales.includes(slug)
       ? actuales.filter((s) => s !== slug)
@@ -104,7 +104,7 @@ export function CatalogPage() {
       setParams(s);
       return;
     }
-    if (valor) alternar(clave as 'need' | 'brand' | 'line' | 'size' | 'category', valor);
+    if (valor) alternar(clave as 'animal' | 'need' | 'brand' | 'line' | 'size' | 'category', valor);
     else poner(clave, null);
   };
 
