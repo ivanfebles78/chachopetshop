@@ -74,10 +74,10 @@ const montar = (productos: unknown[]) => {
   // La portada hace DOS tipos de petición: una sin filtros (con `facets`, para el
   // menú y los recuentos) y otras filtradas por animal/categoría (para «La
   // selección de Chacho»). El mock responde a cada una como el servidor.
-  vi.mocked(api.products).mockImplementation((f?: { animal?: string; category?: string[]; facets?: boolean }) => {
+  vi.mocked(api.products).mockImplementation((f?: { animal?: string[]; category?: string[]; facets?: boolean }) => {
     const lista = (productos as { animals?: { slug: string }[]; categories?: { slug: string }[] }[]).filter(
       (p) =>
-        (!f?.animal || (p.animals ?? []).some((a) => a.slug === f.animal)) &&
+        (!f?.animal?.length || (p.animals ?? []).some((a) => f.animal!.includes(a.slug))) &&
         (!f?.category?.length || (p.categories ?? []).some((c) => f.category!.includes(c.slug))),
     );
     return Promise.resolve({
