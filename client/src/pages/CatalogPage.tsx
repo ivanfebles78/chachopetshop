@@ -170,7 +170,7 @@ export function CatalogPage() {
          * contenido evita que ese scroll arrastre la página.
          */}
         <aside
-          className="hidden w-60 shrink-0 self-start lg:block lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1"
+          className="hidden w-60 shrink-0 self-start lg:block lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-4 lg:[scrollbar-gutter:stable]"
           aria-label="Filtros"
         >
           <Filtros facetas={facetas} filtros={filtros} poner={poner} alternar={alternar} />
