@@ -158,13 +158,21 @@ export function CatalogPage() {
       </div>
 
       <div className="mt-6 flex gap-8">
-        <aside className="hidden w-60 shrink-0 lg:block" aria-label="Filtros">
-          {/*
-           * Sin `sticky`: la lista de filtros (marcas, categorías, tallas…) es más
-           * alta que la pantalla, y fijarla obligaba a un scroll interno propio
-           * —una segunda barra, incómoda—. Fluyendo con la página se llega a
-           * todos los fabricantes con el scroll normal, con una sola barra.
-           */}
+        {/*
+         * PANEL DE FILTROS FIJO (sticky).
+         *
+         * Antes fluía con la página, así que al marcar un filtro —que cambia la
+         * altura de los resultados— toda la página subía o bajaba y mareaba. Ahora
+         * se queda anclado bajo la cabecera (`self-start` es imprescindible: sin
+         * él, en un flex el aside se estira a la altura de la columna de productos
+         * y el sticky no engancha). Sólo tiene scroll propio si su contenido supera
+         * la pantalla —y como los grupos se pliegan, casi nunca pasa—; `overscroll`
+         * contenido evita que ese scroll arrastre la página.
+         */}
+        <aside
+          className="hidden w-60 shrink-0 self-start lg:block lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-1"
+          aria-label="Filtros"
+        >
           <Filtros facetas={facetas} filtros={filtros} poner={poner} alternar={alternar} />
         </aside>
 
@@ -176,9 +184,17 @@ export function CatalogPage() {
             <Orden valor={filtros.sort ?? 'relevance'} onChange={(v) => poner('sort', v)} className="w-56 shrink-0" />
           </div>
 
+          {/*
+            STALE-WHILE-REVALIDATE: al cambiar un filtro NO se vacía la rejilla a
+            esqueletos —eso encogía la página y la hacía saltar—. Sólo se enseña el
+            esqueleto en la PRIMERA carga (sin nada que mostrar todavía). Mientras
+            llegan los nuevos resultados, los actuales siguen a la vista, atenuados
+            y sin pulsarse, y se sustituyen de golpe al llegar. La altura cambia una
+            sola vez, no «colapsa y vuelve».
+          */}
           {error && items.length === 0 ? (
             <ErrorState message={error} onRetry={refetch} />
-          ) : cargando ? (
+          ) : cargando && items.length === 0 ? (
             <ul className="grid list-none grid-cols-2 gap-4 p-0 sm:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
                 <li key={i}>
@@ -188,7 +204,12 @@ export function CatalogPage() {
             </ul>
           ) : items.length > 0 ? (
             <>
-              <ul className="grid list-none grid-cols-2 gap-4 p-0 sm:grid-cols-3 xl:grid-cols-4">
+              <ul
+                aria-busy={cargando}
+                className={`grid list-none grid-cols-2 gap-4 p-0 transition-opacity duration-200 sm:grid-cols-3 xl:grid-cols-4 ${
+                  cargando ? 'pointer-events-none opacity-60' : ''
+                }`}
+              >
                 {items.map((p) => (
                   <li key={p.id}>
                     <ProductCard product={p} />
