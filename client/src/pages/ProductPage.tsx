@@ -148,6 +148,7 @@ export function ProductPage() {
       slug: producto.slug,
       name: producto.name,
       variantLabel: variante?.label,
+      sku: variante?.sku,
       image: producto.image,
       unitPrice: precio,
       quantity: cantidad,
@@ -266,6 +267,18 @@ export function ProductPage() {
                 setCantidad(1);
               }}
             />
+          )}
+
+          {/*
+            La REFERENCIA (SKU) de la variante elegida, a la vista. Es el dato con
+            el que se identifica el producto en un pedido, así que quien compra y
+            quien prepara el pedido ven exactamente el mismo código.
+          */}
+          {variante?.sku && (
+            <p className="mt-4 text-body-sm text-content-muted">
+              <span className="font-semibold text-content">Referencia (SKU):</span>{' '}
+              <span className="font-mono tracking-tight text-content">{variante.sku}</span>
+            </p>
           )}
 
           {soloEnTienda ? (
