@@ -144,6 +144,11 @@ export function CartDrawer() {
                       {l.variantLabel && (
                         <p className="text-caption text-content-muted">{l.variantLabel}</p>
                       )}
+                      {l.sku && (
+                        <p className="text-caption text-content-subtle">
+                          SKU: <span className="font-mono">{l.sku}</span>
+                        </p>
+                      )}
                       {/*
                         El precio unitario Y el total de la línea. Antes sólo
                         estaba uno de los dos, y con tres unidades había que

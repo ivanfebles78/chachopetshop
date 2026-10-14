@@ -7,6 +7,8 @@ export type CartLine = {
   slug: string;
   name: string;
   variantLabel?: string;
+  /** Referencia/SKU de la variante, para verla en el carrito y el pedido. */
+  sku?: string;
   image: string;
   unitPrice: number;
   quantity: number;

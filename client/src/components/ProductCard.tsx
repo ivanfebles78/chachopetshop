@@ -32,6 +32,7 @@ export function ProductCard({ product }: { product: Product }) {
       slug: product.slug,
       name: product.name,
       variantLabel: cheapest?.label,
+      sku: cheapest?.sku,
       image: product.image,
       unitPrice: price,
       quantity: 1,
