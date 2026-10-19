@@ -73,7 +73,10 @@ async function main() {
   let creados = 0;
   const usados = new Set();
   for (const it of items) {
-    const { price, stock } = preserva(it.sku);
+    const { price: prev, stock } = preserva(it.sku);
+    // Precio: conserva el que hubiera (lo gestiona la tienda) y, si no hay,
+    // usa el precio scrapeado del plan. Así las fichas nuevas nunca quedan sin precio.
+    const price = prev ?? (it.price != null ? Number(it.price) : null);
     let slug = it.slug;
     if (usados.has(slug)) slug = `${slug}-${it.sku.toLowerCase().slice(-4)}`;
     usados.add(slug);
