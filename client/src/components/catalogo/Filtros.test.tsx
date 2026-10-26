@@ -59,7 +59,7 @@ describe('«Tipo de producto» agrupado', () => {
   });
 
   it('las subcategorías NO se ven hasta abrir su grupo', async () => {
-    const user = montar();
+    montar();
     // El detalle del grupo está plegado: su casilla no está en el árbol accesible.
     expect(screen.queryByRole('checkbox', { name: /Alimentación seca/i })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /^Alimentación/i }));
