@@ -93,7 +93,10 @@ describe('el panel de filtros no ofrece callejones sin salida', () => {
     expect(perros).toBeInTheDocument();
     // El número va al lado para poder decidir antes de pulsar.
     expect(screen.getByText('15')).toBeInTheDocument();
-    expect(screen.getByText('13')).toBeInTheDocument();
+    // «Tipo de producto» va agrupado: la categoría cuelga del grupo
+    // «Alimentación», que muestra su recuento en la cabecera plegable.
+    expect(screen.getByRole('button', { name: /alimentación/i })).toBeInTheDocument();
+    expect(screen.getAllByText('13').length).toBeGreaterThan(0);
   });
 
   it('una faceta vacía SÍ se enseña si está puesta, para poder soltarla', async () => {

@@ -208,6 +208,93 @@ function RangoPrecio({
   );
 }
 
+/**
+ * EL FILTRO «TIPO DE PRODUCTO» VA AGRUPADO, NO PLANO.
+ *
+ * Antes listaba las categorías sueltas de la base —«Alimentación seca»,
+ * «húmeda», «semihúmeda», «Snacks»…— y eso, visto de golpe, es ruido: cinco
+ * entradas para decir «comida». La estructura comercial tiene dos niveles, y el
+ * panel ahora los respeta: arriba el grupo (Alimentación, Suplementos y
+ * cosmética, Accesorios…) y, al abrirlo, sus subcategorías. Antes de abrir no
+ * se ve el detalle, igual que en una tienda de verdad.
+ *
+ * El grupo de ACCESORIOS es especial: en la base es UNA sola categoría, así que
+ * no tiene sentido enseñar una subcategoría «Accesorios» dentro de «Accesorios».
+ * Lo que cuelga de él son las LÍNEAS de accesorio (jaulas, camas, toallitas…),
+ * que es como el cliente los piensa.
+ */
+type GrupoTipo = { nombre: string; cats: string[]; esAccesorios?: boolean };
+
+/** Las líneas de la categoría «accesorios» (su subcategoría real). */
+const LINEAS_ACCESORIO = [
+  'Jaulas y transportines',
+  'Camas, almohadas y cojines',
+  'Pads de entrenamiento',
+  'Bolsas de basura',
+  'Toallitas',
+  'Dispensadores de comida',
+  'Aglomerantes',
+  'Rascadores y árboles',
+  'Areneros y accesorios',
+];
+
+const GRUPOS_TIPO: GrupoTipo[] = [
+  {
+    nombre: 'Alimentación',
+    cats: ['alimentacion-seca', 'alimentacion-humeda', 'alimentacion-semihumeda', 'snacks-y-premios', 'semillas-y-forraje'],
+  },
+  { nombre: 'Suplementos y cosmética', cats: ['higiene-y-cosmetica', 'salud-y-antiparasitarios'] },
+  { nombre: 'Accesorios', cats: ['accesorios'], esAccesorios: true },
+  { nombre: 'Otros', cats: ['otros'] },
+];
+
+/**
+ * Cabecera plegable de SEGUNDO nivel (dentro de «Tipo de producto»).
+ *
+ * Más ligera que `Grupo` —peso normal, no mayúsculas— porque cuelga de él.
+ * Sigue siendo un botón de verdad con `aria-expanded`/`aria-controls`, así que
+ * el teclado y el lector de pantalla la manejan igual.
+ */
+function SubGrupo({
+  titulo,
+  total,
+  defaultOpen,
+  children,
+}: {
+  titulo: string;
+  total: number;
+  defaultOpen: boolean;
+  children: React.ReactNode;
+}) {
+  const [abierto, setAbierto] = useState(defaultOpen);
+  const idContenido = useId();
+  return (
+    <div className="border-b border-edge-subtle/60 last:border-0">
+      <button
+        type="button"
+        onClick={() => setAbierto((v) => !v)}
+        aria-expanded={abierto}
+        aria-controls={idContenido}
+        className="flex w-full items-center justify-between gap-2 rounded-control px-2 py-2 text-body-sm font-semibold text-content transition-colors hover:bg-brand-50"
+      >
+        <span>{titulo}</span>
+        <span className="flex items-center gap-2 text-content-subtle">
+          <span className="text-caption tabular-nums" aria-hidden="true">
+            {total}
+          </span>
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 transition-transform duration-200 ${abierto ? '' : '-rotate-90'}`}
+            aria-hidden="true"
+          />
+        </span>
+      </button>
+      <div id={idContenido} hidden={!abierto} className="pb-1">
+        {children}
+      </div>
+    </div>
+  );
+}
+
 export function Filtros({ facetas, filtros, poner, alternar }: Props) {
   if (!facetas) {
     return (
@@ -225,6 +312,32 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
   const marcas = visibles(facetas.brands, filtros.brand ?? []);
   const lineas = visibles(facetas.lines, filtros.line ?? []);
   const tamanos = visibles(facetas.sizes, filtros.size ?? []);
+
+  // ── «Tipo de producto» agrupado ────────────────────────────────────────
+  // Las líneas de accesorio cuelgan del grupo «Accesorios»; las de marca (que
+  // dependen de la marca) se quedan en su grupo «Línea» de más abajo.
+  const lineasAccesorio = lineas.filter((l) => LINEAS_ACCESORIO.includes(l.slug));
+  const lineasMarca = lineas.filter((l) => !LINEAS_ACCESORIO.includes(l.slug));
+  // Ninguna categoría puede desaparecer: las que no caen en un grupo conocido
+  // se recogen en un grupo «Más» al final.
+  const enAlgunGrupo = new Set(GRUPOS_TIPO.flatMap((g) => g.cats));
+  const sueltas = categorias.filter((c) => !enAlgunGrupo.has(c.slug));
+  const defsGrupo = sueltas.length
+    ? [...GRUPOS_TIPO, { nombre: 'Más', cats: sueltas.map((c) => c.slug) }]
+    : GRUPOS_TIPO;
+  const grupos = defsGrupo
+    .map((g) => {
+      const miembros = categorias.filter((c) => g.cats.includes(c.slug));
+      const esLinea = Boolean((g as GrupoTipo).esAccesorios);
+      const hijos = esLinea ? lineasAccesorio : miembros;
+      const total = miembros.reduce((s, c) => s + c.total, 0);
+      const activo = esLinea
+        ? (filtros.category ?? []).includes('accesorios') ||
+          (filtros.line ?? []).some((x) => LINEAS_ACCESORIO.includes(x))
+        : miembros.some((c) => (filtros.category ?? []).includes(c.slug));
+      return { nombre: g.nombre, total, hijos, esLinea, activo, visible: hijos.length > 0 };
+    })
+    .filter((x) => x.visible);
 
   return (
     <div className="space-y-6">
@@ -260,17 +373,30 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
         </Grupo>
       )}
 
-      {categorias.length > 0 && (
+      {grupos.length > 0 && (
         <Grupo titulo="Tipo de producto">
-          <div className="-mx-2">
-            {categorias.map((c) => (
-              <Opcion
-                key={c.slug}
-                nombre="category"
-                faceta={c}
-                marcada={(filtros.category ?? []).includes(c.slug)}
-                onChange={() => alternar('category', c.slug)}
-              />
+          <div>
+            {grupos.map((gr) => (
+              <SubGrupo
+                key={gr.nombre}
+                titulo={gr.nombre}
+                total={gr.total}
+                // Abierto si ya hay algo elegido de ese grupo (para poder
+                // soltarlo) o si es el único que queda a la vista.
+                defaultOpen={gr.activo || grupos.length === 1}
+              >
+                <div className="-mx-2">
+                  {gr.hijos.map((h) => (
+                    <Opcion
+                      key={h.slug}
+                      nombre={gr.esLinea ? 'line' : 'category'}
+                      faceta={h}
+                      marcada={(gr.esLinea ? filtros.line ?? [] : filtros.category ?? []).includes(h.slug)}
+                      onChange={() => alternar(gr.esLinea ? 'line' : 'category', h.slug)}
+                    />
+                  ))}
+                </div>
+              </SubGrupo>
             ))}
           </div>
         </Grupo>
@@ -325,10 +451,10 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
         recuentos ya se calculan dentro de la marca). El `slug` de la faceta es
         el nombre de la línea tal cual.
       */}
-      {(filtros.brand?.length ?? 0) > 0 && lineas.length > 0 && (
+      {(filtros.brand?.length ?? 0) > 0 && lineasMarca.length > 0 && (
         <Grupo titulo="Línea">
           <div className="-mx-2">
-            {lineas.map((l) => (
+            {lineasMarca.map((l) => (
               <Opcion
                 key={l.slug}
                 nombre="line"
