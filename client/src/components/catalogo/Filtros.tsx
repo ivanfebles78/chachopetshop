@@ -228,7 +228,7 @@ type GrupoTipo = { nombre: string; cats: string[]; esAccesorios?: boolean };
 /** Las líneas de la categoría «accesorios» (su subcategoría real). */
 const LINEAS_ACCESORIO = [
   'Jaulas y transportines',
-  'Camas, almohadas y cojines',
+  'Camas y cojines',
   'Pads de entrenamiento',
   'Bolsas de basura',
   'Toallitas',
