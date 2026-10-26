@@ -90,6 +90,13 @@ describe('«Tipo de producto» agrupado', () => {
     expect(screen.getByRole('checkbox', { name: /Camas, almohadas y cojines/i })).toBeInTheDocument();
   });
 
+  it('una línea traída en la URL llega ya marcada (enlace del menú superior)', () => {
+    // Pinchar «Jaulas y transportines» en el menú abre la página con ese filtro
+    // puesto: debe salir seleccionado, no sólo visible.
+    montar({ category: ['accesorios'], line: ['Jaulas y transportines'] });
+    expect(screen.getByRole('checkbox', { name: /Jaulas y transportines/i })).toBeChecked();
+  });
+
   it('las líneas de accesorio NO aparecen en el grupo «Línea» de marca', () => {
     // Con marca elegida pero sólo líneas de accesorio disponibles, el grupo
     // «Línea» (de marca) no se pinta: esas líneas ya cuelgan de «Accesorios».
