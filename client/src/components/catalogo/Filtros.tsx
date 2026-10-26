@@ -292,9 +292,13 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
         </Grupo>
       )}
 
-      {marcas.length > 0 && (
+      {marcas.length > 0 && (facetas.marcasEnResultado == null || facetas.marcasEnResultado > 1) && (
         <Grupo titulo="Marca">
           {/*
+           * El filtro «Marca» solo aparece si el resultado tiene MÁS DE UNA marca.
+           * Con una sola (p. ej. Animally, que solo vende cosmética) no tiene
+           * sentido ofrecer otras marcas, así que se oculta el grupo entero.
+           *
            * Sin tope de alto ni scroll propio: la lista se ve entera y se recorre
            * con el scroll normal de la página. Antes (`max-h-72 overflow-y-auto`)
            * era una segunda barra dentro del panel, difícil de usar.
