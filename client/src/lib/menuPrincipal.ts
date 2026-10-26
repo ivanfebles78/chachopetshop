@@ -38,6 +38,13 @@ const F = (animal: string) => (slug: string) => `/tienda?animal=${animal}&catego
 const porPerro = F('perro');
 const porGato = F('gato');
 
+/**
+ * Un enlace a la categoría «accesorios» con una LÍNEA ya seleccionada. La línea
+ * es el valor exacto del atributo `line` (jaulas, camas…), así que va codificado.
+ */
+const porLinea = (linea: string) =>
+  `/tienda?category=accesorios&line=${encodeURIComponent(linea)}`;
+
 /** Las cuatro categorías de alimentación, iguales para perro y gato. */
 const alimentacion = (por: (slug: string) => string): ItemMenu[] => [
   { etiqueta: 'Seca', href: por('alimentacion-seca') },
@@ -69,14 +76,18 @@ export const MENU_PRINCIPAL: ItemMenu[] = [
   {
     etiqueta: 'Accesorios',
     icono: Package,
+    // Cada hoja lleva ya su LÍNEA puesta, para que al abrir la página el filtro
+    // de esa subcategoría salga seleccionado (no sólo la categoría «accesorios»).
     hijos: [
-      { etiqueta: 'Jaulas y transportines', href: '/tienda?category=accesorios' },
-      { etiqueta: 'Camas, almohadas y cojines', href: '/tienda?category=accesorios' },
-      { etiqueta: 'Pads de entrenamiento', href: '/tienda?category=accesorios' },
-      { etiqueta: 'Bolsas de basura', href: '/tienda?category=accesorios' },
-      { etiqueta: 'Toallitas', href: '/tienda?category=accesorios' },
-      { etiqueta: 'Dispensadores de comida', href: '/tienda?category=accesorios' },
-      { etiqueta: 'Aglomerantes', href: '/tienda?category=accesorios' },
+      { etiqueta: 'Camas, almohadas y cojines', href: porLinea('Camas, almohadas y cojines') },
+      { etiqueta: 'Jaulas y transportines', href: porLinea('Jaulas y transportines') },
+      { etiqueta: 'Rascadores y árboles', href: porLinea('Rascadores y árboles') },
+      { etiqueta: 'Areneros y accesorios', href: porLinea('Areneros y accesorios') },
+      { etiqueta: 'Toallitas', href: porLinea('Toallitas') },
+      { etiqueta: 'Pads de entrenamiento', href: porLinea('Pads de entrenamiento') },
+      { etiqueta: 'Bolsas de basura', href: porLinea('Bolsas de basura') },
+      { etiqueta: 'Dispensadores de comida', href: porLinea('Dispensadores de comida') },
+      { etiqueta: 'Aglomerantes', href: porLinea('Aglomerantes') },
     ],
   },
   {
