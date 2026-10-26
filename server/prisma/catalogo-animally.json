@@ -1,0 +1,1761 @@
+{
+ "fuente": "evopetnutricion.com · ANIMALLY PERRO Y GATO",
+ "extraido": "2026-10-26",
+ "items": [
+  {
+   "sku": "9430030",
+   "slug": "animally-pawskin-repairing-50-ml",
+   "name": "Paw&Skin Repairing 50 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Cuidado específico",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 9.2,
+   "image": "/productos/animally/animally-pawskin-repairing-50-ml.webp",
+   "description": "Gel natural hidratante que protege, nutre y refresca la piel gracias a las propiedades cicatrizantes y regeneradoras del Aloe Vera, Extracto de Caléndula y Vitamina E. Ideal para el cuidado de almohadillas y callosidades.",
+   "formato": {
+    "label": "50 ml",
+    "quantity": 50,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Gel natural hidratante que protege, nutre y refresca la piel gracias a las propiedades cicatrizantes y regeneradoras del Aloe Vera, Extracto de Caléndula y Vitamina E. Ideal para el cuidado de almohadillas y callosidades."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Extracto de caléndula: efecto antiinflamatorio, cicatrizante y reepitelizante.",
+      "Vitamina E: efecto antioxidante y cicatrizante."
+     ]
+    },
+    "composicion": "Aqua (Water), Acrylates Copolymer, Glycerin, Pentylene glycol, Benzyl Alcohol, Ethylhexyl Glycerin, Aloe Barbadensis Leaf Juice Powder, Sodium Hydroxyde, Tocopheryl Acetate, Caléndula Officinalis Flower Extract, Potassium Sorbate, Sodium Benzoate, CI 19140, CI 61570.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Aplicar directamente el roll-on realizando un movimiento circular en la zona deseada tantas veces como sean necesarias."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-pawskin-repairing-50-ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9420000",
+   "slug": "animally-all-in-one-shampoo-conditioner-250ml",
+   "name": "All In One Shampoo & Conditioner 250 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Higiene y cosmética",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 9.5,
+   "image": "/productos/animally/animally-all-in-one-shampoo-conditioner-250ml.webp",
+   "description": "Champú con acondicionador para perros y gatos en forma de crema lavante sin sulfatos para perros y gatos adultos. Su fórmula enriquecida con Aceite de Argán ecológico y Aloe Vera, hidratan la piel y aporta suavidad y brillo al pelo.",
+   "formato": {
+    "label": "250 ml",
+    "quantity": 250,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Champú con acondicionador para perros y gatos en forma de crema lavante sin sulfatos para perros y gatos adultos. Su fórmula enriquecida con Aceite de Argán ecológico y Aloe Vera, hidratan la piel y aporta suavidad y brillo al pelo."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Pantenol (Vitamina B5): propiedades hidratantes de la piel y fortalecedora del pelo.",
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Aceite de argán ecológico: efecto antioxidante, hidratante y regenerante.",
+      "Acido hialurónico (alto peso molecular): gran capacidad de hidratación."
+     ]
+    },
+    "composicion": "Aqua (Water), Sodium Lauroyl Methyl Isethionate, Cocamidopropyl Betaine, Disodium Laureth Sulfosuccinate, Lauryl Glucoside, Acrylates Copolymer, PEG-7 Glyceryl Cocoate, Polyquaternium 22, Coco-Glucoside, Glyceryl Oleate, Glycerin, Sodium Hydroxyde, Parfum, Ethylhexyl Glycerin, Aloe Barbadensis Leaf Juice, Styrene/Acrylates Copolymer, Trisodium Ethylendiamine Dissuccinate, Citric Acid, Caprylyl Glycol, 1,2 Hexanediol, Argania Spinosa Kernel Oil, Laurdimonium Hydroxypropyl Hydrolized Protein, Guar Hydroxypropyltrimonium Chloride, Panthenol, Tropolone, Sodium Benzoate, Potassium Sorbate, Benzoid Acid, Tocopherol, Hydrogenated Glycerides Citrate.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Mojar el pelo con abundante agua y aplicar suficiente champú sobre el pelo. Masajear. Dejar actuar unos minutos. Aclarar con abundante agua. Repetir si es necesario."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-all-in-one-shampoo-conditioner-250ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9410000",
+   "slug": "animally-biotin-b-plus-60-uds",
+   "name": "Biotin + B Plus 60 uds",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Suplemento nutricional",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 13.35,
+   "image": "/productos/animally/animally-biotin-b-plus-60-uds.webp",
+   "description": "Suplemento nutricional para mascotas formulado con Biotina y Vitaminas del grupo B para el cuidado y protección de la piel y el fortalecimiento del pelo. Indicado en animales con pelaje en mal estado, caída excesiva, pelo frágil o con tendencia a sufrirlos.",
+   "formato": {
+    "label": "60 uds",
+    "quantity": 60,
+    "unit": "uds"
+   },
+   "contenido": {
+    "descripcion": [
+     "Suplemento nutricional para mascotas formulado con Biotina y Vitaminas del grupo B para el cuidado y protección de la piel y el fortalecimiento del pelo. Indicado en animales con pelaje en mal estado, caída excesiva, pelo frágil o con tendencia a sufrirlos."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Biotina: contribuye al mantenimiento de una piel y pelo sanos.",
+      "Complejo Vitaminas B: favorecen el normal funcionamiento del sistema inmunitario y el sistema nervioso, intervienen en los procesos metabólicos que convierten los nutrientes en energía."
+     ]
+    },
+    "composicion": "COMPOSICIÓN (POR COMPRIMIDO): Celulosa microcristalina, fosfato dicálcico, estearato de magnesio, dióxido de silicio. ADITIVOS (POR COMPRIMIDO): Aditivos nutricionales: Vit. B3 (25 mg), Vit. B6 (8 mg), Vit. B5 (7,4 mg), Biotina (3,2 mg), Vit. B1 (2 mg), Vit. B2 (2 mg), Vit. B9 (200 μg), Vit. B12 (60 μg). Aditivos organolépticos: Aromatizantes.",
+    "analitica": [
+     {
+      "nombre": "Proteína bruta",
+      "valor": "24,9%"
+     },
+     {
+      "nombre": "Aceites y grasas brutos",
+      "valor": "9,9%"
+     },
+     {
+      "nombre": "Fibras brutas",
+      "valor": "12,6%"
+     },
+     {
+      "nombre": "Ceniza bruta",
+      "valor": "8,15%"
+     }
+    ],
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Administrar una vez al día sólo o con una pequeña cantidad de comida.",
+      "Dosis diaria: Animales con menos de 5 kg: 1/2 comprimido | Animales con más de 5 kg: 1 comprimido por cada 10 kg (Max 4 comp./día).",
+      "Administrar un período mínimo de 4-8 semanas. Para uso prolongado se recomienda supervisión profesional."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-biotin-b-plus-60-uds/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9430000",
+   "slug": "animally-dental-spray-fresh-125-ml",
+   "name": "Dental Spray Fresh 125 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Cuidado específico",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 9.2,
+   "image": "/productos/animally/animally-dental-spray-fresh-125-ml.webp",
+   "description": "Spray formulado para facilitar la higiene y salud oral. Ayuda a controlar el sarro y eliminar el mal aliento favoreciendo unos dientes limpios y sanos. Con aroma mentolado para un buen aliento.",
+   "formato": {
+    "label": "125 ml",
+    "quantity": 125,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Spray formulado para facilitar la higiene y salud oral. Ayuda a controlar el sarro y eliminar el mal aliento favoreciendo unos dientes limpios y sanos. Con aroma mentolado para un buen aliento."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Aroma menta: ayuda a neutralizar el mal olor bucal.",
+      "Aloe vera: efecto reepitelizante y humectante.",
+      "Flúor (fluoruro sódico): protege contra la caries, reduce la formación de placa y mejora la remineralización del esmalte dental."
+     ]
+    },
+    "composicion": "Aqua (Water), Glycerin, Sorbitol, Erythritol, Pentylene Glycol, Polysorbate 20, Aloe Barbadensis Leaf Juice, Aroma Menta, Benzyl Alcohol, Potassium Nitrate, Caprylyl/Capryl Glucoside, Polyglyceryl-3 Cocoate, Sodium Fluoride, Polyglyceryl-10 Laurate, Zinc Chloride, Citric Acid, CI 42090, Potassium Sorbate, Sodium Benzoate.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Usar una vez al día. Levantar suavemente el labio superior del animal y pulverizar 1 o 2 veces sobre la superficie dental de cada lado. No es necesario cepillar ni enjuagar."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-dental-spray-fresh-125-ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9430010",
+   "slug": "animally-ear-cleaner-125ml",
+   "name": "Ear Cleaner 125 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Cuidado específico",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 9.2,
+   "image": "/productos/animally/animally-ear-cleaner-125ml.webp",
+   "description": "Este limpiador de oídos para perros y gatos es ideal para la higiene del oído externo diaria. Su fórmula con Extractos de Tomillo y Caléndula que ayudan a eliminar la suciedad y cerumen, ayudando a mantener los oídos en un estado óptimo.",
+   "formato": {
+    "label": "125 ml",
+    "quantity": 125,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Este limpiador de oídos para perros y gatos es ideal para la higiene del oído externo diaria. Su fórmula con Extractos de Tomillo y Caléndula que ayudan a eliminar la suciedad y cerumen, ayudando a mantener los oídos en un estado óptimo."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Extracto de caléndula: efecto antiinflamatorio, cicatrizante y reepitelizante.",
+      "Extracto de tomillo: efecto antiséptico, antiinflamatorio y antioxidante."
+     ]
+    },
+    "composicion": "Aqua (Water), Glycerin, Propanediol, Aloe Barbadensis Leaf Juice, Sodium Alginate, Potassium Sorbate, Sodium Benzoate, Thymus Vulgaris Flower/Leaf Extract, Calendula Officinalis Flower Extract.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Aplicar cantidad suficiente de producto en los pliegues del oído externo. Masajear la base de la oreja. Retirar el producto y suciedad con una gasa, arrastrando la suciedad desde dentro hacia fuera del oído. No usar algodón."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-ear-cleaner-125ml/",
+    "enStockProveedor": false
+   }
+  },
+  {
+   "sku": "9420170",
+   "slug": "animally-extra-care-shampoo-250ml",
+   "name": "Extra Care Shampoo 250 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Higiene y cosmética",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 12.8,
+   "image": "/productos/animally/animally-extra-care-shampoo-250ml.webp",
+   "description": "Champú extra suave para perros y gatos de cualquier edad. Su fórmula es libre de sulfatos, colorantes y perfume. Contiene Aloe Vera, Centella Asiática y Hammamelis con propiedades calmantes y regenerativas. Está enriquecida con Biotina y Niacinamida que tienen efecto protector para las pieles reacti",
+   "formato": {
+    "label": "250 ml",
+    "quantity": 250,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Champú extra suave para perros y gatos de cualquier edad. Su fórmula es libre de sulfatos, colorantes y perfume. Contiene Aloe Vera, Centella Asiática y Hammamelis con propiedades calmantes y regenerativas. Está enriquecida con Biotina y Niacinamida que tienen efecto protector para las pieles reactivas o ultrasensibles."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Pantenol (Vitamina B5): propiedades hidratantes de la piel y fortalecedoras del pelo.",
+      "Extracto Centella Asiática: tiene propiedades calmantes, regenerativas y antioxidantes.",
+      "Agua de Hamamelis: actúa como calmante y antiinflamatorio.",
+      "Niacinamida: hidratante, calmante y antioxidante.",
+      "Biotina: contribuye al mantenimiento de una piel y pelo sanos."
+     ]
+    },
+    "composicion": "Aqua, Sodium Lauroyl Methyl Isethionate, Lauryl Glucoside, Cocamidopropyl Betaine, Hamamelis Virgiana Leaf Water, Disodium Laureth Sulfosuccinate, Benzyl Alcohol, Niacinamide, Aloe Barbadensis Leaf Juice, Glycerin, Trisodium Ethylenediamine Disuccinate, Panthenol, Sodium Benzoate, Biotin, Salicylic Acid, Sorbic Acid, Centella Asiatica Extract, Potassium Sorbate.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Moja el pelo con abundante agua y aplica suficiente champú sobre el pelo. Masajea hasta que haga espuma. Déjalo actuar unos minutos y aclara con abundante agua. Puedes repetir el proceso si es necesario. Evitar el contacto con ojos y mucosas."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-extra-care-shampoo-250ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9430020",
+   "slug": "animally-eyes-cleaner-125ml",
+   "name": "Eyes Cleaner 125 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Cuidado específico",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 9.2,
+   "image": "/productos/animally/animally-eyes-cleaner-125ml.webp",
+   "description": "Limpiador de ojos para perros y gatos. Contiene Agua de Hamamelis y extractos vegetales de Romero y Manzanilla que favorecen la higiene lacrimal y ayuda a prevenir las marcas amarillentas en la zona.",
+   "formato": {
+    "label": "125 ml",
+    "quantity": 125,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Limpiador de ojos para perros y gatos. Contiene Agua de Hamamelis y extractos vegetales de Romero y Manzanilla que favorecen la higiene lacrimal y ayuda a prevenir las marcas amarillentas en la zona."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Extracto de romero: efecto antiinflamatorio y antioxidante.",
+      "Extracto de manzanilla: efecto antiinflamatorio, protector y reparador de la piel.",
+      "Agua de hamamelis: efecto antiséptico, calmante y fotoprotector."
+     ]
+    },
+    "composicion": "Aqua (Water), Hamamelis Virginiana Leaf Water, Anthemis Nobilis Flower Water, Sodium Chloride, Aloe Barbadensis Leaf Juice, Sodium Benzoate, Potassium Sorbate, Glycerin, Gluconolactone, Rosmarinus Officinalis Leaf Extract, Citric Acid, Calcium Gluconate.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Aplicar cantidad suficiente de producto sobre una gasa. Limpiar el contorno del ojo y la zona lacrimal, arrastrando la suciedad hacia fuera. Usar una gasa limpia para cada ojo. No usar algodón."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-eyes-cleaner-125ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9410015",
+   "slug": "animally-herbal-respir-100ml",
+   "name": "Herbal Respir 100 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Suplemento nutricional",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 15.95,
+   "image": "/productos/animally/animally-herbal-respir-100ml.webp",
+   "description": "Suplemento nutricional para mascotas formulado con aceites esenciales de eucalipto, menta, canela, tomillo, orégano, cítricos y anís para el cuidado de las vías respiratorias facilitando la expulsión de moco y aliviando la tos.",
+   "formato": {
+    "label": "100 ml",
+    "quantity": 100,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Suplemento nutricional para mascotas formulado con aceites esenciales de eucalipto, menta, canela, tomillo, orégano, cítricos y anís para el cuidado de las vías respiratorias facilitando la expulsión de moco y aliviando la tos."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Aceite esencial de eucalipto: tiene propiedades antisépticas, expectorantes y mucolíticas. Además, tiene efecto estimulante de la función inmune del tracto respiratorio.",
+      "Aceite esencial de menta: ayuda a descongestionar.",
+      "Aceite esencial de canela: rico en L-teanina, actúa como calmante y relajante. También aumenta la capacidad de atención y aprendizaje.",
+      "Aceite esencial de tomillo: propiedades antiinflamatorias, antioxidantes y antitusivas.",
+      "Aceite esencial de orégano: propiedades antiinflamatorias, antioxidantes, expectorantes y antitusivas.",
+      "Aceite esencial de cítricos: propiedades antiinflamatorias y antioxidantes.",
+      "Aceite esencial de anís: cualidades antisépticas y expectorantes."
+     ]
+    },
+    "composicion": "COMPOSICIÓN: Agua, aceite esencial de eucalipto (3,25%), aceite esencial de menta (1,75%), aceite esencial de canela (cinamaldehído (1,5%)), aceite esencial de tomillo (1,5%), aceite esencial de orégano (1,5%), aceite esencial de cítricos (0,25%), aceite esencial de anís (0,25%). ADITIVOS: Aditivos tecnológicos: Conservantes, emulgentes. Aditivos organolépticos: Aromatizantes.",
+    "analitica": [
+     {
+      "nombre": "Proteína bruta",
+      "valor": "0,09%"
+     },
+     {
+      "nombre": "Aceites y grasas brutos",
+      "valor": "11,27%"
+     },
+     {
+      "nombre": "Fibras brutas",
+      "valor": "14,25%"
+     },
+     {
+      "nombre": "Ceniza bruta",
+      "valor": "<0,1%"
+     }
+    ],
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Agitar antes de usar. Administrar dos veces al día directamente en la boca o una vez al día disuelto en el agua de bebida.",
+      "Dosis diaria (disuelto en agua): 1 ml por cada 10 kg | 0,1 ml por cada 100 ml de agua (0,1 mL (mililitro) ≈ 2 gotas) | 1 ml por cada litro de agua (1 mL (mililitro) ≈ 20 gotas).",
+      "Administrar este suplemento nutricional durante un periodo mínimo de 15-20 días. Se recomienda administrar varias veces al año. Para uso prolongado se recomienda supervisión profesional. Advertencia: puede producir hipersalivación.",
+      "Dejar siempre agua limpia y fresca a disposición del animal. Conservar en un lugar fresco y seco, alejado del suelo y lejos de la luz solar."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-herbal-respir-100ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9420040",
+   "slug": "animally-hydrating-conditioner-200ml",
+   "name": "Hydrating Conditioner 200 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Higiene y cosmética",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 14.95,
+   "image": "/productos/animally/animally-hydrating-conditioner-200ml.webp",
+   "description": "Mascarilla suavizante con Aceite de Argán y Ricino ecológicos que aportan propiedades nutritivas. Su contenido en Manteca de Karité, Aceite de Coco y Ácido Hialurónico (alto PM), fortalece el pelo y aporta brillo natural. Ideal para pelo largo, dañado, seco y quebradizo. COMPONENTES ACTIVOSAloe vera",
+   "formato": {
+    "label": "200 ml",
+    "quantity": 200,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Mascarilla suavizante con Aceite de Argán y Ricino ecológicos que aportan propiedades nutritivas. Su contenido en Manteca de Karité, Aceite de Coco y Ácido Hialurónico (alto PM), fortalece el pelo y aporta brillo natural. Ideal para pelo largo, dañado, seco y quebradizo."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Aceite de argán ecológico: efecto antioxidante, hidratante y regenerante.",
+      "Acido hialurónico (alto peso molecular): gran capacidad de hidratación.",
+      "Manteca de karité ecológico: efecto hidratante, nutritivo y protector de la piel.",
+      "Aceite de ricino ecológico: efecto hidratante, antioxidante y antiencrespamiento.",
+      "Aceite de coco ecológico: favorece la hidratación y protección del pelo."
+     ]
+    },
+    "composicion": "Aqua (Water), Cocos Nucifera Oil, Butyrospermum Parkii (Shea) Butter, Cetearyl Alcohol, Glycerin, Laurdimonium Hydroxypropil Hydrolyzed Protein, Betaine Anhidrous, Glyceryl Stearate, Caprylic/Capric Triglyceride, Stearamidopropyl Dimethylamine, Behentrimonium Methosulfate, Parfum, Benzyl Alcohol, Sodium Stearoyl Lactylate, Sodium Lauroyl Glutamate, Argania Spinosa Seed Oil, Ricinus Communis Seed Oil, Lactic Acid, Guar Hydroxypropyl Trimonium Chloride, Salicylic Acid, Aloe Barbadensis Leaf Juice, Sodium Hydroxide, Sorbic Acid, Sodium Hyaluronate, 1,2 Hexanediol, Caprylyl Glycol, Potassium Sorbate, Sodium Benzoate, CI 19140, CI 14700.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Aplicar a continuación del champú, una vez aclarado, mediante un suave masaje. Dejar actuar unos minutos. Aclarar con abundante agua."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-hydrating-conditioner-200ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9440000",
+   "slug": "animally-insect-repellent-shampoo-250-ml",
+   "name": "Insect Repellent Shampoo 250 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Antiparasitario natural",
+   "animals": [
+    "perro"
+   ],
+   "categories": [
+    "higiene-y-cosmetica",
+    "salud-y-antiparasitarios"
+   ],
+   "price": 9.5,
+   "image": "/productos/animally/animally-insect-repellent-shampoo-250-ml.webp",
+   "description": "Champú sin sulfatos para perros adultos. Ayuda a mantener alejados los insectos como pulgas, garrapatas y mosquitos, al mismo tiempo que limpia el pelo y la piel. Contiene Aceite esencial de Eucalipto Citriodora y Aceite de Andiroba conocidos por su efecto protector contra insectos.",
+   "formato": {
+    "label": "250 ml",
+    "quantity": 250,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Champú sin sulfatos para perros adultos. Ayuda a mantener alejados los insectos como pulgas, garrapatas y mosquitos, al mismo tiempo que limpia el pelo y la piel. Contiene Aceite esencial de Eucalipto Citriodora y Aceite de Andiroba conocidos por su efecto protector contra insectos."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Pantenol (Vitamina B5): propiedades hidratantes de la piel y fortalecedora del pelo.",
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Aceite de andiroba: efecto hidratante, emoliente y repelente de insectos.",
+      "Aceite de eucalipto citriodora: efecto repelente de insectos."
+     ]
+    },
+    "composicion": "Aqua (Water), Sodium Lauroyl Methyl Isethionate, Lauryl Glucoside, Cocamidopropyl Betaine, Disodium Laureth Sulfosuccinate, Benzyl Alcohol, Aloe Barbadensis Leaf Juice, Parfum, Trisodium Ethylendiamine Disuccinate, Eucalyptus Citriodora Oil, Carapa Guaianensis Seed Oil, Panthenol, Salicylic Acid, Sodium Hydroxyde, Glycerin, Sorbic Acid, Potassium Sorbate, Sodium Benzoate, C.I 61570, C.I 19140.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Mojar el pelo con abundante agua y aplicar suficiente champú sobre el pelo. Masajear hasta que haga espuma. Dejar actuar unos minutos. Aclarar con abundante agua. Repetir si es necesario. No usar en gatos."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-insect-repellent-shampoo-250-ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9440010",
+   "slug": "animally-insect-repellent-spray-250ml",
+   "name": "Insect Repellent Spray 250 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Antiparasitario natural",
+   "animals": [
+    "perro"
+   ],
+   "categories": [
+    "higiene-y-cosmetica",
+    "salud-y-antiparasitarios"
+   ],
+   "price": 9.5,
+   "image": "/productos/animally/animally-insect-repellent-spray-250ml.webp",
+   "description": "Spray repelente de insectos que ayuda a mantener alejados los insectos como pulgas, garrapatas y mosquitos. Contiene Aceite esencial de Eucalipto Citriodora, Aceite de Andiroba y Aceite de Neem conocidos por su efecto protector contra insectos.",
+   "formato": {
+    "label": "250 ml",
+    "quantity": 250,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Spray repelente de insectos que ayuda a mantener alejados los insectos como pulgas, garrapatas y mosquitos. Contiene Aceite esencial de Eucalipto Citriodora, Aceite de Andiroba y Aceite de Neem conocidos por su efecto protector contra insectos."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Aceite de neem ecológico: efecto repelente de insectos.",
+      "Aceite de andiroba: efecto hidratante, emoliente y repelente de insectos.",
+      "Aceite de eucalipto citriodora: efecto repelente de insectos."
+     ]
+    },
+    "composicion": "Aqua (Water), Aloe Barbadensis Leaf Juice, Glycerin, Benzyl Alcohol, Parfum, Eucalyptus Citriodora Oil 0,5%, Arginine, Salicylic Acid, Carapa Guaianensis Seed Oil 0,1%, Melia Azadirachta Seed Oil 0,1%, Citronellol, Potassium Sorbate, Sodium Benzoate, Limonene, Geraniol.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Agitar antes de usar. Pulverizar sobre el cuerpo del animal a una distancia aproximada de 15 cm. Evitar ojos y mucosas. Repetir la aplicación regularmente. No usar en gatos."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-insect-repellent-spray-250ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9420180",
+   "slug": "animally-instant-conditioner-spray-250ml",
+   "name": "Instant Conditioner Spray 250 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Higiene y cosmética",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 12.8,
+   "image": "/productos/animally/animally-instant-conditioner-spray-250ml.webp",
+   "description": "Acondicionador instantáneo en spray sin aclarado para perros y gatos. Con Aloe Vera y de Peonía, que junto con Ácido Hialurónico y el ingrediente patentado Protecsyl®, repara la fibra capilar, reduce el encrespamiento y facilita el peinado. Fórmula de uso frecuente ideal para aplicar directamente so",
+   "formato": {
+    "label": "250 ml",
+    "quantity": 250,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Acondicionador instantáneo en spray sin aclarado para perros y gatos. Con Aloe Vera y de Peonía, que junto con Ácido Hialurónico y el ingrediente patentado Protecsyl®, repara la fibra capilar, reduce el encrespamiento y facilita el peinado. Fórmula de uso frecuente ideal para aplicar directamente sobre el pelo seco o mojado."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Extracto de peonía: propiedades antiinflamatorias, antioxidantes, hidratantes y regenerador celular.",
+      "Extracto de Jatropha macrantha (Protecsyl®): ayuda a la resistencia y elasticidad del pelo además de tener función anti-encrespamiento, anti-rotura y fortalecimiento capilar.",
+      "Ácido hialurónico (alto peso molecular): tiene gran capacidad de hidratación."
+     ]
+    },
+    "composicion": "Aqua, Propanediol, Lauryldimonium Hydroxypropyl Hydrolized Wheat Protein, Aloe Barbadensis Leaf Juice, Cetrimonium Chloride, Benzyl Alcohol, Parfum, Glycerin, Hydrolized Jatropha Macrantha Bark Extract, Citric Acid, Phenoxyethanol, Paeonia Lactiflora Root Extract, Potassium Sorbate, 1,2-Hexanediol, Caprylyl Glycol, Sodium Hyaluronate, Trehalose, Sodium Benzoate.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Agitar antes de usar. Antes del cepillado, pulverízalo sobre el cuerpo del animal a una distancia aproximada de 15 cm y luego cepíllalo con normalidad. Evitar contacto con los ojos y mucosas."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-instant-conditioner-spray-250ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9420050",
+   "slug": "animally-kenai-fresh-cologne-spray-125ml",
+   "name": "Kenai Fresh Cologne Spray 125 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Higiene y cosmética",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 7.95,
+   "image": "/productos/animally/animally-kenai-fresh-cologne-spray-125ml.webp",
+   "description": "Agua de colonia sin alcohol con activos suaves como Aloe Vera y Extracto de Camomila, protege la piel y elimina los malos olores del manto dejando una fresca fragancia a té verde. Adecuada para cualquier edad y tipo de pelo. Apto para uso diario.",
+   "formato": {
+    "label": "125 ml",
+    "quantity": 125,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Agua de colonia sin alcohol con activos suaves como Aloe Vera y Extracto de Camomila, protege la piel y elimina los malos olores del manto dejando una fresca fragancia a té verde. Adecuada para cualquier edad y tipo de pelo. Apto para uso diario."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Extracto de camomila: efecto protector y reparador de la piel.",
+      "Notas olfativas: té verde refrescante."
+     ]
+    },
+    "composicion": "Aqua (Water), Caprylyl/Capryl Glucoside, Glycerin, Parfum, Polyglyceryl-3 Cocoate, Benzyl Alcohol, Aloe Barbadensis Leaf Juice, Polyglyceryl-10 Laurate, Salicylic Acid, Arginine, Chamomilla Recutita Flower Extract, Sorbic Acid, Potassium Sorbate, Sodium Benzoate.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Agitar antes de usar. Pulverizar sobre el cuerpo del animal a una distancia aproximada de 15 cm. Evitar ojos y mucosas."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-kenai-fresh-cologne-spray-125ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9420060",
+   "slug": "animally-moisturizing-shampoo-250ml",
+   "name": "Moisturizing Shampoo 250 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Higiene y cosmética",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 9.5,
+   "image": "/productos/animally/animally-moisturizing-shampoo-250ml.webp",
+   "description": "Champú hidratante sin sulfatos para perros y gatos adultos de pelo largo. Contiene ingredientes activos naturales como la Queratina Vegetal, Aceite de Argán ecológico y Ácido Hialurónico (alto PM), que proporciona una hidratación profunda de la piel, aportando suavidad al pelo y facilitando el peina",
+   "formato": {
+    "label": "250 ml",
+    "quantity": 250,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Champú hidratante sin sulfatos para perros y gatos adultos de pelo largo. Contiene ingredientes activos naturales como la Queratina Vegetal, Aceite de Argán ecológico y Ácido Hialurónico (alto PM), que proporciona una hidratación profunda de la piel, aportando suavidad al pelo y facilitando el peinado. Ideal para pelo largo, pelo dañado, seco y quebradizo."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Pantenol (Vitamina B5): propiedades hidratantes de la piel y fortalecedora del pelo.",
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Acido hialurónico (alto peso molecular): gran capacidad de hidratación.",
+      "Aceite de argán ecológico: efecto antioxidante, hidratante y regenerante.",
+      "Queratina vegetal: efecto reparador y antiencrespamiento."
+     ]
+    },
+    "composicion": "Aqua (Water), Sodium Lauroyl Methyl Isethionate, Lauryl Glucoside, Cocamidopropyl Betaine, Disodium Laureth Sulfosuccinate, Sodium Alginate, Aloe Barbadensis Leaf Juice, Benzyl Alcohol, Trisodium Ethylendiamine Disuccinate, Zea Mays Starch, Parfum, Glycerin, Argania Spinosa Seed Oil, Salicylic Acid, Sodium Hydroxyde, Panthenol, Sorbic Acid, Hydrolyzed Wheat gluten, Hydrolyzed Corn Protein, Hydrolyzed Rice Protein, Sodium Hyaluronate, Gluconolactone, Potassium Sorbate, Sodium Benzoate, Phenetyl Alcohol, Caprylyl Glycol, Guar Hydroxypropyltrimonium chloride, Calcium Gluconate, Polyquaternium 7, CI 19140, CI 14700.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Mojar el pelo con abundante agua y aplicar suficiente champú sobre el pelo. Masajear hasta que haga espuma. Dejar actuar unos minutos. Aclarar con abundante agua. Repetir si es necesario."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-moisturizing-shampoo-250ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9410030",
+   "slug": "animally-move-plus-100-uds",
+   "name": "Move Plus 100 uds",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Suplemento nutricional",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 41.95,
+   "image": "/productos/animally/animally-move-plus-100-uds.webp",
+   "description": "Suplemento nutricional para mascotas formulado con 7 ingredientes activos para el cuidado y protección de las articulaciones. Indicado en animales con problemas degenerativos de las articulaciones o tendencia a ellos.",
+   "formato": {
+    "label": "100 uds",
+    "quantity": 100,
+    "unit": "uds"
+   },
+   "contenido": {
+    "descripcion": [
+     "Suplemento nutricional para mascotas formulado con 7 ingredientes activos para el cuidado y protección de las articulaciones. Indicado en animales con problemas degenerativos de las articulaciones o tendencia a ellos."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Glucosamina: fortalece los cartílagos de las articulaciones para disminuir la fricción ayudando a mejorar la movilidad.",
+      "Condroitín sulfato: componente de la matriz del cartílago, mejora la hidratación de la misma. Necesario para mantener la elasticidad y flexibilidad de las articulaciones.",
+      "MSM: forma inorgánica de azufre que ayuda a reducir la inflamación.",
+      "Membrana de huevo: rica en colágeno y otras moléculas activas. Ayuda a aliviar el dolor articular, reducir la inflamación y mejorar la función articular.",
+      "Ácido hialurónico: fundamental en la producción de colágeno. Ayuda a mantener la elasticidad del cartílago.",
+      "Vitamina E: es un potente antioxidante, contribuye a la protección de las células frente a la oxidación.",
+      "Vitamina C: ayuda a la formación de colágeno para el funcionamiento normal de los huesos y cartílagos y contribuye a la protección de las células frente a la oxidación."
+     ]
+    },
+    "composicion": "COMPOSICIÓN (POR COMPRIMIDO): Glucosamina sulfato (450 mg), Condroitín sulfato (310 mg), celulosa microcristalina, MSM (240 mg), Membrana de Huevo (30 mg), ácido hialurónico (15,2 mg), estearato de magnesio, dióxido de silicio. ADITIVOS (POR COMPRIMIDO): Aditivos nutricionales: Vitamina C (40 mg), Vitamina E (20 mg). Aditivos organolépticos: aromatizantes.",
+    "analitica": [
+     {
+      "nombre": "Proteína bruta",
+      "valor": "11,4%"
+     },
+     {
+      "nombre": "Aceites y grasas brutos",
+      "valor": "1,6%"
+     },
+     {
+      "nombre": "Fibras brutas",
+      "valor": "26,4%"
+     },
+     {
+      "nombre": "Ceniza bruta",
+      "valor": "15,2%"
+     }
+    ],
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Administrar una vez al día solo o con una pequeña cantidad de comida.",
+      "Dosis diaria: Animales con menos de 5 kg: 1/2 comprimido | Animales con más de 5 kg: 1 comprimido por cada 10 kg. (Max 4 comp/dia).",
+      "Periodo inicial: administrar un período mínimo de 4-8 semanas. Mantenimiento: Reducir la dosis diaria a la mitad. Se recomienda administrar varios ciclos al año. Para uso prolongado se recomienda supervisión profesional."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-move-plus-100-uds/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9410020",
+   "slug": "animally-move-plus-60-uds",
+   "name": "Move Plus 60 uds",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Suplemento nutricional",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 24.95,
+   "image": "/productos/animally/animally-move-plus-60-uds.webp",
+   "description": "Suplemento nutricional para mascotas formulado con 7 ingredientes activos para el cuidado y protección de las articulaciones. Indicado en animales con problemas degenerativos de las articulaciones o tendencia a ellos.",
+   "formato": {
+    "label": "60 uds",
+    "quantity": 60,
+    "unit": "uds"
+   },
+   "contenido": {
+    "descripcion": [
+     "Suplemento nutricional para mascotas formulado con 7 ingredientes activos para el cuidado y protección de las articulaciones. Indicado en animales con problemas degenerativos de las articulaciones o tendencia a ellos."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Glucosamina: fortalece los cartílagos de las articulaciones para disminuir la fricción ayudando a mejorar la movilidad.",
+      "Condroitín sulfato: componente de la matriz del cartílago, mejora la hidratación de la misma. Necesario para mantener la elasticidad y flexibilidad de las articulaciones.",
+      "MSM: forma inorgánica de azufre que ayuda a reducir la inflamación.",
+      "Membrana de huevo: rica en colágeno y otras moléculas activas. Ayuda a aliviar el dolor articular, reducir la inflamación y mejorar la función articular.",
+      "Ácido hialurónico: fundamental en la producción de colágeno. Ayuda a mantener la elasticidad del cartílago.",
+      "Vitamina E: es un potente antioxidante, contribuye a la protección de las células frente a la oxidación.",
+      "Vitamina C: ayuda a la formación de colágeno para el funcionamiento normal de los huesos y cartílagos y contribuye a la protección de las células frente a la oxidación."
+     ]
+    },
+    "composicion": "COMPOSICIÓN (POR COMPRIMIDO): Glucosamina sulfato (450 mg), Condroitín sulfato (310 mg), celulosa microcristalina, MSM (240 mg), Membrana de Huevo (30 mg), ácido hialurónico (15,2 mg), estearato de magnesio, dióxido de silicio. ADITIVOS (POR COMPRIMIDO): Aditivos nutricionales: Vitamina C (40 mg), Vitamina E (20 mg). Aditivos organolépticos: aromatizantes.",
+    "analitica": [
+     {
+      "nombre": "Proteína bruta",
+      "valor": "11,4%"
+     },
+     {
+      "nombre": "Aceites y grasas brutos",
+      "valor": "1,6%"
+     },
+     {
+      "nombre": "Fibras brutas",
+      "valor": "26,4%"
+     },
+     {
+      "nombre": "Ceniza bruta",
+      "valor": "15,2%"
+     }
+    ],
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Administrar una vez al día solo o con una pequeña cantidad de comida.",
+      "Dosis diaria: Animales con menos de 5 kg: 1/2 comprimido | Animales con más de 5 kg: 1 comprimido por cada 10 kg. (Max 4 comp/dia).",
+      "Periodo inicial: administrar un período mínimo de 4-8 semanas. Mantenimiento: Reducir la dosis diaria a la mitad. Se recomienda administrar varios ciclos al año. Para uso prolongado se recomienda supervisión profesional."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-move-plus-60-uds/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9410040",
+   "slug": "animally-multivitamin-60-uds",
+   "name": "Multivitamin 60 uds",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Suplemento nutricional",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 13.35,
+   "image": "/productos/animally/animally-multivitamin-60-uds.webp",
+   "description": "Suplemento nutricional formulado con ingredientes que ayudan a reforzar el sistema inmunitario. Contiene Ginseng y Ginkgo biloba que con su efecto energizante ayudan a estimular el sistema inmunitario y a mantener las capacidades cognitivas, así como vitaminas y minerales, que ayudan a compensar las",
+   "formato": {
+    "label": "60 uds",
+    "quantity": 60,
+    "unit": "uds"
+   },
+   "contenido": {
+    "descripcion": [
+     "Suplemento nutricional formulado con ingredientes que ayudan a reforzar el sistema inmunitario. Contiene Ginseng y Ginkgo biloba que con su efecto energizante ayudan a estimular el sistema inmunitario y a mantener las capacidades cognitivas, así como vitaminas y minerales, que ayudan a compensar las deficiencias nutricionales. Indicado en animales con estados carenciales, con necesitades nutricionales elevadas y animales seniors."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Ginseng: con propiedades revitalizantes gracias a su contenido en ginsenósidos, también tiene efecto inmunoestimulante y energizante.",
+      "Ginkgo biloba: con potente efecto antioxidante, mejora el aprendizaje y ayuda a prevenir el deterioro cognitivo.",
+      "Complejo Vitaminas B: favorecen el normal funcionamiento del sistema inmunitario y el sistema nervioso, intervienen en los procesos metabólicos que convierten los nutrientes."
+     ]
+    },
+    "composicion": "COMPOSICIÓN (POR COMPRIMIDO): Celulosa microcristalina, estearato de magnesio, Ext. seco (hoja y raíz) Ginseng (Panax ginseng) 8:1 (30% Ginsenósidos) (9 mg), Ext. seco (hoja) Ginkgo (Ginkgo biloba) 50:1 (24% Flavonoglicósidos, 6% Terpenolactonas) (4mg), dióxido de silicio. ADITIVOS (POR COMPRIMIDO): Aditivos nutricionales: Vit. C (80 mg), Calcio (65,5 mg), Fósforo (28,8 mg), Vit. B3 (25 mg), Vit. B6 (15 mg), Vit. E (12,5 mg), Vit. B5 (9,2 mg), Vit. B1 (5 mg), Hierro (5 mg), Zinc (5 mg), Vit. B2 (3 mg), Cobre (500 μg), Vit. B9 (200 μg), Vit. A (167 μg), Vit. B12 (57 μg), Selenio (6,8 μg), Vit. D3 (3,8 μg). Aditivos organolépticos: Aromatizantes.",
+    "analitica": [
+     {
+      "nombre": "Aceites y grasas brutos",
+      "valor": "15,9%"
+     },
+     {
+      "nombre": "Fibras brutas",
+      "valor": "1,15%"
+     },
+     {
+      "nombre": "Ceniza bruta",
+      "valor": "6,16%"
+     }
+    ],
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Administrar una vez al día sólo o con una pequeña cantidad de comida.",
+      "Dosis diaria: Animales con menos de 5 kg: 1/2 comprimido. Animales con más de 5 kg: 1 comprimido por cada 10 kg (Max 4 comp/día).",
+      "Administrar un período mínimo de 4-8 semanas. Para uso prolongado se recomienda supervisión profesional."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-multivitamin-60-uds/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9420070",
+   "slug": "animally-odor-control-shampoo-250ml",
+   "name": "Odor Control Shampoo 250 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Higiene y cosmética",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 9.5,
+   "image": "/productos/animally/animally-odor-control-shampoo-250ml.webp",
+   "description": "Champú seborregulador sin sulfatos para perros y gatos adultos. Contiene extractos vegetales de Ortiga Blanca, Romero y Tomillo que equilibran la secreción grasa ayudando a controlar el mal olor del pelaje.",
+   "formato": {
+    "label": "250 ml",
+    "quantity": 250,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Champú seborregulador sin sulfatos para perros y gatos adultos. Contiene extractos vegetales de Ortiga Blanca, Romero y Tomillo que equilibran la secreción grasa ayudando a controlar el mal olor del pelaje."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Pantenol (Vitamina B5): propiedades hidratantes de la piel y fortalecedora del pelo.",
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Extracto de ortiga blanca: propiedades seborreguladoras y emolientes.",
+      "Extracto de romero: propiedades seborreguladoras y revitalizantes.",
+      "Extracto de tomillo: efecto antiséptico y antioxidante."
+     ]
+    },
+    "composicion": "Aqua (Water), Sodium Lauroyl Methyl Isethionate, Lauryl Glucoside, Cocamidopropyl Betaine, Disodium Laureth Sulfosuccinate, Aloe Barbadensis Leaf Juice, Benzyl Alcohol, Propylene glycol, Panthenol, Trisodium Ethylendiamine Disuccinate, Parfum, Glycerin, Salicylic Acid, Sodium Hydroxyde, Lamium Album Extract, Sorbic Acid, Thymus Vulgaris Flower Extract, Rosmarinus Officinalis Leaf Extract, Potassium Sorbate, Sodium Benzoate.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Mojar el pelo con abundante agua y aplicar suficiente champú sobre el pelo. Masajear hasta que haga espuma. Dejar actuar unos minutos. Aclarar con abundante agua. Repetir si es necesario."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-odor-control-shampoo-250ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9410045",
+   "slug": "animally-parasit-stop-100-gr",
+   "name": "Parasit Stop 100 g",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Suplemento nutricional",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 15.95,
+   "image": "/productos/animally/animally-parasit-stop-100-gr.webp",
+   "description": "Suplemento nutricional para mascotas formulado con ingredientes para el cuidado del aparato digestivo. Contiene ingredientes con efecto purgante que ayudan a crear un ambiente desfavorable para los parásitos intestinales además de favorecer el correcto funcionamiento del aparato digestivo.",
+   "formato": {
+    "label": "100 g",
+    "quantity": 100,
+    "unit": "g"
+   },
+   "contenido": {
+    "descripcion": [
+     "Suplemento nutricional para mascotas formulado con ingredientes para el cuidado del aparato digestivo. Contiene ingredientes con efecto purgante que ayudan a crear un ambiente desfavorable para los parásitos intestinales además de favorecer el correcto funcionamiento del aparato digestivo."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Aceite esencial de ajo: tiene propiedades antiparasitarias, antimicrobiana, antimicótica y antiséptica.",
+      "Aceite esencial de eucalipto: con propiedades antiinflamatorias, antisépticas y mucolíticas.",
+      "Aceite esencial de menta: ayuda a descongestionar.",
+      "Aceite esencial de canela: rico en L-teanina, actúa como calmante y relajante. También aumenta la capacidad de atención y aprendizaje.",
+      "Aceite esencial de tomillo: este aceite tiene cualidades antiinflamatorias, antioxidantes y antitusivas.",
+      "Aceite esencial de orégano: Estimula las secreciones digestivas, favorece la movilidad intestinal y facilita la eliminación de gases. Además, cuenta con propiedades antidiarreicas y antiparasitarias.",
+      "Aceite esencial de cítricos: antiinflamatorio y antioxidante.",
+      "Aceite esencial de anís: Además de ayudar a la digestión, cuenta con propiedades carminativas, antisépticas y expectorantes."
+     ]
+    },
+    "composicion": "COMPOSICIÓN: Aceite de girasol, aceite esencial de eucalipto (2,25%), aceite esencial de menta (1,35%), aceite esencial de canela (cinamaldehído (1%)), aceite esencial de tomillo (0,75%), aceite esencial de orégano (0,75%), aceite esencial de ajo (0,5%), aceite esencial de cítricos (0,2%), aceite esencial de anís (0,2%) ADITIVOS: Aditivos tecnológicos: Agentes emulgentes. Aditivos organolépticos: Aromatizantes.",
+    "analitica": [
+     {
+      "nombre": "Proteína bruta",
+      "valor": "0,05%"
+     },
+     {
+      "nombre": "Aceites y grasas brutos",
+      "valor": "73,34%"
+     },
+     {
+      "nombre": "Fibras brutas",
+      "valor": "0,14%"
+     },
+     {
+      "nombre": "Ceniza bruta",
+      "valor": "<0,1%"
+     }
+    ],
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Administrar una vez al día: mezclar los gránulos con una pequeña cantidad de comida húmeda.",
+      "Dosis diaria: Animales de 3 – 10 kg: 1/2 cucharita (275 mg) | Animales con más de 10 – 20 kg: 1 cucharita rasa (550 mg) | Animales con más de 20 – 30 kg: 2 cucharitas rasas (1100 mg) | Animales +30 kg: 3 cucharitas rasas (1650 mg).",
+      "Administrar este suplemento nutricional un periodo mínimo de 4-8 semanas. Se recomienda administrar varias veces al año. Para uso prolongado se recomienda supervisión profesional.",
+      "Contraindicaciones: animales de menos de 3 kg. Dejar siempre agua limpia y fresca a disposición del animal. Conservar en un lugar fresco y seco, alejado del suelo y lejos de la luz solar."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-parasit-stop-100-gr/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9410050",
+   "slug": "animally-prebiotic-carbon-60-uds",
+   "name": "Prebiotic Carbon 60 uds",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Suplemento nutricional",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 15.95,
+   "image": "/productos/animally/animally-prebiotic-carbon-60-uds.webp",
+   "description": "Suplemento nutricional formulado con ingredientes que ayudan a la digestión. Contiene Carbón Activado y Yuca que ayudan a controlar la producción de gases, así como Prebióticos (FOS y MOS), Menta y Anis, que ayudan al correcto funcionamiento del aparato digestivo. Indicado en animales con malas dige",
+   "formato": {
+    "label": "60 uds",
+    "quantity": 60,
+    "unit": "uds"
+   },
+   "contenido": {
+    "descripcion": [
+     "Suplemento nutricional formulado con ingredientes que ayudan a la digestión. Contiene Carbón Activado y Yuca que ayudan a controlar la producción de gases, así como Prebióticos (FOS y MOS), Menta y Anis, que ayudan al correcto funcionamiento del aparato digestivo. Indicado en animales con malas digestiones, mala calidad de las heces, gases, mal aliento o con tendencia a sufrirlos."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Carbón vegetal: absorbe toxinas, bacterias y gases.",
+      "Menta y anís: favorecen el correcto funcionamiento del sistema digestivo.",
+      "FOS+MOS: nutrientes para favorecer el crecimiento de las bacterias beneficiosas del intestino."
+     ]
+    },
+    "composicion": "COMPOSICIÓN (POR COMPRIMIDO): Celulosa microcristalina, FOS (250 mg), MOS (150 mg), Carbón Vegetal activo (100 mg), Ext. Seco (hoja) Menta (Mentha piperita) 10:1 (10% polifenoles) (70 mg), Polvo (fruto) Anís verde (Pimpinella anisum L.) 70 mg, Ext. seco (fruto) Yuca (Yucca schidigera) (10% Saponinas) (50 mg), estearato de magnesio, dióxido de silicio. ADITIVOS (POR COMPRIMIDO): Aditivos organolépticos: Aromatizantes.",
+    "analitica": [
+     {
+      "nombre": "Proteína bruta",
+      "valor": "15,40%"
+     },
+     {
+      "nombre": "Aceites y grasas brutos",
+      "valor": "1,80%"
+     },
+     {
+      "nombre": "Fibras brutas",
+      "valor": "2,3%"
+     },
+     {
+      "nombre": "Ceniza bruta",
+      "valor": "12,60%"
+     }
+    ],
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Administrar una vez al día 30 minutos antes de la comida, sólo o con una pequeña cantidad de comida",
+      "Dosis diaria: Animales con menos de 10 kg: 1/2 comprimido | Animales con más de 10 kg: 1 comprimido por cada 10 kg (Max 4 comp/día).",
+      "Administrar un periodo mínimo de 10-15 días. Para uso prolongado se recomienda supervisión profesional."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-prebiotic-carbon-60-uds/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9410060",
+   "slug": "animally-probiotic-digest-30-uds",
+   "name": "Probiotic Digest 30 uds",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Suplemento nutricional",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 21.45,
+   "image": "/productos/animally/animally-probiotic-digest-30-uds.webp",
+   "description": "Suplemento nutricional formulado con Probióticos activos (Enterococcus faecium) y Prebióticos (FOS y MOS) que ayudan a la regulación de la microbiota intestinal y al correcto funcionamiento del aparato digestivo. Indicado en animales con diarreas, disbiosis intestinales, malas digestiones, gases o c",
+   "formato": {
+    "label": "30 uds",
+    "quantity": 30,
+    "unit": "uds"
+   },
+   "contenido": {
+    "descripcion": [
+     "Suplemento nutricional formulado con Probióticos activos (Enterococcus faecium) y Prebióticos (FOS y MOS) que ayudan a la regulación de la microbiota intestinal y al correcto funcionamiento del aparato digestivo. Indicado en animales con diarreas, disbiosis intestinales, malas digestiones, gases o con tendencia a sufrirlos."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Enterococcus faecium: cepa viva de bacterias ácido lácticas beneficiosas que favorecen el equilibrio de la microbiota y la función intestinal normal.",
+      "FOS+MOS: nutrientes para favorecer el crecimiento de las bacterias beneficiosas del intestino."
+     ]
+    },
+    "composicion": "COMPOSICIÓN (POR COMPRIMIDO): Celulosa microcristalina, MOS (300 mg), FOS (250 mg), estearato de magnesio, dióxido de silicio. ADITIVOS (POR COMPRIMIDO); Aditivos organolépticos: Aromatizantes. Aditivos zootécnicos: Estabilizadores de la flora intestinal: (4b1707) Enterococcus faecium DSM 10663/NCIMB 10415: 1×10^9 UFC.",
+    "analitica": [
+     {
+      "nombre": "Proteína bruta",
+      "valor": "26,2%"
+     },
+     {
+      "nombre": "Aceites y grasas brutos",
+      "valor": "13,1%"
+     },
+     {
+      "nombre": "Fibras brutas",
+      "valor": "5,6%"
+     },
+     {
+      "nombre": "Ceniza bruta",
+      "valor": "6,5%"
+     }
+    ],
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Administrar una vez al día sólo o con una pequeña cantidad de comida.",
+      "Dosis diaria: Animales con menos de 10 kg: 1/2 comprimido | Animales con más de 10 kg: 1 comprimido por cada 10 kg (Max 4 comp/día).",
+      "Administrar un periodo mínimo de 10-15 días. Durante terapia antibiótica: Administrar mientras dure el tratamiento antibiótico. Continuar durante 7 días post-tratamiento. Administrar 3 horas antes o después de administrar el antibiótico. Para uso prolongado se recomienda supervisión profesional."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-probiotic-digest-30-uds/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9420080",
+   "slug": "animally-puppykitten-shampoo-250ml",
+   "name": "Puppy&Kitten Shampoo 250 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Higiene y cosmética",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 9.5,
+   "image": "/productos/animally/animally-puppykitten-shampoo-250ml.webp",
+   "description": "Este champú natural para cachorros y gatitos es idóneo para los primeros baños. Su delicada fragancia hipoalergénica respeta el sensible olfato de tu peludo. Además, sus ingredientes como el Aloe Vera y Extractos de Camomila proporcionan una limpieza muy suave. Si buscas cuidar a tu mascota, este ch",
+   "formato": {
+    "label": "250 ml",
+    "quantity": 250,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Este champú natural para cachorros y gatitos es idóneo para los primeros baños. Su delicada fragancia hipoalergénica respeta el sensible olfato de tu peludo. Además, sus ingredientes como el Aloe Vera y Extractos de Camomila proporcionan una limpieza muy suave. Si buscas cuidar a tu mascota, este champú natural para cachorros aportará un extra de hidratación y un brillo a su pelaje de forma respetuosa."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Pantenol (Vitamina B5): propiedades hidratantes de la piel y fortalecedora del pelo.",
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Extracto de Camomila ecológico: efecto protector y reparador de la piel."
+     ]
+    },
+    "composicion": "Aqua (Water), Sodium Lauroyl Methyl Isethionate, Lauryl Glucoside, Cocamidopropyl Betaine, Disodium Laureth Sulfosuccinate, Benzyl Alcohol, Panthenol, Glycerin, Parfum, Trisodium Ethylendiamine Disuccinate, Aloe Barbadensis Leaf Juice, Sodium Hydroxyde, Chamomilla Recutita Flower Extract, Potassium Sorbate, Sodium Benzoate, CI 14700.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Mojar el pelo con abundante agua y aplicar suficiente champú sobre el pelo. Masajear hasta que haga espuma. Dejar actuar unos minutos. Aclarar con abundante agua. Repetir si es necesario."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-puppykitten-shampoo-250ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9410070",
+   "slug": "animally-relaxpet-30-uds",
+   "name": "Relaxpet 30 uds",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Suplemento nutricional",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 13.35,
+   "image": "/productos/animally/animally-relaxpet-30-uds.webp",
+   "description": "Suplemento nutricional formulado con ingredientes como Pasiflora, Melisa, Espino Blanco, Té Verde y L-Triptófano que ayudan a mantener la calma y el equilibrio emocional. Indicado para animales con problemas de ansiedad o sometidos a situaciones estresantes como viajes, visitas en casa, ruidos, etc.",
+   "formato": {
+    "label": "30 uds",
+    "quantity": 30,
+    "unit": "uds"
+   },
+   "contenido": {
+    "descripcion": [
+     "Suplemento nutricional formulado con ingredientes como Pasiflora, Melisa, Espino Blanco, Té Verde y L-Triptófano que ayudan a mantener la calma y el equilibrio emocional. Indicado para animales con problemas de ansiedad o sometidos a situaciones estresantes como viajes, visitas en casa, ruidos, etc."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Melisa: efecto sedante y relajante.",
+      "Pasiflora: efecto relajante y ansiolítico.",
+      "Espino blanco: alivia el nerviosismo y ayuda a inducir el sueño.",
+      "Té verde: rico en L-teanina, proporciona propiedades calmantes y relajantes. También aumenta la capacidad de atención y aprendizaje.",
+      "L-triptófano: aminoácido esencial que ayuda a regular el bienestar emocional y contribuye a conciliar el sueño."
+     ]
+    },
+    "composicion": "COMPOSICIÓN (POR COMPRIMIDO): Celulosa microcristalina, Ext. Seco (parte aérea) Pasiflora (Passiflora incarnata L.) 5:1 (2% Flavonoides) (100 mg), Ext. seco (hoja) Melisa (Melissa officinalis) 5:1 (1% c. Rosmarínico) (50 mg), Ext. seco (hoja) Espino blanco (Crataegus monogyna L.) 10:1 (10% Polifenoles) (40 mg), Ext. seco (hoja) Té verde (Camellia sinensis L.) (30% Polifenoles, 40% L-Teanina) (40 mg), estearato de magnesio, dióxido de silicio. ADITIVOS (POR COMPRIMIDO): Aditivos nutricionales: L-Triptófano (50 mg). Aditivos organolépticos: Aromatizantes.",
+    "analitica": [
+     {
+      "nombre": "Proteína bruta",
+      "valor": "<0,1%"
+     },
+     {
+      "nombre": "Aceites y grasas brutos",
+      "valor": "0,1%"
+     },
+     {
+      "nombre": "Fibras brutas",
+      "valor": "1,6%"
+     },
+     {
+      "nombre": "Ceniza bruta",
+      "valor": "24,6%"
+     }
+    ],
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Administrar una vez al día sólo o con una pequeña cantidad de comida.",
+      "Dosis diaria: Animales con menos de 10 kg: 1 comprimido | Animales con más de 10 kg: 1 comprimido por cada 10 kg (Max 4 comp/día)",
+      "Administrar entre 5-7 días antes de la situación estresante. Para uso prolongado se recomienda supervisión profesional."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-relaxpet-30-uds/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9430040",
+   "slug": "animally-relaxpet-spray-125ml",
+   "name": "Relaxpet Spray 125 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Cuidado específico",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 9.2,
+   "image": "/productos/animally/animally-relaxpet-spray-125ml.webp",
+   "description": "Spray formulado con extractos vegetales como Extracto de Lavanda, Melisa y Pasiflora recomendado para mantener la calma en situaciones estresantes como viajes, visitas en casa, ruidos, etc.",
+   "formato": {
+    "label": "125 ml",
+    "quantity": 125,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Spray formulado con extractos vegetales como Extracto de Lavanda, Melisa y Pasiflora recomendado para mantener la calma en situaciones estresantes como viajes, visitas en casa, ruidos, etc."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Extracto de lavanda: efecto relajante.",
+      "Extracto de melisa: efecto sedante y relajante.",
+      "Extracto de pasiflora: efecto relajante y ansiolítico."
+     ]
+    },
+    "composicion": "Aqua (Water), Aloe Barbadensis Leaf Juice, Glycerin, Caprylyl/ Capryl Glucoside, Benzyl Alcohol, Polyglyceryl-3 cocoate, Arginine, Salicylic Acid, Polyglyceryl-10 Laurate, Lavandula Angustifolia Flower Extract, Parfum, Passiflora Edulis Fruit Extract, Melissa Officinalis Leaf Extract, Sodium Benzoate, Potassium Sorbate, Sorbic Acid, Citric Acid.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Aplicar directamente sobre la ropa de cama, transportín, juguetes, etc."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-relaxpet-spray-125ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9420185",
+   "slug": "animally-sensitive-skin-lotion-125ml",
+   "name": "Sensitive Skin Lotion 125 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Higiene y cosmética",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 9.96,
+   "image": "/productos/animally/animally-sensitive-skin-lotion-125ml.webp",
+   "description": "Loción calmante dermoprotectora sin perfume para perros y gatos de cualquier edad. Formulada con activos naturales que ayudan a aliviar el picor y a reducir la irritación cutánea: Aloe Vera, agua de Hamamelis, extractos de Caléndula, Sauce y Boswellia, junto con Ácido hialurónico y Ácido succínico. ",
+   "formato": {
+    "label": "125 ml",
+    "quantity": 125,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Loción calmante dermoprotectora sin perfume para perros y gatos de cualquier edad. Formulada con activos naturales que ayudan a aliviar el picor y a reducir la irritación cutánea: Aloe Vera, agua de Hamamelis, extractos de Caléndula, Sauce y Boswellia, junto con Ácido hialurónico y Ácido succínico.",
+     "Su acción calmante, antiinflamatoria e hidratante ayuda a restaurar el confort y el equilibrio natural de la piel, favoreciendo su regeneración. Ideal para animales con problemas dermatológicos (piel atópica, alergias, dermatitis), animales con pieles dañadas (picor, enrojecimiento, descamaciones) y animales con piel sensible."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Pantenol (Vitamina B5): propiedades hidratantes de la piel y fortalecedora del pelo.",
+      "Extracto de caléndula: efecto antiinflamatorio, cicatrizante y reepitelizante.",
+      "Agua de hamamelis: propiedades calmantes y antiinflamatorias.",
+      "Extracto de Boswellia: propiedades hidratantes, calmantes y antiinflamatorias.",
+      "Extracto de sauce: propiedades antibacterianas, antiinflamatorias, hidratantes y calmantes.",
+      "Ácido succínico (ECO): propiedades antioxidantes y revitalizantes de la piel.",
+      "Acido hialurónico (Alto Peso Molecular): propiedades hidratantes, calmantes y reparadoras."
+     ]
+    },
+    "composicion": "Aqua, Glycerin, Hamamelis Virginiana Leaf Water, Pentylene Glycol, Succinic Acid, Polysorbate 20, Sodium Citrate, Aloe Barbadensis Leaf Juice, Benzyl Alcohol, Panthenol, Propylene Glycol, Calendula Officinalis Flower Extract, Glyceryl Laurate, Boswellia Carter Resin Extract, Sodium Benzoate, Salix Alba (Willow) Bark Extract, Gluconolactone, Potassium Sorbate, 1,2-Hexanediol, Caprylyl Glycol, Sodium Hyaluronate, Citric Acid, Calcium Gluconate.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Agitar antes de usar. Pulverizar sobre el cuerpo del animal a una distancia aproximada de 15 cm. Puede usarse varias veces al día. Evitar contacto con ojos y mucosas."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-sensitive-skin-lotion-125ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9420090",
+   "slug": "animally-sensitive-skin-shampoo-250ml",
+   "name": "Sensitive Skin Shampoo 250 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Higiene y cosmética",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 12.8,
+   "image": "/productos/animally/animally-sensitive-skin-shampoo-250ml.webp",
+   "description": "Champú sin sulfatos apto para perros y gatos de cualquier edad. Está especialmente indicado para mascotas con tendencia a la sequedad cutánea, rojeces o irritaciones. Gracias a ingredientes como Extracto de Caléndula y Aloe vera con propiedades calmantes y regenerativas, resulta ideal para aliviar y",
+   "formato": {
+    "label": "250 ml",
+    "quantity": 250,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Champú sin sulfatos apto para perros y gatos de cualquier edad. Está especialmente indicado para mascotas con tendencia a la sequedad cutánea, rojeces o irritaciones. Gracias a ingredientes como Extracto de Caléndula y Aloe vera con propiedades calmantes y regenerativas, resulta ideal para aliviar y aportar brillo."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Pantenol (Vitamina B5): propiedades hidratantes de la piel y fortalecedora del pelo.",
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Extracto de caléndula: efecto antiinflamatorio, cicatrizante y reepitelizante."
+     ]
+    },
+    "composicion": "Aqua (Water), Sodium Lauroyl Methyl Isethionate, Lauryl Glucoside, Cocamidopropyl Betaine, Disodium Laureth Sulfosuccinate, Benzyl Alcohol, Panthenol, Parfum, Trisodium Ethylendiamine Disuccinate, Aloe Barbadensis Leaf Juice, Sodium Hydroxyde, Glycerin, Calendula Officinalis Flower Extract, Potassium Sorbate, Sodium Benzoate.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Mojar el pelo con abundante agua y aplicar suficiente champú sobre el pelo. Masajear hasta que haga espuma. Dejar actuar unos minutos. Aclarar con abundante agua. Repetir si es necesario."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-sensitive-skin-shampoo-250ml/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9410080",
+   "slug": "animally-skin-coat-oil-250ml",
+   "name": "Skin & Coat Oil 250 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Suplemento nutricional",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 13.25,
+   "image": "/productos/animally/animally-skin-coat-oil-250ml.webp",
+   "description": "Suplemento nutricional natural para mascotas rico en ácidos grasos esenciales Omega 3 y 6, que ayudan a un correcto funcionamiento del corazón, la vista y contribuye al mantenimiento una piel y pelo sanos.",
+   "formato": {
+    "label": "250 ml",
+    "quantity": 250,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Suplemento nutricional natural para mascotas rico en ácidos grasos esenciales Omega 3 y 6, que ayudan a un correcto funcionamiento del corazón, la vista y contribuye al mantenimiento una piel y pelo sanos."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Omega 3: contribuyen a una correcta funcionalidad de la piel y al mantenimiento de su estructura.",
+      "Omega 6: favorecen la regeneración de la piel y el fortalecimiento del pelo."
+     ]
+    },
+    "composicion": "COMPOSICIÓN: Aceite de sardina (100%).",
+    "analitica": [
+     {
+      "nombre": "Aceites y grasas brutos",
+      "valor": "100%"
+     },
+     {
+      "nombre": "Omega 3",
+      "valor": "30,7%"
+     },
+     {
+      "nombre": "Omega 6",
+      "valor": "3,4%"
+     }
+    ],
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Administrar una vez al día sólo o con una pequeña cantidad de comida.",
+      "Dosis diaria: Animales con menos de 5 kg: 1 pulsación | Animales con más de 5 kg: 1 pulsación por cada 10 kg."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-skin-coat-oil-250ml/",
+    "enStockProveedor": false
+   }
+  },
+  {
+   "sku": "9410090",
+   "slug": "animally-skin-coat-pearls-60-uds",
+   "name": "Skin & Coat Pearls 60 uds",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Suplemento nutricional",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 13.35,
+   "image": "/productos/animally/animally-skin-coat-pearls-60-uds.webp",
+   "description": "Suplemento nutricional para mascotas rico en ácidos grasos esenciales Omega 3 (EPA y DHA) para el cuidado y protección de la piel y el pelo. Indicado en animales con problemas dermatológicos (picor, irritaciones), pelaje en mal estado, pelo frágil o con tendencia a sufrirlos.",
+   "formato": {
+    "label": "60 uds",
+    "quantity": 60,
+    "unit": "uds"
+   },
+   "contenido": {
+    "descripcion": [
+     "Suplemento nutricional para mascotas rico en ácidos grasos esenciales Omega 3 (EPA y DHA) para el cuidado y protección de la piel y el pelo. Indicado en animales con problemas dermatológicos (picor, irritaciones), pelaje en mal estado, pelo frágil o con tendencia a sufrirlos."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Omega 3: contribuyen a una correcta funcionalidad de la piel y al mantenimiento de su estructura.",
+      "Vitamina E: es un potente antioxidante, contribuye a la protección de las células frente a la oxidación."
+     ]
+    },
+    "composicion": "COMPOSICIÓN (POR PERLA): Aceite de pescado 500 mg (90 mg EPA, 60 mg DHA), gelatina, glicerina. ADITIVOS (POR PERLA): Aditivos tecnológicos: Antioxidantes: Vitamina E 10 mg.",
+    "analitica": [
+     {
+      "nombre": "Proteína bruta",
+      "valor": "19,20%"
+     },
+     {
+      "nombre": "Aceites y grasas brutos",
+      "valor": "70%"
+     },
+     {
+      "nombre": "Fibras brutas",
+      "valor": "0,01%"
+     },
+     {
+      "nombre": "Ceniza bruta",
+      "valor": "0,02%"
+     }
+    ],
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Administrar una vez al día sólo o con una pequeña cantidad de comida.",
+      "Dosis diaria: 1 perla por cada 10 kg (Max 5 perlas/día).",
+      "Administrar un período mínimo de 4-8 semanas. Para uso prolongado se recomienda supervisión profesional."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-skin-coat-pearls-60-uds/",
+    "enStockProveedor": true
+   }
+  },
+  {
+   "sku": "9420175",
+   "slug": "animally-solid-shampoo-bar",
+   "name": "Solid Shampoo Bar",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Higiene y cosmética",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 9.9,
+   "image": "/productos/animally/animally-solid-shampoo-bar.webp",
+   "description": "Champú sólido para perros y gatos de cualquier edad y tipo de pelo. Ideal para viajar por su formato compacto. Ha sido fabricado de forma artesanal y contiene activos naturales como Aloe Vera, Extracto de Cola de Caballo y Caléndula. Estos ingredientes limpian y protegen la piel al mismo tiempo que ",
+   "formato": {
+    "label": "1 ud",
+    "quantity": null,
+    "unit": null
+   },
+   "contenido": {
+    "descripcion": [
+     "Champú sólido para perros y gatos de cualquier edad y tipo de pelo. Ideal para viajar por su formato compacto. Ha sido fabricado de forma artesanal y contiene activos naturales como Aloe Vera, Extracto de Cola de Caballo y Caléndula. Estos ingredientes limpian y protegen la piel al mismo tiempo que fortalecen el pelo."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Aloe Vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Extracto de cola de caballo: actividad estimulante y revitalizante de la piel, fortalece el pelo y previene su caída.",
+      "Extracto de caléndula: efecto antiinflamatorio, cicatrizante y reepitelizante."
+     ]
+    },
+    "composicion": "Sodium Olivate, Sodium Cocoate, Aqua, Glycerin, Cetearyl Alcohol, Aloe Barbadensis Leaf juice, Sodium Coco Sulfate, Calendula Officinalis Flower Oil, Equisetum Arvense Extract, Citrus Limon Pee Oil, Behentrimonium Methosulfate, Sodium Chloride, Acid Lactic, Tetrasodium Glutamate Diacetate.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Moja el pelo con abundante agua y frota la pastilla de champú sobre el pelo hasta que haga espuma. Déjalo actuar unos minutos y aclara con abundante agua. Puedes repetir el proceso si es necesario. Evitar el contacto con ojos y mucosas. Mantener fuera del alcance de los niños."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-solid-shampoo-bar/",
+    "enStockProveedor": false
+   }
+  },
+  {
+   "sku": "9420190",
+   "slug": "animally-sunscreen-cream-spf50-50ml",
+   "name": "Sunscreen Cream SPF50+ 50 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Higiene y cosmética",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 14.29,
+   "image": "/productos/animally/animally-sunscreen-cream-spf50-50ml.webp",
+   "description": "Crema solar de muy alta protección para perros y gatos. Protege contra las radiaciones UVA y UVB. Ideal para situaciones con una elevada exposición solar o para animales que toman baños de sol. Contiene ingredientes activos naturales como Aloe Vera, Aceite de semilla de Chía y Sacha Inchi con propie",
+   "formato": {
+    "label": "50 ml",
+    "quantity": 50,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Crema solar de muy alta protección para perros y gatos. Protege contra las radiaciones UVA y UVB. Ideal para situaciones con una elevada exposición solar o para animales que toman baños de sol. Contiene ingredientes activos naturales como Aloe Vera, Aceite de semilla de Chía y Sacha Inchi con propiedades hidratantes y efecto protector contra la radiación solar. Es resistente al agua, facil de aplicar, textura no grasa y de rápida absorción. Con perfume hipoalergénico para una alta tolerancia."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Aloe Vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Aceite de semilla de chía: propiedades calmantes y antioxidantes, protege el pelo de la radiación solar.",
+      "Aceite de sacha inchi: propiedades nutritivas, promueve un brillo natural y sedoso del pelo.",
+      "Vitamina E: efecto antioxidante y cicatrizante."
+     ]
+    },
+    "composicion": "Aqua, C12-C15 Alkyl Benzoate, Butyl Methoxydibenzoylmethane, Ethylhexyl Salicylate, Ethylhexyl Triazone, Octyldodecyl PCA, Steareth-2, Acrylates Copolymer, Steareth-21, Zinc Oxide (Nano), Glyceryl Stearate, Hexylene Glycol, PEG-100 Stearate, Pentylene Glycol, Bis-Ethylhexyloxyphenol Methoxyphenyl Triazine, Diethylamino Hydroxybenzoyl Hexyl Benzoate, Potassium Cetyl Phosphate, Benzyl Alcohol, Sodium Hydroxide, Parfum, Plukenetia Volubilis Seed Oil, Salvia Hispanica Seed Oil, Aloe Barbadensis Leaf Juice, Coco-Glucoside, Glyceryl Oleate, Ethylhexylglycerin, Xanthan Gum, Trisodium Ethylenediamine Disuccinate, CI 77891, Tocopheryl Acetate, Citric Acid, Triethoxycaprylylsilane, Potassium Sorbate, Sodium Benzoate, Tocopherol, Hydrogenated Palm Glycerides Citrate.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Aplicar directamente realizando un movimiento circular en la zona deseada antes y durante la exposición solar. Evitar contacto con los ojos."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-sunscreen-cream-spf50-50ml/",
+    "enStockProveedor": false
+   }
+  },
+  {
+   "sku": "9430050",
+   "slug": "animally-toothpaste-fresh-75-ml",
+   "name": "Toothpaste Fresh 75 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Cuidado específico",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 9.6,
+   "image": "/productos/animally/animally-toothpaste-fresh-75-ml.webp",
+   "description": "Pasta dental formulada para facilitar la higiene y salud oral. Ayuda a controlar el sarro y eliminar el mal aliento favoreciendo unos dientes limpios y sanos. Con Aceite esencial de Menta para un buen aliento.",
+   "formato": {
+    "label": "75 ml",
+    "quantity": 75,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Pasta dental formulada para facilitar la higiene y salud oral. Ayuda a controlar el sarro y eliminar el mal aliento favoreciendo unos dientes limpios y sanos. Con Aceite esencial de Menta para un buen aliento."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Aceites esenciales de menta: efecto antiséptico, purificante y antiirritante.",
+      "Aloe vera: efecto reepitelizante y humectante.",
+      "Flúor (fluoruro sódico): protege contra la caries, reduce la formación de placa y mejora la remineralización del esmalte dental."
+     ]
+    },
+    "composicion": "Glycerin, Hydrated Silica, Sorbitol, Aqua (Water), Sodium Lauroyl Sarcosinate, Erythritol, Lithium Magnesium Sodium Silicate, Zinc Oxide, Aloe Barbadensis Leaf Juice, Benzyl Alcohol, Aroma Menta, Sodium Benzoate, Xantham Gum, Sodium Fluoride, Mentha piperita Oil, Potassium Sorbate.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Aplicar una pequeña cantidad de pasta sobre un cepillo de dientes. Cepillar la superficie de todos los dientes y la lengua. No es necesario enjuagar. Para conseguir mejores resultados, cepillar los dientes 3-4 veces a la semana."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-toothpaste-fresh-75-ml/",
+    "enStockProveedor": false
+   }
+  },
+  {
+   "sku": "9420100",
+   "slug": "animally-white-coat-shampoo-250ml",
+   "name": "White Coat Shampoo 250 ml",
+   "brandSlug": "animally",
+   "brandName": "Animally",
+   "line": "Higiene y cosmética",
+   "animals": [
+    "perro",
+    "gato"
+   ],
+   "categories": [
+    "higiene-y-cosmetica"
+   ],
+   "price": 9.5,
+   "image": "/productos/animally/animally-white-coat-shampoo-250ml.webp",
+   "description": "Champú sin sulfatos para perros y gatos de pelo blanco. Su fórmula con extracto de aciano ayuda a matizar de forma natural los tonos amarillentos, mientras que el aloe vera y el pantenol hidratan y protegen la piel, dejando el pelaje suave, sedoso, brillante y con un olor estupendo.",
+   "formato": {
+    "label": "250 ml",
+    "quantity": 250,
+    "unit": "ml"
+   },
+   "contenido": {
+    "descripcion": [
+     "Champú sin sulfatos para perros y gatos de pelo blanco. Su fórmula con extracto de aciano ayuda a matizar de forma natural los tonos amarillentos, mientras que el aloe vera y el pantenol hidratan y protegen la piel, dejando el pelaje suave, sedoso, brillante y con un olor estupendo."
+    ],
+    "caracteristicas": {
+     "titulo": "Componentes activos",
+     "puntos": [
+      "Pantenol (Vitamina B5): propiedades hidratantes de la piel y fortalecedora del pelo.",
+      "Aloe vera: efecto hidratante, antiinflamatorio y regenerador celular.",
+      "Extracto de aciano: efecto antioxidante y fotoprotector."
+     ]
+    },
+    "composicion": "Aqua (Water), Sodium Lauroyl Methyl Isethionate, Lauryl Glucoside, Cocamidopropyl Betaine, Disodium Laureth Sulfosuccinate, Aloe Barbadensis Leaf Juice, Benzyl Alcohol, Glycerin, Trisodium Ethylendiamine Disuccinate, Parfum, Panthenol, Salicylic Acid, Sodium Hydroxyde, Centaurea Cyanus Flower Extract, Sorbic Acid, Potassium Sorbate, Sodium Benzoate, CI 42090.",
+    "recomendaciones": {
+     "titulo": "Modo de empleo",
+     "puntos": [
+      "Mojar el pelo con abundante agua y aplicar suficiente champú sobre el pelo. Masajear hasta que haga espuma. Dejar actuar unos minutos. Aclarar con abundante agua. Repetir si es necesario."
+     ]
+    }
+   },
+   "origen": {
+    "url": "https://evopetnutricion.com/producto/animally-white-coat-shampoo-250ml/",
+    "enStockProveedor": true
+   }
+  }
+ ]
+}
