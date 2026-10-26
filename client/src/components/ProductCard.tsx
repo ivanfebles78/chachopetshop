@@ -69,7 +69,7 @@ export function ProductCard({ product }: { product: Product }) {
           ve siempre. La rejilla no se descuadra porque el marco sigue siendo un
           cuadrado fijo.
         */}
-        <div className="relative aspect-square overflow-hidden bg-cream-200 p-4 sm:p-5">
+        <div className="relative aspect-square overflow-hidden bg-white p-4 sm:p-5">
           <ImagenProducto
             product={product}
             className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-[1.04]"
