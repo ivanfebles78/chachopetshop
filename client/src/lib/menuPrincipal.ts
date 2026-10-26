@@ -79,7 +79,7 @@ export const MENU_PRINCIPAL: ItemMenu[] = [
     // Cada hoja lleva ya su LÍNEA puesta, para que al abrir la página el filtro
     // de esa subcategoría salga seleccionado (no sólo la categoría «accesorios»).
     hijos: [
-      { etiqueta: 'Camas, almohadas y cojines', href: porLinea('Camas, almohadas y cojines') },
+      { etiqueta: 'Camas y cojines', href: porLinea('Camas y cojines') },
       { etiqueta: 'Jaulas y transportines', href: porLinea('Jaulas y transportines') },
       { etiqueta: 'Rascadores y árboles', href: porLinea('Rascadores y árboles') },
       { etiqueta: 'Areneros y accesorios', href: porLinea('Areneros y accesorios') },
