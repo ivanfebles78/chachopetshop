@@ -95,21 +95,33 @@ export const cabecerasDeSeguridad: RequestHandler = helmet({
  * Se desactivan en las pruebas: una suite que dispara cien peticiones seguidas
  * empezaría a recibir 429 y fallaría por el límite, no por el código.
  */
-const limitador = (opciones: { windowMs: number; limit: number; message: string }) =>
+const limitador = (opciones: {
+  windowMs: number;
+  limit: number;
+  message: string;
+  /** Si es true, las peticiones que SALEN BIEN (2xx) no gastan cupo. */
+  skipSuccessfulRequests?: boolean;
+}) =>
   isTest
     ? ((_req, _res, next) => next()) as RequestHandler
     : rateLimit({
         windowMs: opciones.windowMs,
         limit: opciones.limit,
+        skipSuccessfulRequests: opciones.skipSuccessfulRequests ?? false,
         standardHeaders: 'draft-7',
         legacyHeaders: false,
         message: { error: opciones.message },
       });
 
-/** Acceso: lo justo para no molestar a quien se equivoca de contraseña. */
+/**
+ * Acceso: cuenta SOLO los intentos FALLIDOS. Si contara también los correctos,
+ * el `GET /auth/me` que la web lanza en cada carga —y los logins buenos— irían
+ * gastando cupo y acababan bloqueando al propio dueño con un uso normal.
+ */
 export const limiteAutenticacion = limitador({
   windowMs: 15 * 60 * 1000,
-  limit: 10,
+  limit: 20,
+  skipSuccessfulRequests: true,
   message: 'Demasiados intentos. Espera unos minutos antes de volver a probar.',
 });
 
