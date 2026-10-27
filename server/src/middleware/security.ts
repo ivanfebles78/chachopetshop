@@ -101,6 +101,8 @@ const limitador = (opciones: {
   message: string;
   /** Si es true, las peticiones que SALEN BIEN (2xx) no gastan cupo. */
   skipSuccessfulRequests?: boolean;
+  /** Si solo cuentan los POST (p. ej. login/registro, no el GET /auth/me). */
+  soloPost?: boolean;
 }) =>
   isTest
     ? ((_req, _res, next) => next()) as RequestHandler
@@ -108,20 +110,25 @@ const limitador = (opciones: {
         windowMs: opciones.windowMs,
         limit: opciones.limit,
         skipSuccessfulRequests: opciones.skipSuccessfulRequests ?? false,
+        skip: opciones.soloPost ? (req) => req.method !== 'POST' : undefined,
         standardHeaders: 'draft-7',
         legacyHeaders: false,
         message: { error: opciones.message },
       });
 
 /**
- * Acceso: cuenta SOLO los intentos FALLIDOS. Si contara también los correctos,
- * el `GET /auth/me` que la web lanza en cada carga —y los logins buenos— irían
- * gastando cupo y acababan bloqueando al propio dueño con un uso normal.
+ * Acceso: cuenta SOLO los intentos de LOGIN/REGISTRO fallidos.
+ *
+ * El router de auth incluye `GET /auth/me`, que la web lanza en cada carga
+ * (y devuelve 401 si no hay sesión) y `POST /auth/logout`. Si contaran, un
+ * dueño recargando la página de login agotaría el cupo sin «intentar entrar»
+ * ni una vez. Por eso: solo POST, y solo los que fallan.
  */
 export const limiteAutenticacion = limitador({
   windowMs: 15 * 60 * 1000,
   limit: 20,
   skipSuccessfulRequests: true,
+  soloPost: true,
   message: 'Demasiados intentos. Espera unos minutos antes de volver a probar.',
 });
 
