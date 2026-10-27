@@ -56,6 +56,16 @@ export function createApp() {
 
   app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }));
   app.use('/api', limiteGeneral);
+  /*
+   * La API NO se cachea. Sin esto, Express pone un ETag pero ningún
+   * `Cache-Control`, así que el navegador cachea «a su criterio» las respuestas
+   * GET y, al cambiar un filtro, devolvía datos viejos hasta forzar recarga.
+   * `no-store` garantiza que cada petición trae datos frescos.
+   */
+  app.use('/api', (_req, res, next) => {
+    res.set('Cache-Control', 'no-store');
+    next();
+  });
   app.use('/api/taxonomy', taxonomyRouter);
   app.use('/api/config', configRouter);
   app.use('/api/products', productsRouter);
@@ -75,8 +85,28 @@ export function createApp() {
     const __dirname = path.dirname(fileURLToPath(import.meta.url));
     const clientDist = path.resolve(__dirname, '../../client/dist');
     if (existsSync(clientDist)) {
-      app.use(express.static(clientDist));
-      app.get('*', (_req, res) => res.sendFile(path.join(clientDist, 'index.html')));
+      /*
+       * Caché del front, por tipo de fichero:
+       *   · `index.html` → `no-cache`: el navegador SIEMPRE revalida, así que tras
+       *     un despliegue coge el bundle nuevo sin tener que forzar recarga.
+       *   · `/assets/*` (JS/CSS con hash en el nombre) → cacheados «para siempre»
+       *     e inmutables: el hash cambia en cada build, así que nunca sirven viejo.
+       */
+      app.use(
+        express.static(clientDist, {
+          setHeaders: (res, filePath) => {
+            if (filePath.endsWith('.html')) {
+              res.setHeader('Cache-Control', 'no-cache');
+            } else if (/[\\/]assets[\\/]/.test(filePath)) {
+              res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+            }
+          },
+        }),
+      );
+      app.get('*', (_req, res) => {
+        res.setHeader('Cache-Control', 'no-cache');
+        res.sendFile(path.join(clientDist, 'index.html'));
+      });
     }
   }
 
