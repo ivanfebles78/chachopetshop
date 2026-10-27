@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Download, Pencil, Search, Trash2, Upload, X } from 'lucide-react';
+import { Check, FileDown, FileUp, Pencil, Search, Trash2, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { cn, eur } from '@/lib/cn';
@@ -131,14 +131,14 @@ export function ProductosPanel({
             disabled={exportando || productos.length === 0}
             className="inline-flex items-center gap-2 rounded-full border border-brand-900/10 bg-white px-4 py-2.5 text-sm font-semibold text-ink hover:bg-brand-50 disabled:opacity-50"
           >
-            <Download className="h-4 w-4" aria-hidden="true" />
+            <FileDown className="h-4 w-4" aria-hidden="true" />
             {exportando ? 'Exportando…' : 'Exportar a Excel'}
           </button>
           <button
             onClick={() => setImportando(true)}
             className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-4 py-2.5 text-sm font-semibold text-cream shadow-soft hover:bg-brand-700"
           >
-            <Upload className="h-4 w-4" aria-hidden="true" />
+            <FileUp className="h-4 w-4" aria-hidden="true" />
             Importar
           </button>
         </div>

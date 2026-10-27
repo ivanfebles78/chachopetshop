@@ -15,18 +15,21 @@ import type { AdminProduct, ImportRow } from './types';
  */
 
 type XLSXModule = typeof import('xlsx');
-const CDN_XLSX = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+// Se sirve desde el propio dominio (client/public/vendor), NO desde un CDN: así
+// la permite el CSP (`script-src 'self'`) y, al ser un fichero estático, no pasa
+// por el empaquetado (que es lo que agotaba la memoria del build).
+const URL_XLSX = '/vendor/xlsx.full.min.js';
 
-/** Carga SheetJS desde el CDN (o lo reutiliza si ya está en `window`). */
+/** Carga SheetJS (o lo reutiliza si ya está en `window`). */
 async function cargarXLSX(): Promise<XLSXModule> {
   const w = window as unknown as { XLSX?: XLSXModule };
   if (w.XLSX) return w.XLSX;
   await new Promise<void>((resolve, reject) => {
     const s = document.createElement('script');
-    s.src = CDN_XLSX;
+    s.src = URL_XLSX;
     s.async = true;
     s.onload = () => resolve();
-    s.onerror = () => reject(new Error('No se pudo cargar la librería de Excel. ¿Sin conexión?'));
+    s.onerror = () => reject(new Error('No se pudo cargar la librería de Excel.'));
     document.head.appendChild(s);
   });
   if (!w.XLSX) throw new Error('No se pudo cargar la librería de Excel.');
