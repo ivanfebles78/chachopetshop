@@ -153,18 +153,23 @@ export function ProductosPanel({
         </p>
       </div>
 
-      {/* Tabla */}
+      {/*
+        Tabla con scroll horizontal propio. El `min-w` evita que, con muchas
+        columnas, el navegador aplaste unas y recorte otras por la derecha: si no
+        caben, aparece la barra de scroll y se ven todas.
+      */}
       <div className="card overflow-x-auto rounded-4xl">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[1080px] text-sm">
           <thead className="bg-brand-900/[0.03] text-left text-xs uppercase tracking-wide text-content-subtle">
             <tr>
-              <th className="px-4 py-3">Producto</th>
-              <th className="px-4 py-3">Animal</th>
-              <th className="px-4 py-3">Categoría</th>
-              <th className="px-4 py-3">Línea</th>
-              <th className="px-4 py-3">SKU</th>
-              <th className="px-4 py-3 text-right">Precio</th>
-              <th className="px-4 py-3"></th>
+              <th className="whitespace-nowrap px-4 py-3">Producto</th>
+              <th className="whitespace-nowrap px-4 py-3">Marca</th>
+              <th className="whitespace-nowrap px-4 py-3">Animal</th>
+              <th className="whitespace-nowrap px-4 py-3">Categoría</th>
+              <th className="whitespace-nowrap px-4 py-3">Línea</th>
+              <th className="whitespace-nowrap px-4 py-3">SKU</th>
+              <th className="whitespace-nowrap px-4 py-3 text-right">Precio</th>
+              <th className="whitespace-nowrap px-4 py-3 text-right">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-brand-900/5">
@@ -173,22 +178,20 @@ export function ProductosPanel({
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <img src={p.image} alt="" className="h-10 w-10 shrink-0 rounded-lg bg-white object-contain" />
-                    <div className="min-w-0">
+                    <div className="min-w-0 max-w-[240px]">
                       <Link to={`/producto/${p.slug}`} className="block truncate font-semibold text-ink hover:text-brand-700" title={p.name}>
                         {p.name}
                       </Link>
-                      <span className="text-xs text-content-subtle">
-                        {p.brand?.name ?? 'Sin marca'}
-                        {!p.active && ' · oculto'}
-                      </span>
+                      {!p.active && <span className="text-xs text-content-subtle">Oculto en la tienda</span>}
                     </div>
                   </div>
                 </td>
+                <td className="whitespace-nowrap px-4 py-3 text-brand-900/70">{p.brand?.name ?? '—'}</td>
                 <td className="px-4 py-3 text-brand-900/70">{p.animals.map((a) => a.name).join(', ') || '—'}</td>
                 <td className="px-4 py-3 text-brand-900/70">{p.categories.map((c) => c.name).join(', ') || '—'}</td>
                 <td className="px-4 py-3 text-brand-900/70">{p.line || '—'}</td>
-                <td className="px-4 py-3 font-mono text-xs text-brand-900/60">{p.variants[0]?.sku ?? '—'}</td>
-                <td className="px-4 py-3 text-right font-semibold">
+                <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-brand-900/60">{p.variants[0]?.sku ?? '—'}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-right font-semibold">
                   {p.price == null && p.variants[0]?.price == null ? 'A consultar' : eur(p.price ?? p.variants[0]?.price)}
                 </td>
                 <td className="px-4 py-3">
@@ -213,7 +216,7 @@ export function ProductosPanel({
             ))}
             {visibles.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-content-subtle">
+                <td colSpan={8} className="px-4 py-12 text-center text-content-subtle">
                   No hay productos con estos filtros.
                 </td>
               </tr>
