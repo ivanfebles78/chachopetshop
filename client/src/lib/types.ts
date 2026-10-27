@@ -51,6 +51,8 @@ export type Product = {
   categories: Category[];
   needs: Need[];
   variants: Variant[];
+  /** Línea de producto (jaulas, Descanso, Gourmet…). */
+  line?: string | null;
   /**
    * Contenido enriquecido de ficha: composición, análisis, características,
    * proceso de fabricación, recomendaciones y tabla de raciones.
@@ -63,6 +65,44 @@ export type Product = {
 
 /** Un producto relacionado, con la razón por la que se enseña. */
 export type Relacionado = Product & { motivo?: 'categoria' | 'animal' | 'marca' };
+
+/** Referencia ligera (id + nombre + slug) usada en el panel de administración. */
+export type RefTax = { id: string; name: string; slug: string };
+
+/**
+ * Un producto tal y como lo lista el panel de administración: lo justo para la
+ * tabla y el editor (sin `contenido` ni galería), con sus relaciones resueltas.
+ */
+export type AdminProduct = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image: string;
+  price: number | null;
+  active: boolean;
+  line: string | null;
+  brand: RefTax | null;
+  animals: RefTax[];
+  categories: RefTax[];
+  needs: RefTax[];
+  variants: { id: string; sku: string; price: number | null; stock: number; label: string }[];
+};
+
+export type AdminProductsResponse = { products: AdminProduct[]; lineas: string[] };
+
+/** Campos editables de un producto desde el panel (todos opcionales). */
+export type AdminProductPatch = Partial<{
+  name: string;
+  description: string;
+  line: string | null;
+  price: number | null;
+  brandId: string | null;
+  active: boolean;
+  animalIds: string[];
+  categoryIds: string[];
+  needIds: string[];
+}>;
 
 export type Taxonomy = {
   animals: Animal[];

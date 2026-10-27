@@ -9,6 +9,7 @@ import { toast } from '@/store/toast';
 import { avisoDeCambio, estadoDePedido, ETIQUETA_OPERATIVA } from '@/lib/pedidos';
 import type { Order } from '@/lib/types';
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
+import { ProductosPanel } from '@/components/admin/ProductosPanel';
 import { ErrorState } from '@/components/ErrorState';
 
 
@@ -36,16 +37,6 @@ export function AdminPage() {
     );
   }
 
-  const deleteProduct = async (id: string) => {
-    if (!confirm('¿Eliminar este producto?')) return;
-    try {
-      await api.adminDeleteProduct(id);
-      toast.success('Producto eliminado');
-      setNonce((n) => n + 1);
-    } catch (err) {
-      toast.error((err as Error).message);
-    }
-  };
   /**
    * Mover el estado OPERATIVO de un pedido.
    *
@@ -113,39 +104,11 @@ export function AdminPage() {
           <div className="card rounded-4xl py-16 text-center text-content-subtle">Cargando estadísticas…</div>
         )
       ) : tab === 'products' ? (
-        <div className="card overflow-hidden rounded-4xl">
-          <table className="w-full text-sm">
-            <thead className="bg-brand-900/[0.03] text-left text-xs uppercase tracking-wide text-content-subtle">
-              <tr>
-                <th className="px-5 py-3">Producto</th>
-                <th className="px-5 py-3">Marca</th>
-                <th className="px-5 py-3">Precio</th>
-                <th className="px-5 py-3">Variantes</th>
-                <th className="px-5 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-brand-900/5">
-              {products.data?.products.map((p) => (
-                <tr key={p.id} className="hover:bg-brand-900/[0.02]">
-                  <td className="px-5 py-3">
-                    <div className="flex items-center gap-3">
-                      <img src={p.image} alt="" className="h-10 w-10 rounded-lg object-cover" />
-                      <Link to={`/producto/${p.slug}`} className="font-semibold text-ink hover:text-brand-700">{p.name}</Link>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3 text-brand-900/70">{p.brand?.name ?? '—'}</td>
-                  <td className="px-5 py-3 font-semibold">{eur(p.price)}</td>
-                  <td className="px-5 py-3 text-brand-900/60">{p.variants.length}</td>
-                  <td className="px-5 py-3 text-right">
-                    <button onClick={() => deleteProduct(p.id)} className="rounded-lg p-2 text-content-subtle hover:bg-red-50 hover:text-red-500" aria-label="Eliminar">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        products.error ? (
+          <ErrorState message={products.error} onRetry={products.refetch} />
+        ) : (
+          <ProductosPanel data={products.data} onChanged={() => setNonce((n) => n + 1)} />
+        )
       ) : tab === 'orders' ? (
         <div className="space-y-3">
           {!orders.data?.orders.length ? (

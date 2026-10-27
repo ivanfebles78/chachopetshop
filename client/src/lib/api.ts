@@ -1,4 +1,7 @@
 import type {
+  AdminProduct,
+  AdminProductPatch,
+  AdminProductsResponse,
   Analytics,
   AuthUser,
   ContactMessage,
@@ -163,7 +166,9 @@ export const api = {
     request<{ ok: boolean }>(`/admin/messages/${id}`, { method: 'PATCH', body: JSON.stringify({ read }) }),
   adminDeleteMessage: (id: string) =>
     request<{ ok: boolean }>(`/admin/messages/${id}`, { method: 'DELETE' }),
-  adminProducts: () => request<{ products: Product[] }>('/admin/products'),
+  adminProducts: () => request<AdminProductsResponse>('/admin/products'),
+  adminUpdateProduct: (id: string, patch: AdminProductPatch) =>
+    request<{ product: AdminProduct }>(`/admin/products/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
   adminDeleteProduct: (id: string) => request<{ ok: boolean }>(`/admin/products/${id}`, { method: 'DELETE' }),
   adminOrders: () => request<{ orders: (Order & { siguientes: string[] })[] }>('/admin/orders'),
   /*

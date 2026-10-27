@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '../db.js';
 import {
   admiteCambioOperativo,
@@ -28,15 +29,26 @@ adminRouter.get('/analytics', async (_req, res, next) => {
   }
 });
 
+// Las imágenes del catálogo pueden ser URLs externas (semilla, picsum) o rutas
+// propias servidas por el front (`/productos/…`). `z.string().url()` rechazaba
+// las segundas, así que al guardar un accesorio desde el panel fallaba la
+// validación. Aceptamos ambas.
+const imagen = z
+  .string()
+  .min(1)
+  .refine((s) => /^https?:\/\//.test(s) || s.startsWith('/'), 'Debe ser una URL http(s) o una ruta que empiece por «/».');
+
 const productBody = z.object({
   name: z.string().min(1),
   slug: z.string().min(1),
   description: z.string().default(''),
+  /** Línea de producto (jaulas, Descanso, Gourmet…). Nullable. */
+  line: z.string().nullable().optional(),
   brandId: z.string(),
   price: z.number().min(0),
   compareAt: z.number().min(0).nullable().optional(),
-  image: z.string().url(),
-  gallery: z.array(z.string().url()).default([]),
+  image: imagen,
+  gallery: z.array(imagen).default([]),
   featured: z.boolean().default(false),
   bestseller: z.boolean().default(false),
   active: z.boolean().default(true),
@@ -52,6 +64,7 @@ const relationConnect = (b: z.infer<typeof productBody>) => ({
   name: b.name,
   slug: b.slug,
   description: b.description,
+  line: b.line ?? null,
   brandId: b.brandId,
   price: b.price,
   compareAt: b.compareAt ?? null,
@@ -65,13 +78,102 @@ const relationConnect = (b: z.infer<typeof productBody>) => ({
   needs: { set: b.needIds.map((id) => ({ id })) },
 });
 
+/**
+ * GET /api/admin/products — listado para gestionar el catálogo.
+ *
+ * Devuelve TODOS los productos (activos e inactivos) con lo justo para la tabla
+ * y el editor: sin `contenido` (el JSON grande de la ficha) ni galería, para que
+ * el payload sea ligero aunque haya más de mil productos. El filtrado, la
+ * búsqueda y el orden se hacen en el cliente sobre esta lista.
+ *
+ * Incluye también `lineas`: los valores de línea existentes, para ofrecerlos
+ * como filtro y como sugerencias al editar.
+ */
 adminRouter.get('/products', async (_req, res, next) => {
   try {
-    const products = await prisma.product.findMany({
-      orderBy: { createdAt: 'desc' },
+    const [rows, lineRows] = await Promise.all([
+      prisma.product.findMany({
+        orderBy: { name: 'asc' },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          image: true,
+          price: true,
+          active: true,
+          line: true,
+          brand: { select: { id: true, name: true, slug: true } },
+          animals: { select: { id: true, slug: true, name: true } },
+          categories: { select: { id: true, slug: true, name: true } },
+          needs: { select: { id: true, slug: true, name: true } },
+          variants: { select: { id: true, sku: true, price: true, stock: true, label: true }, orderBy: { price: 'asc' } },
+        },
+      }),
+      prisma.product.findMany({ where: { line: { not: null } }, select: { line: true }, distinct: ['line'] }),
+    ]);
+    const products = rows.map((p) => ({
+      ...p,
+      price: toNumber(p.price),
+      variants: p.variants.map((v) => ({ ...v, price: toNumber(v.price) })),
+    }));
+    const lineas = lineRows
+      .map((l) => l.line)
+      .filter((l): l is string => Boolean(l))
+      .sort((a, b) => a.localeCompare(b, 'es'));
+    res.json({ products, lineas });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * PATCH /api/admin/products/:id — edición puntual de un producto.
+ *
+ * Solo toca los campos que llegan (nombre, descripción, línea, precio, marca,
+ * animales, categorías, necesidades, activo). NO recrea variantes —a diferencia
+ * del PUT— para no perder su SKU/stock. Como cada producto es «una ficha por
+ * formato» (una variante), al cambiar el precio se iguala también el de la
+ * variante, que es el que se ve en la tienda.
+ */
+const productPatch = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().optional(),
+  line: z.string().nullable().optional(),
+  price: z.number().min(0).nullable().optional(),
+  brandId: z.string().nullable().optional(),
+  active: z.boolean().optional(),
+  animalIds: z.array(z.string()).optional(),
+  categoryIds: z.array(z.string()).optional(),
+  needIds: z.array(z.string()).optional(),
+});
+
+adminRouter.patch('/products/:id', async (req, res, next) => {
+  try {
+    const b = productPatch.parse(req.body);
+    const id = req.params.id;
+    const data: Prisma.ProductUpdateInput = {};
+    if (b.name !== undefined) data.name = b.name;
+    if (b.description !== undefined) data.description = b.description;
+    if (b.line !== undefined) data.line = b.line; // null = quitar la línea
+    if (b.active !== undefined) data.active = b.active;
+    if (b.price !== undefined) data.price = b.price;
+    if (b.brandId !== undefined) data.brand = b.brandId ? { connect: { id: b.brandId } } : { disconnect: true };
+    if (b.animalIds) data.animals = { set: b.animalIds.map((x) => ({ id: x })) };
+    if (b.categoryIds) data.categories = { set: b.categoryIds.map((x) => ({ id: x })) };
+    if (b.needIds) data.needs = { set: b.needIds.map((x) => ({ id: x })) };
+
+    // El precio que ve el cliente es el de la variante; al cambiarlo (o vaciarlo
+    // = «a consultar») igualamos también las variantes para que coincida.
+    if (b.price !== undefined) {
+      await prisma.productVariant.updateMany({ where: { productId: id }, data: { price: b.price } });
+    }
+    const product = await prisma.product.update({
+      where: { id },
+      data,
       include: { brand: true, animals: true, categories: true, needs: true, variants: true },
     });
-    res.json({ products: products.map(serializeProduct) });
+    res.json({ product: serializeProduct(product) });
   } catch (err) {
     next(err);
   }
