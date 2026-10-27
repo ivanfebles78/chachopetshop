@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, Pencil, Search, Trash2, X } from 'lucide-react';
+import { Check, Download, Pencil, Search, Trash2, Upload, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { cn, eur } from '@/lib/cn';
 import { toast } from '@/store/toast';
 import { useOverlay } from '@/lib/useOverlay';
+import { exportarProductosAExcel } from '@/lib/excelProductos';
+import { ImportDialog } from './ImportDialog';
 import type { AdminProduct, AdminProductsResponse, RefTax, Taxonomy } from '@/lib/types';
 
 /**
@@ -45,8 +47,22 @@ export function ProductosPanel({
   const [orden, setOrden] = useState<Orden>('nombre');
   const [pagina, setPagina] = useState(1);
   const [editando, setEditando] = useState<AdminProduct | null>(null);
+  const [importando, setImportando] = useState(false);
+  const [exportando, setExportando] = useState(false);
 
   const productos = data?.products ?? [];
+
+  const exportar = async () => {
+    if (!productos.length) return;
+    setExportando(true);
+    try {
+      await exportarProductosAExcel(productos);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setExportando(false);
+    }
+  };
 
   const filtrados = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -106,6 +122,28 @@ export function ProductosPanel({
 
   return (
     <div className="space-y-4">
+      {/* Exportar / importar en bloque */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-content-subtle">Edita, exporta o importa el catálogo en bloque.</p>
+        <div className="flex gap-2">
+          <button
+            onClick={exportar}
+            disabled={exportando || productos.length === 0}
+            className="inline-flex items-center gap-2 rounded-full border border-brand-900/10 bg-white px-4 py-2.5 text-sm font-semibold text-ink hover:bg-brand-50 disabled:opacity-50"
+          >
+            <Download className="h-4 w-4" aria-hidden="true" />
+            {exportando ? 'Exportando…' : 'Exportar a Excel'}
+          </button>
+          <button
+            onClick={() => setImportando(true)}
+            className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-4 py-2.5 text-sm font-semibold text-cream shadow-soft hover:bg-brand-700"
+          >
+            <Upload className="h-4 w-4" aria-hidden="true" />
+            Importar
+          </button>
+        </div>
+      </div>
+
       {/* Barra de búsqueda y filtros */}
       <div className="card rounded-3xl p-4">
         <div className="flex flex-wrap items-center gap-3">
@@ -260,6 +298,8 @@ export function ProductosPanel({
           }}
         />
       )}
+
+      {importando && <ImportDialog onCerrar={() => setImportando(false)} onImportado={onChanged} />}
     </div>
   );
 }

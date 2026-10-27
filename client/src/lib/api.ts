@@ -3,6 +3,9 @@ import type {
   AdminProductPatch,
   AdminProductsResponse,
   Analytics,
+  ImportMode,
+  ImportResult,
+  ImportRow,
   AuthUser,
   ContactMessage,
   Envio,
@@ -169,6 +172,8 @@ export const api = {
   adminProducts: () => request<AdminProductsResponse>('/admin/products'),
   adminUpdateProduct: (id: string, patch: AdminProductPatch) =>
     request<{ product: AdminProduct }>(`/admin/products/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
+  adminImportProducts: (mode: ImportMode, rows: ImportRow[]) =>
+    request<ImportResult>('/admin/products/import', { method: 'POST', body: JSON.stringify({ mode, rows }) }),
   adminDeleteProduct: (id: string) => request<{ ok: boolean }>(`/admin/products/${id}`, { method: 'DELETE' }),
   adminOrders: () => request<{ orders: (Order & { siguientes: string[] })[] }>('/admin/orders'),
   /*

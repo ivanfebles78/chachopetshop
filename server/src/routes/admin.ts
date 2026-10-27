@@ -214,6 +214,176 @@ adminRouter.put('/products/:id', async (req, res, next) => {
   }
 });
 
+/**
+ * POST /api/admin/products/import — importación masiva desde Excel.
+ *
+ * El cliente lee el .xlsx y manda las filas ya parseadas. Cada fila se localiza
+ * por SKU (y si no, por slug). Dos modos:
+ *
+ *   · «merge»   → crea las que faltan y actualiza las que ya están. Lo que NO
+ *                 viene en el archivo se queda igual.
+ *   · «replace» → lo mismo, y además ELIMINA lo que no aparece en el archivo
+ *                 (desactiva en vez de borrar si el producto tiene pedidos, para
+ *                 no romper el histórico). Es destructivo: el panel lo confirma.
+ *
+ * Los slugs de marca/animales/categorías que no existan se ignoran y se avisan;
+ * nunca se inventan taxonomías nuevas desde aquí.
+ */
+const slugify = (s: string) =>
+  s
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+const importRow = z
+  .object({
+    sku: z.string().trim().min(1).optional(),
+    slug: z.string().trim().optional(),
+    name: z.string().optional(),
+    description: z.string().optional(),
+    line: z.string().nullable().optional(),
+    price: z.number().min(0).nullable().optional(),
+    brand: z.string().optional(), // slug de marca
+    animals: z.array(z.string()).optional(), // slugs
+    categories: z.array(z.string()).optional(), // slugs
+    active: z.boolean().optional(),
+    image: z.string().optional(),
+  })
+  .refine((r) => Boolean(r.sku || r.slug), 'Cada fila necesita SKU o slug.');
+
+const importBody = z.object({
+  mode: z.enum(['merge', 'replace']),
+  rows: z.array(importRow).min(1).max(5000),
+});
+
+adminRouter.post('/products/import', async (req, res, next) => {
+  try {
+    const { mode, rows } = importBody.parse(req.body);
+
+    const [animales, categorias, marcas, variantes, productos] = await Promise.all([
+      prisma.animal.findMany({ select: { id: true, slug: true } }),
+      prisma.category.findMany({ select: { id: true, slug: true } }),
+      prisma.brand.findMany({ select: { id: true, slug: true } }),
+      prisma.productVariant.findMany({ select: { sku: true, productId: true } }),
+      prisma.product.findMany({ select: { id: true, slug: true } }),
+    ]);
+    const animalId = new Map(animales.map((a) => [a.slug, a.id]));
+    const categoryId = new Map(categorias.map((c) => [c.slug, c.id]));
+    const brandId = new Map(marcas.map((b) => [b.slug, b.id]));
+    const idPorSku = new Map(variantes.map((v) => [v.sku, v.productId]));
+    const idPorSlug = new Map(productos.map((p) => [p.slug, p.id]));
+
+    const conservados = new Set<string>();
+    let creados = 0;
+    let actualizados = 0;
+    const errores: string[] = [];
+
+    for (const [i, r] of rows.entries()) {
+      const etiqueta = r.sku || r.slug || `fila ${i + 2}`;
+      try {
+        const productId = (r.sku && idPorSku.get(r.sku)) || (r.slug && idPorSlug.get(r.slug)) || null;
+        const aIds = r.animals?.map((s) => animalId.get(s)).filter((x): x is string => Boolean(x));
+        const cIds = r.categories?.map((s) => categoryId.get(s)).filter((x): x is string => Boolean(x));
+        const bId = r.brand ? brandId.get(r.brand) : undefined;
+        if (r.brand && !bId) errores.push(`${etiqueta}: la marca «${r.brand}» no existe (se deja igual).`);
+
+        if (productId) {
+          // Está en el archivo: se conserva aunque la actualización falle, para
+          // que en modo «replace» un error puntual no acabe borrándolo.
+          conservados.add(productId);
+          const data: Prisma.ProductUpdateInput = {};
+          if (r.name !== undefined) data.name = r.name;
+          if (r.description !== undefined) data.description = r.description;
+          if (r.line !== undefined) data.line = r.line;
+          if (r.active !== undefined) data.active = r.active;
+          if (r.price !== undefined) data.price = r.price;
+          if (r.image) data.image = r.image;
+          if (bId) data.brand = { connect: { id: bId } };
+          if (aIds) data.animals = { set: aIds.map((id) => ({ id })) };
+          if (cIds) data.categories = { set: cIds.map((id) => ({ id })) };
+          if (r.price !== undefined) {
+            await prisma.productVariant.updateMany({ where: { productId }, data: { price: r.price } });
+          }
+          await prisma.product.update({ where: { id: productId }, data });
+          actualizados++;
+        } else {
+          const slug = r.slug || slugify(r.name || r.sku || '');
+          if (!r.name || !slug || !r.image) {
+            errores.push(`${etiqueta}: para CREAR un producto nuevo hacen falta Nombre, Slug e Imagen.`);
+            continue;
+          }
+          const creado = await prisma.product.create({
+            data: {
+              name: r.name,
+              slug,
+              description: r.description ?? '',
+              line: r.line ?? null,
+              price: r.price ?? null,
+              image: r.image,
+              gallery: [r.image],
+              active: r.active ?? true,
+              ...(bId ? { brand: { connect: { id: bId } } } : {}),
+              ...(aIds?.length ? { animals: { connect: aIds.map((id) => ({ id })) } } : {}),
+              ...(cIds?.length ? { categories: { connect: cIds.map((id) => ({ id })) } } : {}),
+              variants: { create: [{ label: 'Único', sku: r.sku || slug, price: r.price ?? null, stock: 0 }] },
+            },
+            select: { id: true },
+          });
+          conservados.add(creado.id);
+          creados++;
+        }
+      } catch (e) {
+        errores.push(`${etiqueta}: ${(e as Error).message}`);
+      }
+    }
+
+    let eliminados = 0;
+    let desactivados = 0;
+    if (mode === 'replace') {
+      // Salvaguarda: si no se importó nada, NO se borra el catálogo entero.
+      if (conservados.size === 0) {
+        return res.status(400).json({
+          error: 'No se importó ningún producto válido, así que no se borra nada. Revisa el archivo.',
+        });
+      }
+      const sobran = await prisma.product.findMany({
+        where: { id: { notIn: [...conservados] } },
+        select: { id: true },
+      });
+      for (const p of sobran) {
+        let ped = 0;
+        try {
+          ped = await prisma.orderItem.count({ where: { productId: p.id } });
+        } catch {
+          ped = 0;
+        }
+        if (ped > 0) {
+          await prisma.product.update({ where: { id: p.id }, data: { active: false } });
+          desactivados++;
+        } else {
+          await prisma.product.delete({ where: { id: p.id } });
+          eliminados++;
+        }
+      }
+    }
+
+    res.json({
+      mode,
+      total: rows.length,
+      creados,
+      actualizados,
+      eliminados,
+      desactivados,
+      totalErrores: errores.length,
+      errores: errores.slice(0, 50),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 adminRouter.delete('/products/:id', async (req, res, next) => {
   try {
     await prisma.product.delete({ where: { id: req.params.id } });

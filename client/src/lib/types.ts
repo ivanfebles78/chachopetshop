@@ -91,6 +91,39 @@ export type AdminProduct = {
 
 export type AdminProductsResponse = { products: AdminProduct[]; lineas: string[] };
 
+/** Importación masiva: cómo tratar lo que ya existe. */
+export type ImportMode = 'merge' | 'replace';
+
+/** Una fila de la importación (lo que el cliente extrae del Excel). */
+export type ImportRow = {
+  sku?: string;
+  slug?: string;
+  name?: string;
+  description?: string;
+  line?: string | null;
+  price?: number | null;
+  /** slug de la marca. */
+  brand?: string;
+  /** slugs de animales. */
+  animals?: string[];
+  /** slugs de categorías. */
+  categories?: string[];
+  active?: boolean;
+  image?: string;
+};
+
+/** Resumen que devuelve el servidor tras importar. */
+export type ImportResult = {
+  mode: ImportMode;
+  total: number;
+  creados: number;
+  actualizados: number;
+  eliminados: number;
+  desactivados: number;
+  totalErrores: number;
+  errores: string[];
+};
+
 /** Campos editables de un producto desde el panel (todos opcionales). */
 export type AdminProductPatch = Partial<{
   name: string;
