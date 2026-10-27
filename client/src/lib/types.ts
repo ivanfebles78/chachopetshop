@@ -98,9 +98,6 @@ export type Facetas = {
   sizes: Faceta[];
   ofertas: number;
   precio: { min: number; max: number } | null;
-  /** Nº de marcas distintas en el resultado actual. Si es <= 1, el panel oculta
-   *  el filtro «Marca» (no tiene sentido con una sola marca, p. ej. Animally). */
-  marcasEnResultado?: number;
 };
 
 export type ProductListResponse = {
