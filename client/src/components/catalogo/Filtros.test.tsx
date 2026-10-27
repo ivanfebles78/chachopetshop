@@ -31,7 +31,7 @@ const FACETAS: Facetas = {
     { slug: 'nobleza', nombre: 'Nobleza', total: 49 },
   ],
   lines: [
-    { slug: 'Camas y cojines', nombre: 'Camas y cojines', total: 211 },
+    { slug: 'Descanso', nombre: 'Descanso', total: 211 },
     { slug: 'Jaulas y transportines', nombre: 'Jaulas y transportines', total: 22 },
     { slug: 'Toallitas', nombre: 'Toallitas', total: 7 },
   ],
@@ -86,7 +86,7 @@ describe('«Tipo de producto» agrupado', () => {
   it('en la categoría accesorios, el grupo viene abierto con sus líneas', () => {
     montar({ category: ['accesorios'] });
     // Activo -> abierto por defecto: la línea se ve sin tener que desplegar.
-    expect(screen.getByRole('checkbox', { name: /Camas y cojines/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Descanso/i })).toBeInTheDocument();
   });
 
   it('una línea traída en la URL llega ya marcada (enlace del menú superior)', () => {
