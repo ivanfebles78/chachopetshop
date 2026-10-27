@@ -3,9 +3,10 @@ import type { AdminProduct, ImportRow } from './types';
 /**
  * EXPORTAR / IMPORTAR EL CATÁLOGO EN EXCEL.
  *
- * SheetJS se carga con `import()` dinámico: es una librería grande y solo hace
- * falta cuando el admin pulsa exportar o importar, así que no entra en el
- * paquete principal de la tienda.
+ * SheetJS NO se empaqueta: se carga desde un CDN la primera vez que el admin
+ * pulsa exportar o importar. Empaquetarla hacía que el build de producción se
+ * quedara sin memoria (la librería es enorme), así que se mantiene fuera del
+ * bundle y solo se trae bajo demanda, en una pantalla de administración.
  *
  * Las relaciones (marca, animales, categorías) viajan como SLUGS —los
  * identificadores estables—, no como nombres: así el archivo se puede reeditar
@@ -13,10 +14,29 @@ import type { AdminProduct, ImportRow } from './types';
  * animales y categorías van separados por «|».
  */
 
+type XLSXModule = typeof import('xlsx');
+const CDN_XLSX = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+
+/** Carga SheetJS desde el CDN (o lo reutiliza si ya está en `window`). */
+async function cargarXLSX(): Promise<XLSXModule> {
+  const w = window as unknown as { XLSX?: XLSXModule };
+  if (w.XLSX) return w.XLSX;
+  await new Promise<void>((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = CDN_XLSX;
+    s.async = true;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error('No se pudo cargar la librería de Excel. ¿Sin conexión?'));
+    document.head.appendChild(s);
+  });
+  if (!w.XLSX) throw new Error('No se pudo cargar la librería de Excel.');
+  return w.XLSX;
+}
+
 const CABECERAS = ['SKU', 'Nombre', 'Descripción', 'Marca', 'Animales', 'Categorías', 'Línea', 'Precio', 'Activo', 'Imagen', 'Slug'];
 
 export async function exportarProductosAExcel(products: AdminProduct[]) {
-  const XLSX = await import('xlsx');
+  const XLSX = await cargarXLSX();
   const filas = products.map((p) => ({
     SKU: p.variants[0]?.sku ?? '',
     Nombre: p.name,
@@ -60,7 +80,7 @@ const CLAVES: Record<string, string[]> = {
 };
 
 export async function parsearProductosDeExcel(file: File): Promise<ImportRow[]> {
-  const XLSX = await import('xlsx');
+  const XLSX = await cargarXLSX();
   const buf = await file.arrayBuffer();
   const wb = XLSX.read(buf, { type: 'array' });
   const nombreHoja = wb.SheetNames[0];

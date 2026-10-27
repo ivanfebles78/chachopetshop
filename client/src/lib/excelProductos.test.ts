@@ -1,13 +1,19 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import * as XLSX from 'xlsx';
 import { parsearProductosDeExcel } from './excelProductos';
+
+// En producción SheetJS se carga del CDN; en jsdom no hay red, así que lo
+// dejamos ya disponible en `window` (el cargador lo reutiliza si existe).
+beforeAll(() => {
+  (window as unknown as { XLSX: typeof XLSX }).XLSX = XLSX;
+});
 
 /** Construye un File .xlsx en memoria a partir de filas con cabeceras. */
 function archivo(rows: Record<string, unknown>[]): File {
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Productos');
-  const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as Uint8Array;
+  const buf = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as BlobPart;
   return new File([buf], 'productos.xlsx');
 }
 
