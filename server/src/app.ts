@@ -46,6 +46,10 @@ export function createApp() {
       credentials: true,
     }),
   );
+  // La importación masiva de productos manda el catálogo entero en JSON, que
+  // supera de largo el límite por defecto (100 kb). Se le da un parser propio
+  // con más holgura ANTES del global; el global ve el body ya leído y lo salta.
+  app.use('/api/admin/products/import', express.json({ limit: '20mb' }));
   app.use(express.json());
   app.use(cookieParser());
   app.use(attachUser);
