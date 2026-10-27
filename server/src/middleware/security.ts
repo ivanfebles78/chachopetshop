@@ -126,7 +126,11 @@ const limitador = (opciones: {
  */
 export const limiteAutenticacion = limitador({
   windowMs: 15 * 60 * 1000,
-  limit: 20,
+  // Tope alto a propósito: el dueño no debe bloquearse aunque se equivoque de
+  // contraseña muchas veces seguidas. Con soloPost + skipSuccessfulRequests, un
+  // uso normal (y los logins correctos) no gastan nada; esto solo frena un
+  // ataque automatizado masivo.
+  limit: 100,
   skipSuccessfulRequests: true,
   soloPost: true,
   message: 'Demasiados intentos. Espera unos minutos antes de volver a probar.',
