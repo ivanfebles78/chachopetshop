@@ -40,12 +40,6 @@ export type Facetas = {
   ofertas: number;
   /** Rango de precios real del resultado, para acotar el filtro de precio. */
   precio: { min: number; max: number } | null;
-  /**
-   * Nº de marcas DISTINTAS presentes en el resultado actual (con TODOS los
-   * filtros puestos, marca incluida). El panel oculta el filtro «Marca» cuando
-   * es <= 1: no tiene sentido ofrecer marcas si solo hay una (p. ej. Animally).
-   */
-  marcasEnResultado: number;
 };
 
 /** Condiciones de la consulta, separadas por dimensión para poder excluir una. */
@@ -93,7 +87,7 @@ const aFaceta = (f: { slug: string; name: string; _count: { products: number } }
 });
 
 export async function calcularFacetas(c: Condiciones): Promise<Facetas> {
-  const [animals, categories, needs, brands, lines, sizes, ofertas, precios, marcasEnResultado] = await Promise.all([
+  const [animals, categories, needs, brands, lines, sizes, ofertas, precios] = await Promise.all([
     prisma.animal.findMany({
       select: { slug: true, name: true, _count: { select: { products: { where: salvo(c, 'animal') } } } },
       orderBy: { sortOrder: 'asc' },
@@ -147,10 +141,6 @@ export async function calcularFacetas(c: Condiciones): Promise<Facetas> {
       _min: { price: true },
       _max: { price: true },
     }),
-    // Marcas distintas en el resultado actual (TODOS los filtros, marca incluida).
-    prisma.product
-      .findMany({ where: salvo(c, null), select: { brandId: true }, distinct: ['brandId'] })
-      .then((r) => r.length),
   ]);
 
   const min = precios._min.price;
@@ -165,6 +155,5 @@ export async function calcularFacetas(c: Condiciones): Promise<Facetas> {
     sizes,
     ofertas,
     precio: min != null && max != null ? { min: Number(min), max: Number(max) } : null,
-    marcasEnResultado,
   };
 }

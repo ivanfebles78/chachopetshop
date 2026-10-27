@@ -243,7 +243,7 @@ const GRUPOS_TIPO: GrupoTipo[] = [
     nombre: 'Alimentación',
     cats: ['alimentacion-seca', 'alimentacion-humeda', 'alimentacion-semihumeda', 'snacks-y-premios', 'semillas-y-forraje'],
   },
-  { nombre: 'Suplementos y cosmética', cats: ['higiene-y-cosmetica', 'salud-y-antiparasitarios'] },
+  { nombre: 'Cosmética', cats: ['higiene-y-cosmetica', 'salud-y-antiparasitarios'] },
   { nombre: 'Accesorios', cats: ['accesorios'], esAccesorios: true },
   { nombre: 'Otros', cats: ['otros'] },
 ];
@@ -318,6 +318,24 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
   // dependen de la marca) se quedan en su grupo «Línea» de más abajo.
   const lineasAccesorio = lineas.filter((l) => LINEAS_ACCESORIO.includes(l.slug));
   const lineasMarca = lineas.filter((l) => !LINEAS_ACCESORIO.includes(l.slug));
+
+  // El filtro «Marca» se oculta SOLO cuando la marca es el único filtro activo:
+  // ahí la faceta de marca se calcula sin esa dimensión y devuelve TODO el
+  // catálogo (p. ej. entrar por Animally mostraría las 50 marcas). En cualquier
+  // otro caso —filtrando por línea, categoría, animal…— las marcas del resultado
+  // sí interesan, aunque solo haya una (aglomerantes y areneros son de Nobleza,
+  // y hay que poder verlo).
+  const hayOtroFiltro =
+    (filtros.category?.length ?? 0) > 0 ||
+    (filtros.line?.length ?? 0) > 0 ||
+    (filtros.animal?.length ?? 0) > 0 ||
+    (filtros.need?.length ?? 0) > 0 ||
+    (filtros.size?.length ?? 0) > 0 ||
+    Boolean(filtros.oferta) ||
+    filtros.minPrice != null ||
+    filtros.maxPrice != null ||
+    Boolean(filtros.q);
+  const marcaGlobalizada = (filtros.brand?.length ?? 0) > 0 && !hayOtroFiltro;
   // Ninguna categoría puede desaparecer: las que no caen en un grupo conocido
   // se recogen en un grupo «Más» al final.
   const enAlgunGrupo = new Set(GRUPOS_TIPO.flatMap((g) => g.cats));
@@ -418,12 +436,13 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
         </Grupo>
       )}
 
-      {marcas.length > 0 && (facetas.marcasEnResultado == null || facetas.marcasEnResultado > 1) && (
+      {marcas.length > 0 && !marcaGlobalizada && (
         <Grupo titulo="Marca">
           {/*
-           * El filtro «Marca» solo aparece si el resultado tiene MÁS DE UNA marca.
-           * Con una sola (p. ej. Animally, que solo vende cosmética) no tiene
-           * sentido ofrecer otras marcas, así que se oculta el grupo entero.
+           * El filtro «Marca» se oculta solo cuando la marca es el único filtro
+           * (ver `marcaGlobalizada`): entonces la faceta trae todo el catálogo y
+           * no dice nada. Con cualquier otro filtro puesto, las marcas del
+           * resultado sí interesan —aunque sea una sola.
            *
            * Sin tope de alto ni scroll propio: la lista se ve entera y se recorre
            * con el scroll normal de la página. Antes (`max-h-72 overflow-y-auto`)

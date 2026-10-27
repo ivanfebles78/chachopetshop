@@ -38,13 +38,12 @@ const FACETAS: Facetas = {
   sizes: [],
   ofertas: 0,
   precio: { min: 5, max: 60 },
-  marcasEnResultado: 2,
 };
 
-const montar = (filtros: ProductFilters = {}) => {
+const montar = (filtros: ProductFilters = {}, facetas: Facetas = FACETAS) => {
   const poner = vi.fn();
   const alternar = vi.fn();
-  render(<Filtros facetas={FACETAS} filtros={filtros} poner={poner} alternar={alternar} />);
+  render(<Filtros facetas={facetas} filtros={filtros} poner={poner} alternar={alternar} />);
   return { poner, alternar };
 };
 
@@ -54,7 +53,7 @@ describe('«Tipo de producto» agrupado', () => {
   it('arriba se ven los grupos, no las categorías sueltas', () => {
     montar();
     expect(screen.getByRole('button', { name: /^Alimentación/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Suplementos y cosmética/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Cosmética/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Accesorios/i })).toBeInTheDocument();
   });
 
@@ -102,5 +101,25 @@ describe('«Tipo de producto» agrupado', () => {
     // «Línea» (de marca) no se pinta: esas líneas ya cuelgan de «Accesorios».
     montar({ brand: ['nobleza'] });
     expect(screen.queryByRole('button', { name: /^Línea$/i })).not.toBeInTheDocument();
+  });
+});
+
+describe('el filtro «Marca»', () => {
+  it('se ve filtrando por línea aunque solo haya UNA marca (aglomerantes = Nobleza)', () => {
+    montar(
+      { line: ['Aglomerantes'] },
+      {
+        ...FACETAS,
+        brands: [{ slug: 'nobleza', nombre: 'Nobleza', total: 3 }],
+        lines: [{ slug: 'Aglomerantes', nombre: 'Aglomerantes', total: 3 }],
+      },
+    );
+    expect(screen.getByRole('button', { name: /^Marca$/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Nobleza/i })).toBeInTheDocument();
+  });
+
+  it('se oculta cuando la marca es el ÚNICO filtro (la faceta trae todo el catálogo)', () => {
+    montar({ brand: ['gamarq'] });
+    expect(screen.queryByRole('button', { name: /^Marca$/i })).not.toBeInTheDocument();
   });
 });
