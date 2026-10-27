@@ -51,9 +51,9 @@ WORKDIR /app/server
 #
 # Si la importación falla, se avisa pero la API arranca igual: un problema
 # sembrando no puede dejar la tienda caída.
-#   · CREAR_ADMIN=1  →  en ESE arranque crea/actualiza el usuario administrador
-#     con ADMIN_EMAIL y ADMIN_PASSWORD (hasheada). Es para dar de alta el acceso
-#     al panel sin abrir una consola: se ponen las tres variables, se redespliega
-#     y DESPUÉS se pone CREAR_ADMIN=0 (ADMIN_PASSWORD se puede quitar). Si el
-#     usuario ya existía, le actualiza la contraseña y el rol.
-CMD ["sh", "-c", "npx prisma migrate deploy && if [ \"$IMPORTAR_CATALOGO\" = \"1\" ]; then echo '>> IMPORTAR_CATALOGO=1: importando catálogo de tienda...'; npx tsx prisma/sembrar-tienda.ts || echo '>> AVISO: la importación del catálogo falló; la API arranca igual.'; fi; if [ \"$CREAR_ADMIN\" = \"1\" ]; then echo '>> CREAR_ADMIN=1: creando usuario admin...'; node scripts/crear-admin.mjs || echo '>> AVISO: no se pudo crear el admin; la API arranca igual.'; fi; node dist/index.js"]
+# Alta del ADMIN del panel: si al arrancar están ADMIN_EMAIL y ADMIN_PASSWORD,
+# se crea/actualiza el usuario administrador (contraseña hasheada), sin abrir
+# consola. Se ponen las dos variables, se redespliega y queda hecho; luego se
+# puede quitar ADMIN_PASSWORD. Si el usuario ya existía, le pone esa contraseña
+# y el rol ADMIN. (Cada arranque con esas variables reafirma la contraseña.)
+CMD ["sh", "-c", "npx prisma migrate deploy && if [ \"$IMPORTAR_CATALOGO\" = \"1\" ]; then echo '>> IMPORTAR_CATALOGO=1: importando catálogo de tienda...'; npx tsx prisma/sembrar-tienda.ts || echo '>> AVISO: la importación del catálogo falló; la API arranca igual.'; fi; if [ -n \"$ADMIN_EMAIL\" ] && [ -n \"$ADMIN_PASSWORD\" ]; then echo '>> Creando/actualizando usuario admin...'; node scripts/crear-admin.mjs || echo '>> AVISO: no se pudo crear el admin; la API arranca igual.'; fi; node dist/index.js"]
