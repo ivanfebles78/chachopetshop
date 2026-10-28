@@ -60,6 +60,25 @@ export function CatalogPage() {
     return () => obs.disconnect();
   }, [hayMas, cargarMas]);
 
+  /*
+   * RELLENAR LA PANTALLA SIN TENER QUE HACER SCROLL.
+   *
+   * El observador de arriba solo dispara cuando el centinela ENTRA en pantalla
+   * al bajar. Pero si un filtro devuelve pocos productos (p. ej. 18, y la
+   * primera página trae 12), el centinela ya está a la vista y no vuelve a
+   * «entrar»: se quedaba en «12 de 18» hasta que alguien hacía scroll. Aquí,
+   * tras cada carga, si el centinela sigue dentro de la ventana (quedan
+   * productos y caben), se pide la siguiente página sola. Se detiene solo cuando
+   * la lista llena la pantalla o ya no quedan más.
+   */
+  useEffect(() => {
+    if (cargando || cargandoMas || !hayMas) return;
+    const nodo = centinela.current;
+    if (nodo && nodo.getBoundingClientRect().top <= window.innerHeight + 600) {
+      cargarMas();
+    }
+  }, [items, cargando, cargandoMas, hayMas, cargarMas]);
+
   const titulo = tituloDe(filtros, facetas);
   const puestos = filtrosPuestos(filtros, facetas);
   const nFiltros = cuantosFiltros(filtros);
