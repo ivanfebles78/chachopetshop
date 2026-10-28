@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, type ProductFilters } from './api';
 import type { Facetas, Product } from './types';
 
@@ -33,9 +33,18 @@ export function useCatalogoInfinito(filtros: ProductFilters, clave: string) {
 
   const refetch = useCallback(() => setNonce((n) => n + 1), []);
 
+  // La clave vigente, para que «cargar más» pueda DESCARTAR respuestas que
+  // lleguen cuando los filtros ya han cambiado (si no, mezclaría productos del
+  // filtro anterior —p. ej. otra marca— con los del nuevo).
+  const claveRef = useRef(clave);
+  useEffect(() => {
+    claveRef.current = clave;
+  }, [clave]);
+
   useEffect(() => {
     let vivo = true;
     setCargando(true);
+    setCargandoMas(false);
     setError(null);
     api
       .products({ ...filtros, page: 1 })
@@ -59,19 +68,25 @@ export function useCatalogoInfinito(filtros: ProductFilters, clave: string) {
 
   const cargarMas = useCallback(() => {
     if (cargando || cargandoMas || !hayMas) return;
+    const claveEnCurso = clave;
     const siguiente = pagina + 1;
     setCargandoMas(true);
     api
       .products({ ...filtros, page: siguiente, facets: false })
       .then((d) => {
+        // Si los filtros cambiaron mientras llegaba esta página, se descarta:
+        // añadirla contaminaría la lista nueva con productos del filtro viejo.
+        if (claveRef.current !== claveEnCurso) return;
         setItems((prev) => [...prev, ...d.items]);
         setPagina(siguiente);
       })
       .catch(() => {
         /* silencioso: el observador reintenta al reasomar el final */
       })
-      .finally(() => setCargandoMas(false));
-  }, [cargando, cargandoMas, hayMas, pagina, filtros]);
+      .finally(() => {
+        if (claveRef.current === claveEnCurso) setCargandoMas(false);
+      });
+  }, [cargando, cargandoMas, hayMas, pagina, filtros, clave]);
 
   return { items, facets, total, cargando, cargandoMas, error, hayMas, refetch, cargarMas };
 }
