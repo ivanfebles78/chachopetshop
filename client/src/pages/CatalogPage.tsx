@@ -198,7 +198,7 @@ export function CatalogPage() {
         <div className="min-w-0 flex-1">
           <div className="mb-5 hidden items-center justify-between gap-4 lg:flex">
             <p className="text-body-sm text-content-muted">
-              {!cargando && total > 0 ? `Mostrando ${items.length} de ${total}` : ' '}
+              {!cargando && total > 0 ? `Mostrando ${total} ${total === 1 ? 'producto' : 'productos'}` : ' '}
             </p>
             <Orden valor={filtros.sort ?? 'relevance'} onChange={(v) => poner('sort', v)} className="w-56 shrink-0" />
           </div>
