@@ -82,6 +82,10 @@ export type AdminProduct = {
   price: number | null;
   active: boolean;
   line: string | null;
+  /** EAN (código de barras) de Factusol. null si el artículo no lo trae. */
+  ean: string | null;
+  /** Código de familia de Factusol (PAS, PAH, GAS…). null si no se conoce. */
+  familia: string | null;
   brand: RefTax | null;
   animals: RefTax[];
   categories: RefTax[];
@@ -135,6 +139,12 @@ export type AdminProductPatch = Partial<{
   animalIds: string[];
   categoryIds: string[];
   needIds: string[];
+  /** EAN editable; '' o null lo vacía. */
+  ean: string | null;
+  /** Familia editable; '' o null la vacía. */
+  familia: string | null;
+  /** Imagen: URL, ruta «/…» o data-URL de una foto subida y redimensionada. */
+  image: string;
 }>;
 
 export type Taxonomy = {

@@ -50,6 +50,11 @@ export function createApp() {
   // supera de largo el límite por defecto (100 kb). Se le da un parser propio
   // con más holgura ANTES del global; el global ve el body ya leído y lo salta.
   app.use('/api/admin/products/import', express.json({ limit: '20mb' }));
+  // Editar un producto desde el panel puede incluir una FOTO subida como data-URL
+  // (ya redimensionada en el navegador). Supera el límite global de 100 kb, así
+  // que las escrituras de producto llevan un parser con más holgura, montado
+  // ANTES del global y DESPUÉS del de importación (que sigue viendo su ruta).
+  app.use('/api/admin/products', express.json({ limit: '8mb' }));
   app.use(express.json());
   app.use(cookieParser());
   app.use(attachUser);

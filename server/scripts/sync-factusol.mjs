@@ -237,6 +237,8 @@ async function main() {
             name: nombre,
             price: precio,
             active: true,
+            ean: ean || null,
+            familia: fam || null,
             categories: catId ? { set: [{ id: catId }] } : undefined,
             animals: { set: animalIds.map((id) => ({ id })) },
             ...(marcaConnect ? { brand: marcaConnect } : {}),
@@ -266,6 +268,8 @@ async function main() {
             slug,
             description: '',
             price: precio,
+            ean: ean || null,
+            familia: fam || null,
             image: `https://picsum.photos/seed/chacho-${cod}/800/800`, // relleno → ilustración por categoría
             gallery: [],
             active: true,

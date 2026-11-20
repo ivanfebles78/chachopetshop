@@ -1,23 +1,26 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, FileDown, FileUp, Pencil, Search, Trash2, X } from 'lucide-react';
+import { Check, FileDown, FileUp, ImageOff, ImagePlus, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { cn, eur } from '@/lib/cn';
 import { toast } from '@/store/toast';
 import { useOverlay } from '@/lib/useOverlay';
+import { archivoAImagen } from '@/lib/imagen';
 import { exportarProductosAExcel } from '@/lib/excelProductos';
 import { ImportDialog } from './ImportDialog';
-import type { AdminProduct, AdminProductsResponse, RefTax, Taxonomy } from '@/lib/types';
+import type { AdminProduct, AdminProductsResponse, Brand, RefTax, Taxonomy } from '@/lib/types';
 
 /**
  * GESTIÓN DE PRODUCTOS DEL PANEL.
  *
- * Una tabla con TODO el catálogo, con búsqueda (nombre o SKU), filtros (animal,
- * categoría, línea, marca, estado) y orden, y un editor por producto para
- * cambiar lo que el admin necesite —categoría, animal, línea, precio, nombre,
- * marca, activo—. Los cambios van por PATCH y se reflejan en la tienda porque es
- * la misma base de datos.
+ * Una tabla con TODO el catálogo (datos principales: EAN, nombre, marca,
+ * familia, precio y si tiene foto propia o no), con búsqueda y filtros —nombre o
+ * SKU, EAN, animal, categoría, línea, marca, familia, imagen y estado— y un
+ * editor por producto para cambiar lo que el dueño necesite. Todos los cambios
+ * van por PATCH y se guardan en NUESTRA base de datos, nunca en Factusol: así,
+ * aunque Factusol mande un artículo sin marca o sin foto, la ficha nuestra
+ * conserva lo que aquí se corrige y los filtros de la tienda funcionan.
  *
  * El filtrado y el orden se hacen en el cliente sobre la lista que ya llega
  * entera: para un catálogo de este tamaño es instantáneo y evita una ida y
@@ -27,7 +30,17 @@ import type { AdminProduct, AdminProductsResponse, RefTax, Taxonomy } from '@/li
 const POR_PAGINA = 25;
 
 type Estado = 'todos' | 'activos' | 'inactivos';
+type Imagen = 'todas' | 'con' | 'sin';
 type Orden = 'nombre' | 'precio-asc' | 'precio-desc';
+
+/**
+ * ¿El producto tiene una FOTO PROPIA, o sólo el relleno?
+ * El sincronizador pone `picsum.photos` a los artículos de Factusol sin foto, y
+ * una imagen vacía no es imagen. Todo lo demás —ruta propia «/productos/…», URL
+ * del fabricante o foto subida (data-URL)— cuenta como foto de verdad.
+ */
+const tieneImagen = (img: string | null | undefined): boolean =>
+  Boolean(img) && !img!.includes('picsum.photos');
 
 export function ProductosPanel({
   data,
@@ -39,10 +52,13 @@ export function ProductosPanel({
   const taxonomia = useFetch<Taxonomy>(() => api.taxonomy(), []);
 
   const [q, setQ] = useState('');
+  const [fEan, setFEan] = useState('');
   const [fAnimal, setFAnimal] = useState('');
   const [fCategoria, setFCategoria] = useState('');
   const [fLinea, setFLinea] = useState('');
   const [fMarca, setFMarca] = useState('');
+  const [fFamilia, setFFamilia] = useState('');
+  const [fImagen, setFImagen] = useState<Imagen>('todas');
   const [fEstado, setFEstado] = useState<Estado>('todos');
   const [orden, setOrden] = useState<Orden>('nombre');
   const [pagina, setPagina] = useState(1);
@@ -51,6 +67,16 @@ export function ProductosPanel({
   const [exportando, setExportando] = useState(false);
 
   const productos = data?.products ?? [];
+
+  // Familias presentes en el catálogo, para ofrecerlas como filtro. Se calculan
+  // de la propia lista: el servidor no necesita devolver un listado aparte.
+  const familias = useMemo(
+    () =>
+      [...new Set(productos.map((p) => p.familia).filter((f): f is string => Boolean(f)))].sort((a, b) =>
+        a.localeCompare(b, 'es'),
+      ),
+    [productos],
+  );
 
   const exportar = async () => {
     if (!productos.length) return;
@@ -66,12 +92,17 @@ export function ProductosPanel({
 
   const filtrados = useMemo(() => {
     const t = q.trim().toLowerCase();
+    const e = fEan.trim().toLowerCase();
     const lista = productos.filter((p) => {
       if (t && !(p.name.toLowerCase().includes(t) || p.variants.some((v) => v.sku.toLowerCase().includes(t)))) return false;
+      if (e && !(p.ean ?? '').toLowerCase().includes(e)) return false;
       if (fAnimal && !p.animals.some((a) => a.slug === fAnimal)) return false;
       if (fCategoria && !p.categories.some((c) => c.slug === fCategoria)) return false;
       if (fLinea && p.line !== fLinea) return false;
       if (fMarca && p.brand?.slug !== fMarca) return false;
+      if (fFamilia && p.familia !== fFamilia) return false;
+      if (fImagen === 'con' && !tieneImagen(p.image)) return false;
+      if (fImagen === 'sin' && tieneImagen(p.image)) return false;
       if (fEstado === 'activos' && !p.active) return false;
       if (fEstado === 'inactivos' && p.active) return false;
       return true;
@@ -85,10 +116,10 @@ export function ProductosPanel({
         : precio(b) - precio(a),
     );
     return lista;
-  }, [productos, q, fAnimal, fCategoria, fLinea, fMarca, fEstado, orden]);
+  }, [productos, q, fEan, fAnimal, fCategoria, fLinea, fMarca, fFamilia, fImagen, fEstado, orden]);
 
   // Cualquier cambio de filtro vuelve a la primera página.
-  useEffect(() => setPagina(1), [q, fAnimal, fCategoria, fLinea, fMarca, fEstado, orden]);
+  useEffect(() => setPagina(1), [q, fEan, fAnimal, fCategoria, fLinea, fMarca, fFamilia, fImagen, fEstado, orden]);
 
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
   const paginaActual = Math.min(pagina, totalPaginas);
@@ -111,14 +142,20 @@ export function ProductosPanel({
 
   const limpiar = () => {
     setQ('');
+    setFEan('');
     setFAnimal('');
     setFCategoria('');
     setFLinea('');
     setFMarca('');
+    setFFamilia('');
+    setFImagen('todas');
     setFEstado('todos');
     setOrden('nombre');
   };
-  const hayFiltros = q || fAnimal || fCategoria || fLinea || fMarca || fEstado !== 'todos';
+  const hayFiltros =
+    q || fEan || fAnimal || fCategoria || fLinea || fMarca || fFamilia || fImagen !== 'todas' || fEstado !== 'todos';
+
+  const sinFoto = productos.filter((p) => !tieneImagen(p.image)).length;
 
   return (
     <div className="space-y-4">
@@ -147,7 +184,7 @@ export function ProductosPanel({
       {/* Barra de búsqueda y filtros */}
       <div className="card rounded-3xl p-4">
         <div className="flex flex-wrap items-center gap-3">
-          <label className="relative min-w-56 flex-1">
+          <label className="relative min-w-52 flex-1">
             <span className="sr-only">Buscar por nombre o SKU</span>
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-content-subtle" aria-hidden="true" />
             <input
@@ -157,10 +194,30 @@ export function ProductosPanel({
               className="h-11 w-full rounded-full border border-brand-900/10 bg-white pl-10 pr-3 text-sm outline-none focus:border-brand-500"
             />
           </label>
+          <label className="relative min-w-44">
+            <span className="sr-only">Buscar por EAN</span>
+            <input
+              value={fEan}
+              onChange={(e) => setFEan(e.target.value)}
+              inputMode="numeric"
+              placeholder="EAN…"
+              className="h-11 w-full rounded-full border border-brand-900/10 bg-white px-4 text-sm outline-none focus:border-brand-500"
+            />
+          </label>
           <Selector valor={fAnimal} onChange={setFAnimal} vacio="Animal" opciones={taxonomia.data?.animals ?? []} />
           <Selector valor={fCategoria} onChange={setFCategoria} vacio="Categoría" opciones={taxonomia.data?.categories ?? []} />
+          <SelectorTexto valor={fFamilia} onChange={setFFamilia} vacio="Familia" opciones={familias} />
           <SelectorTexto valor={fLinea} onChange={setFLinea} vacio="Línea" opciones={data.lineas} />
           <Selector valor={fMarca} onChange={setFMarca} vacio="Marca" opciones={taxonomia.data?.brands ?? []} />
+          <select
+            value={fImagen}
+            onChange={(e) => setFImagen(e.target.value as Imagen)}
+            className="h-11 rounded-full border border-brand-900/10 bg-white px-3 text-sm font-semibold outline-none focus:border-brand-500"
+          >
+            <option value="todas">Imagen: todas</option>
+            <option value="con">Con foto</option>
+            <option value="sin">Sin foto</option>
+          </select>
           <select
             value={fEstado}
             onChange={(e) => setFEstado(e.target.value as Estado)}
@@ -185,10 +242,21 @@ export function ProductosPanel({
             </button>
           )}
         </div>
-        <p className="mt-3 text-xs text-content-subtle">
-          {filtrados.length} {filtrados.length === 1 ? 'producto' : 'productos'}
-          {filtrados.length !== productos.length ? ` de ${productos.length}` : ''}
-        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-content-subtle">
+          <span>
+            {filtrados.length} {filtrados.length === 1 ? 'producto' : 'productos'}
+            {filtrados.length !== productos.length ? ` de ${productos.length}` : ''}
+          </span>
+          {sinFoto > 0 && (
+            <button
+              onClick={() => setFImagen('sin')}
+              className="inline-flex items-center gap-1 font-semibold text-amber-700 hover:underline"
+            >
+              <ImageOff className="h-3.5 w-3.5" aria-hidden="true" />
+              {sinFoto} sin foto propia
+            </button>
+          )}
+        </div>
       </div>
 
       {/*
@@ -201,57 +269,70 @@ export function ProductosPanel({
           <thead className="bg-brand-900/[0.03] text-left text-xs uppercase tracking-wide text-content-subtle">
             <tr>
               <th className="whitespace-nowrap px-4 py-3">Producto</th>
+              <th className="whitespace-nowrap px-4 py-3">EAN</th>
               <th className="whitespace-nowrap px-4 py-3">Marca</th>
-              <th className="whitespace-nowrap px-4 py-3">Animal</th>
+              <th className="whitespace-nowrap px-4 py-3">Familia</th>
               <th className="whitespace-nowrap px-4 py-3">Categoría</th>
-              <th className="whitespace-nowrap px-4 py-3">Línea</th>
-              <th className="whitespace-nowrap px-4 py-3">SKU</th>
               <th className="whitespace-nowrap px-4 py-3 text-right">Precio</th>
+              <th className="whitespace-nowrap px-4 py-3 text-center">Imagen</th>
               <th className="whitespace-nowrap px-4 py-3 text-right">Acciones</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-brand-900/5">
-            {visibles.map((p) => (
-              <tr key={p.id} className={cn('hover:bg-brand-900/[0.02]', !p.active && 'opacity-55')}>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <img src={p.image} alt="" className="h-10 w-10 shrink-0 rounded-lg bg-white object-contain" />
-                    <div className="min-w-0 max-w-[240px]">
-                      <Link to={`/producto/${p.slug}`} className="block truncate font-semibold text-ink hover:text-brand-700" title={p.name}>
-                        {p.name}
-                      </Link>
-                      {!p.active && <span className="text-xs text-content-subtle">Oculto en la tienda</span>}
+            {visibles.map((p) => {
+              const conFoto = tieneImagen(p.image);
+              return (
+                <tr key={p.id} className={cn('hover:bg-brand-900/[0.02]', !p.active && 'opacity-55')}>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <img src={p.image} alt="" className="h-10 w-10 shrink-0 rounded-lg bg-white object-contain" />
+                      <div className="min-w-0 max-w-[240px]">
+                        <Link to={`/producto/${p.slug}`} className="block truncate font-semibold text-ink hover:text-brand-700" title={p.name}>
+                          {p.name}
+                        </Link>
+                        {!p.active && <span className="text-xs text-content-subtle">Oculto en la tienda</span>}
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td className="whitespace-nowrap px-4 py-3 text-brand-900/70">{p.brand?.name ?? '—'}</td>
-                <td className="px-4 py-3 text-brand-900/70">{p.animals.map((a) => a.name).join(', ') || '—'}</td>
-                <td className="px-4 py-3 text-brand-900/70">{p.categories.map((c) => c.name).join(', ') || '—'}</td>
-                <td className="px-4 py-3 text-brand-900/70">{p.line || '—'}</td>
-                <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-brand-900/60">{p.variants[0]?.sku ?? '—'}</td>
-                <td className="whitespace-nowrap px-4 py-3 text-right font-semibold">
-                  {p.price == null && p.variants[0]?.price == null ? 'A consultar' : eur(p.price ?? p.variants[0]?.price)}
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex justify-end gap-1">
-                    <button
-                      onClick={() => setEditando(p)}
-                      className="rounded-lg p-2 text-content-subtle hover:bg-brand-50 hover:text-brand-700"
-                      aria-label={`Editar ${p.name}`}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => borrar(p)}
-                      className="rounded-lg p-2 text-content-subtle hover:bg-red-50 hover:text-red-500"
-                      aria-label={`Eliminar ${p.name}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-brand-900/60">{p.ean || '—'}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-brand-900/70">{p.brand?.name ?? '—'}</td>
+                  <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-brand-900/60">{p.familia || '—'}</td>
+                  <td className="px-4 py-3 text-brand-900/70">{p.categories.map((c) => c.name).join(', ') || '—'}</td>
+                  <td className="whitespace-nowrap px-4 py-3 text-right font-semibold">
+                    {p.price == null && p.variants[0]?.price == null ? 'A consultar' : eur(p.price ?? p.variants[0]?.price)}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {conFoto ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
+                        <Check className="h-3.5 w-3.5" aria-hidden="true" /> Sí
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">
+                        <ImageOff className="h-3.5 w-3.5" aria-hidden="true" /> No
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex justify-end gap-1">
+                      <button
+                        onClick={() => setEditando(p)}
+                        className="rounded-lg p-2 text-content-subtle hover:bg-brand-50 hover:text-brand-700"
+                        aria-label={`Editar ${p.name}`}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => borrar(p)}
+                        className="rounded-lg p-2 text-content-subtle hover:bg-red-50 hover:text-red-500"
+                        aria-label={`Eliminar ${p.name}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
             {visibles.length === 0 && (
               <tr>
                 <td colSpan={8} className="px-4 py-12 text-center text-content-subtle">
@@ -291,6 +372,8 @@ export function ProductosPanel({
           producto={editando}
           taxonomia={taxonomia.data}
           lineas={data.lineas}
+          familias={familias}
+          onMarcaCreada={taxonomia.refetch}
           onCerrar={() => setEditando(null)}
           onGuardado={() => {
             setEditando(null);
@@ -332,7 +415,7 @@ function Selector({
   );
 }
 
-/** Un `<select>` de filtro sobre valores de texto (las líneas). */
+/** Un `<select>` de filtro sobre valores de texto (líneas, familias). */
 function SelectorTexto({
   valor,
   onChange,
@@ -362,16 +445,22 @@ function SelectorTexto({
 
 /* ═══════════════════════════ Editor ═══════════════════════════ */
 
+const VALOR_NUEVA_MARCA = '__nueva__';
+
 function EditorProducto({
   producto,
   taxonomia,
   lineas,
+  familias,
+  onMarcaCreada,
   onCerrar,
   onGuardado,
 }: {
   producto: AdminProduct;
   taxonomia: Taxonomy;
   lineas: string[];
+  familias: string[];
+  onMarcaCreada: () => void;
   onCerrar: () => void;
   onGuardado: () => void;
 }) {
@@ -379,17 +468,57 @@ function EditorProducto({
   const [nombre, setNombre] = useState(producto.name);
   const [descripcion, setDescripcion] = useState(producto.description);
   const [precio, setPrecio] = useState(producto.price != null ? String(producto.price) : '');
+  const [ean, setEan] = useState(producto.ean ?? '');
+  const [familia, setFamilia] = useState(producto.familia ?? '');
   const [linea, setLinea] = useState(producto.line ?? '');
-  const [marca, setMarca] = useState(producto.brand?.id ?? '');
+  const [imagen, setImagen] = useState(producto.image);
   const [activo, setActivo] = useState(producto.active);
   const [animales, setAnimales] = useState<Set<string>>(new Set(producto.animals.map((a) => a.id)));
   const [categorias, setCategorias] = useState<Set<string>>(new Set(producto.categories.map((c) => c.id)));
   const [guardando, setGuardando] = useState(false);
 
+  // Marcas: copia local para poder AÑADIR una recién creada sin esperar a que el
+  // panel recargue la taxonomía entera.
+  const [marcas, setMarcas] = useState<Brand[]>(taxonomia.brands);
+  const [marca, setMarca] = useState(producto.brand?.id ?? '');
+  const [creandoMarca, setCreandoMarca] = useState(false);
+  const [nuevaMarca, setNuevaMarca] = useState('');
+  const [creandoMarcaCargando, setCreandoMarcaCargando] = useState(false);
+
   const alternar = (set: Set<string>, id: string): Set<string> => {
     const copia = new Set(set);
     copia.has(id) ? copia.delete(id) : copia.add(id);
     return copia;
+  };
+
+  const elegirMarca = (valor: string) => {
+    if (valor === VALOR_NUEVA_MARCA) {
+      setCreandoMarca(true);
+      return;
+    }
+    setMarca(valor);
+  };
+
+  const crearMarca = async () => {
+    const nombreMarca = nuevaMarca.trim();
+    if (!nombreMarca) {
+      toast.error('Escribe el nombre de la marca.');
+      return;
+    }
+    setCreandoMarcaCargando(true);
+    try {
+      const { brand, creada } = await api.adminCreateBrand(nombreMarca);
+      setMarcas((ms) => (ms.some((m) => m.id === brand.id) ? ms : [...ms, brand].sort((a, b) => a.name.localeCompare(b.name, 'es'))));
+      setMarca(brand.id);
+      setCreandoMarca(false);
+      setNuevaMarca('');
+      onMarcaCreada(); // refresca el desplegable de marcas del filtro de la tabla
+      toast.success(creada ? `Marca «${brand.name}» creada` : `La marca «${brand.name}» ya existía; seleccionada`);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setCreandoMarcaCargando(false);
+    }
   };
 
   const guardar = async () => {
@@ -398,6 +527,10 @@ function EditorProducto({
       toast.error('El precio no es válido.');
       return;
     }
+    const imagenLimpia = imagen.trim();
+    // La imagen sólo se envía si cambió y no está vacía: el campo es obligatorio
+    // en el servidor, así que vaciarlo conservaría la foto anterior.
+    const cambioImagen = imagenLimpia !== '' && imagenLimpia !== producto.image;
     setGuardando(true);
     try {
       await api.adminUpdateProduct(producto.id, {
@@ -405,10 +538,13 @@ function EditorProducto({
         description: descripcion,
         line: linea.trim() === '' ? null : linea.trim(),
         price: precioNum,
+        ean: ean.trim() === '' ? null : ean.trim(),
+        familia: familia.trim() === '' ? null : familia.trim(),
         brandId: marca || null,
         active: activo,
         animalIds: [...animales],
         categoryIds: [...categorias],
+        ...(cambioImagen ? { image: imagenLimpia } : {}),
       });
       toast.success('Producto actualizado');
       onGuardado();
@@ -436,9 +572,37 @@ function EditorProducto({
         </div>
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
+          <CampoImagen imagen={imagen} nombre={producto.name} onCambio={setImagen} />
+
           <Campo etiqueta="Nombre">
             <input value={nombre} onChange={(e) => setNombre(e.target.value)} className="field h-11 w-full" />
           </Campo>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Campo etiqueta="EAN (código de barras)" ayuda="De Factusol. Se guarda sólo en nuestra tienda.">
+              <input
+                value={ean}
+                onChange={(e) => setEan(e.target.value)}
+                inputMode="numeric"
+                placeholder="Sin EAN"
+                className="field h-11 w-full font-mono"
+              />
+            </Campo>
+            <Campo etiqueta="Familia" ayuda="PAS, PAH, GAS… El código de Factusol.">
+              <input
+                value={familia}
+                onChange={(e) => setFamilia(e.target.value)}
+                list="familias-existentes"
+                placeholder="Sin familia"
+                className="field h-11 w-full font-mono uppercase"
+              />
+              <datalist id="familias-existentes">
+                {familias.map((f) => (
+                  <option key={f} value={f} />
+                ))}
+              </datalist>
+            </Campo>
+          </div>
 
           <div className="grid gap-5 sm:grid-cols-2">
             <Campo etiqueta="Precio (€)" ayuda="Vacío = «a consultar». Iguala también el precio de la variante.">
@@ -450,15 +614,47 @@ function EditorProducto({
                 className="field h-11 w-full"
               />
             </Campo>
-            <Campo etiqueta="Marca">
-              <select value={marca} onChange={(e) => setMarca(e.target.value)} className="field h-11 w-full">
-                <option value="">Sin marca</option>
-                {taxonomia.brands.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.name}
-                  </option>
-                ))}
-              </select>
+            <Campo etiqueta="Marca" ayuda="Si falta, créala y se guardará en nuestra tienda.">
+              {creandoMarca ? (
+                <div className="flex gap-2">
+                  <input
+                    value={nuevaMarca}
+                    onChange={(e) => setNuevaMarca(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), crearMarca())}
+                    autoFocus
+                    placeholder="Nueva marca…"
+                    className="field h-11 w-full"
+                  />
+                  <button
+                    type="button"
+                    onClick={crearMarca}
+                    disabled={creandoMarcaCargando}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-full bg-brand-600 px-3 text-sm font-semibold text-cream hover:bg-brand-700 disabled:opacity-50"
+                  >
+                    <Plus className="h-4 w-4" /> Crear
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCreandoMarca(false);
+                      setNuevaMarca('');
+                    }}
+                    className="shrink-0 rounded-full px-3 text-sm font-semibold text-brand-900/60 hover:bg-brand-900/5"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              ) : (
+                <select value={marca} onChange={(e) => elegirMarca(e.target.value)} className="field h-11 w-full">
+                  <option value="">Sin marca</option>
+                  {marcas.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                  <option value={VALOR_NUEVA_MARCA}>➕ Crear marca nueva…</option>
+                </select>
+              )}
             </Campo>
           </div>
 
@@ -523,6 +719,108 @@ function EditorProducto({
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Campo de IMAGEN del producto: vista previa + subir una foto del ordenador
+ * (se redimensiona en el navegador) o pegar una URL. Resuelve los productos que
+ * llegan de Factusol sin foto propia.
+ */
+function CampoImagen({
+  imagen,
+  nombre,
+  onCambio,
+}: {
+  imagen: string;
+  nombre: string;
+  onCambio: (v: string) => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [url, setUrl] = useState('');
+  const [subiendo, setSubiendo] = useState(false);
+  const esSubida = imagen.startsWith('data:');
+  const esRelleno = imagen.includes('picsum.photos');
+
+  const subir = async (file: File | undefined) => {
+    if (!file) return;
+    setSubiendo(true);
+    try {
+      const dataUrl = await archivoAImagen(file);
+      onCambio(dataUrl);
+      toast.success('Foto preparada. Pulsa «Guardar cambios» para aplicarla.');
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setSubiendo(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const usarUrl = () => {
+    const v = url.trim();
+    if (!/^https?:\/\//.test(v) && !v.startsWith('/')) {
+      toast.error('Pega una URL que empiece por http(s):// o una ruta «/…».');
+      return;
+    }
+    onCambio(v);
+    setUrl('');
+    toast.success('URL aplicada. Pulsa «Guardar cambios».');
+  };
+
+  return (
+    <Campo etiqueta="Imagen">
+      <div className="flex flex-wrap items-start gap-4">
+        <img
+          src={imagen}
+          alt={`Imagen de ${nombre}`}
+          className="h-24 w-24 shrink-0 rounded-2xl border border-brand-900/10 bg-white object-contain"
+        />
+        <div className="min-w-56 flex-1 space-y-2">
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={subiendo}
+              className="inline-flex items-center gap-2 rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-cream hover:bg-brand-700 disabled:opacity-50"
+            >
+              <ImagePlus className="h-4 w-4" aria-hidden="true" />
+              {subiendo ? 'Procesando…' : 'Subir foto'}
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              onChange={(e) => subir(e.target.files?.[0])}
+              className="hidden"
+            />
+          </div>
+          <div className="flex gap-2">
+            <input
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), usarUrl())}
+              placeholder="…o pega una URL de imagen"
+              className="field h-10 w-full text-sm"
+            />
+            <button
+              type="button"
+              onClick={usarUrl}
+              className="shrink-0 rounded-full border border-brand-900/15 bg-white px-3 text-sm font-semibold text-brand-900/70 hover:bg-brand-50"
+            >
+              Usar
+            </button>
+          </div>
+          <p className="text-xs text-content-subtle">
+            {esSubida
+              ? 'Foto subida (se guardará en la tienda al pulsar «Guardar cambios»).'
+              : esRelleno
+              ? 'Sin foto propia: ahora se muestra un relleno. Sube una foto para solucionarlo.'
+              : 'Tiene foto propia. Puedes reemplazarla subiendo otra o pegando una URL.'}
+          </p>
+        </div>
+      </div>
+    </Campo>
   );
 }
 

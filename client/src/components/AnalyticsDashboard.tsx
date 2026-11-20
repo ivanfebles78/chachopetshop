@@ -121,26 +121,30 @@ export function AnalyticsDashboard({ data }: { data: Analytics }) {
             <h3 className="font-display text-lg font-bold">Control de stock</h3>
             <span className="rounded-full bg-brand-100 px-3 py-1 text-xs font-bold text-brand-700">{stock.totalUnits} uds totales</span>
           </div>
-          {stock.lowStock.length > 0 && (
-            <div className="mb-4">
-              <p className="mb-2 text-sm font-semibold text-red-600">⚠️ Stock bajo (≤ {stock.lowStockThreshold} uds)</p>
-              <div className="flex flex-wrap gap-2">
-                {stock.lowStock.map((s) => (
-                  <span key={s.name} className="rounded-full border border-red-200 bg-red-50 px-3 py-1 text-xs font-medium text-red-700">
-                    {s.name} · {s.stock}
-                  </span>
-                ))}
-              </div>
+          {/*
+            RESUMEN, NO LISTADO. Con el catálogo completo hay miles de productos
+            con stock bajo o agotado (sobre todo hasta que el stock se sincroniza
+            con Factusol), y pintarlos todos no ayuda a nadie. Se muestra sólo el
+            RECUENTO para que el dueño sepa que tiene que revisarlo, sin inundar
+            el panel.
+          */}
+          {stock.lowStock.length > 0 ? (
+            <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6 text-center">
+              <p className="text-4xl font-bold text-amber-700">{stock.lowStock.length.toLocaleString('es-ES')}</p>
+              <p className="mt-1 text-sm font-semibold text-amber-800">
+                {stock.lowStock.length === 1 ? 'producto con stock bajo o agotado' : 'productos con stock bajo o agotado'} (≤{' '}
+                {stock.lowStockThreshold} uds)
+              </p>
+              <p className="mx-auto mt-3 max-w-md text-xs text-amber-700/80">
+                Revísalo y repón lo necesario. El stock se pone al día al sincronizar con Factusol; hasta entonces muchos
+                productos figuran a 0.
+              </p>
             </div>
+          ) : (
+            <p className="rounded-3xl border border-green-200 bg-green-50 p-6 text-center text-sm font-semibold text-green-700">
+              Todo el catálogo tiene stock por encima de {stock.lowStockThreshold} uds. 👍
+            </p>
           )}
-          <div className="max-h-56 space-y-1 overflow-y-auto pr-1">
-            {stock.byProduct.map((s) => (
-              <div key={s.name} className="flex items-center justify-between rounded-lg px-2 py-1.5 text-sm hover:bg-brand-900/[0.02]">
-                <span className="line-clamp-1 text-brand-900/70">{s.name}</span>
-                <span className={cn('font-semibold', s.stock <= stock.lowStockThreshold ? 'text-red-500' : 'text-brand-700')}>{s.stock}</span>
-              </div>
-            ))}
-          </div>
         </section>
       </div>
     </div>

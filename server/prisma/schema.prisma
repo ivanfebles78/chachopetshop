@@ -159,6 +159,22 @@ model Product {
   image       String
   gallery     String[]
   /**
+   * EAN (código de barras) tal y como viene de Factusol (`F_ART.EANART`).
+   * Factusol NO tiene columna de marca y su familia (PAS, PAH…) ni su EAN se
+   * guardaban: sólo servían para CASAR el artículo con un producto nuestro. Se
+   * conservan ahora para que el panel pueda mostrarlos y filtrar por ellos, y
+   * para que, aunque Factusol no mande marca, la ficha nuestra tenga algo por lo
+   * que buscarse. Nullable: un accesorio o un granel pueden no traer EAN.
+   */
+  ean         String?
+  /**
+   * CÓDIGO DE FAMILIA de Factusol (`F_ART.FAMART`): PAS = perro alim. seca,
+   * PAH = perro alim. húmeda, GAS = gato seca… El sincronizador ya lo traduce a
+   * animal + categoría web, pero el código original es lo que el dueño reconoce
+   * y por lo que quiere poder filtrar en el panel. Nullable.
+   */
+  familia     String?
+  /**
    * Reservados para un sistema de reseñas REAL. Hasta que exista, quedan
    * vacíos y no se publican: `@default(4.6)` convertía en «4,6 estrellas» a
    * cualquier producto recién creado, sin que nadie hubiese opinado.
@@ -192,6 +208,7 @@ model Product {
   createdAt DateTime @default(now())
 
   @@index([brandId])
+  @@index([familia])
 }
 
 model ProductVariant {
