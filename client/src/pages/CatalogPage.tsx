@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ChevronRight, Loader2, PackageOpen, SearchX, SlidersHorizontal, X } from 'lucide-react';
 import { useCatalogoInfinito } from '@/lib/useCatalogoInfinito';
@@ -96,38 +96,54 @@ export function CatalogPage() {
     noIndexar: Boolean(filtros.q),
   });
 
-  const poner = (clave: string, valor: string | null) => {
-    const siguiente = new URLSearchParams(params);
-    if (valor === null || valor === '') siguiente.delete(clave);
-    else siguiente.set(clave, valor);
-    // Cambiar un filtro devuelve a la primera página: si no, se puede acabar
-    // en la página 3 de un resultado que ahora tiene una.
-    if (clave !== 'page') siguiente.delete('page');
-    setParams(siguiente);
-  };
+  /*
+   * Estos callbacks van MEMOIZADOS (useCallback). El panel de filtros está
+   * memoizado y los recibe como props: si se recrearan en cada render, el panel
+   * se re-dibujaría cada vez que el listado del centro carga o crece. Dependen
+   * de `params`, así que cambian cuando cambian los filtros —que es justo cuando
+   * el panel SÍ debe actualizarse— pero no al paginar.
+   */
+  const poner = useCallback(
+    (clave: string, valor: string | null) => {
+      const siguiente = new URLSearchParams(params);
+      if (valor === null || valor === '') siguiente.delete(clave);
+      else siguiente.set(clave, valor);
+      // Cambiar un filtro devuelve a la primera página: si no, se puede acabar
+      // en la página 3 de un resultado que ahora tiene una.
+      if (clave !== 'page') siguiente.delete('page');
+      setParams(siguiente);
+    },
+    [params, setParams],
+  );
 
-  const alternar = (clave: 'animal' | 'need' | 'brand' | 'line' | 'size' | 'category', slug: string) => {
-    const actuales = (params.get(clave)?.split(',') ?? []).filter(Boolean);
-    const siguiente = actuales.includes(slug)
-      ? actuales.filter((s) => s !== slug)
-      : [...actuales, slug];
-    poner(clave, siguiente.join(',') || null);
-  };
+  const alternar = useCallback(
+    (clave: 'animal' | 'need' | 'brand' | 'line' | 'size' | 'category', slug: string) => {
+      const actuales = (params.get(clave)?.split(',') ?? []).filter(Boolean);
+      const siguiente = actuales.includes(slug)
+        ? actuales.filter((s) => s !== slug)
+        : [...actuales, slug];
+      poner(clave, siguiente.join(',') || null);
+    },
+    [params, poner],
+  );
 
-  const quitar = (clave: string, valor?: string) => {
-    if (clave === 'precio') {
-      const s = new URLSearchParams(params);
-      s.delete('minPrice');
-      s.delete('maxPrice');
-      s.delete('page');
-      setParams(s);
-      return;
-    }
-    if (valor) alternar(clave as 'animal' | 'need' | 'brand' | 'line' | 'size' | 'category', valor);
-    else poner(clave, null);
-  };
+  const quitar = useCallback(
+    (clave: string, valor?: string) => {
+      if (clave === 'precio') {
+        const s = new URLSearchParams(params);
+        s.delete('minPrice');
+        s.delete('maxPrice');
+        s.delete('page');
+        setParams(s);
+        return;
+      }
+      if (valor) alternar(clave as 'animal' | 'need' | 'brand' | 'line' | 'size' | 'category', valor);
+      else poner(clave, null);
+    },
+    [params, setParams, alternar, poner],
+  );
 
-  const limpiar = () => setParams(new URLSearchParams());
+  const limpiar = useCallback(() => setParams(new URLSearchParams()), [setParams]);
 
   return (
     <div className="container-page py-6 sm:py-8">

@@ -1,25 +1,31 @@
-import { useEffect, useId, useState } from 'react';
+import { memo, useEffect, useId, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import type { ProductFilters } from '@/lib/api';
 import type { Faceta, Facetas } from '@/lib/types';
 
 /**
- * PANEL DE FILTROS.
+ * PANEL DE FILTROS — ESTRUCTURA ESTABLE, RECUENTOS VIVOS.
  *
- * Todo lo que se ve aquí sale de los RECUENTOS que devuelve el servidor
- * (`?facets=1`), no de la taxonomía a secas. La diferencia es lo que arregla el
- * defecto que arrastraba el catálogo desde antes de la Fase 2A: se ofrecían
- * «Reptiles» y «Semihúmeda», las dos con cero productos. Un filtro que lleva a
- * una página vacía no es un filtro, es una trampa.
+ * El servidor (`?facets=1`) devuelve el UNIVERSO COMPLETO de cada dimensión
+ * —todas las mascotas, categorías, necesidades, marcas y tamaños, en orden fijo,
+ * cada una con su recuento, incluidos los ceros—. Antes el cliente ESCONDÍA las
+ * opciones a 0 y montaba/desmontaba grupos según la selección: al deseleccionar
+ * un filtro reaparecían decenas de opciones y el panel pegaba saltos. Ya no.
  *
- * Dos reglas, y las dos vienen de los datos:
+ * Reglas nuevas, pensadas para que el panel NO SE MUEVA al filtrar:
  *
- *   · Si una opción tiene 0, NO SE PINTA. Con una excepción: si está puesta.
- *     Quitarle de delante el filtro que acaba de marcar deja a la persona sin
- *     forma de soltarlo.
+ *   · Se pinta SIEMPRE el mismo conjunto de opciones, en el mismo orden. Lo único
+ *     que cambia al filtrar es el número de al lado (en el sitio, con cifras de
+ *     ancho fijo) y qué casillas están marcadas.
+ *   · Una opción con 0 productos NO desaparece: se DESHABILITA en gris (no es un
+ *     filtro-trampa, pero tampoco hace saltar la lista). Si estaba marcada, sigue
+ *     activa para poder quitarla.
+ *   · Los grupos no aparecen ni desaparecen ni se auto-abren: lo que pliegues se
+ *     queda plegado.
  *
- *   · El número va al lado siempre. «Alimentación seca (13)» permite decidir
- *     antes de pulsar; sin él, cada filtro es una apuesta.
+ * Además el componente está MEMOIZADO y recibe callbacks estables desde la
+ * página, así que no se re-renderiza cuando el listado de productos del centro
+ * carga o crece: se dibuja de forma independiente del resto de la pantalla.
  *
  * Se usa igual en la barra lateral del escritorio y dentro del cajón del móvil.
  */
@@ -33,19 +39,14 @@ type Props = {
   alternar: (clave: 'animal' | 'need' | 'brand' | 'line' | 'size' | 'category', slug: string) => void;
 };
 
-/** Las opciones que merecen enseñarse: con producto, o ya seleccionadas. */
-function visibles(lista: Faceta[] | undefined, puestas: string[]): Faceta[] {
-  return (lista ?? []).filter((f) => f.total > 0 || puestas.includes(f.slug));
-}
-
 /**
  * Un grupo de filtros PLEGABLE.
  *
  * El título es un botón de verdad (`aria-expanded` + `aria-controls`), así que
  * un lector de pantalla anuncia «contraído/expandido» y el teclado lo abre con
- * Enter o Espacio. Empieza abierto; al plegarlo, su contenido se oculta de
- * verdad (`hidden`), no sólo visualmente, para que el tabulador no entre en
- * opciones que no se ven.
+ * Enter o Espacio. `defaultOpen` sólo fija el estado INICIAL; como la estructura
+ * del panel es estable, el grupo no se vuelve a montar, así que lo que el usuario
+ * pliegue o despliegue se conserva.
  */
 function Grupo({
   titulo,
@@ -85,10 +86,10 @@ function Grupo({
 /**
  * Una opción de filtro.
  *
- * Es una casilla de verdad —`input type="checkbox"`—, no un `<button>` con
- * aspecto de casilla. Así un lector de pantalla anuncia solo «marcada» o «no
- * marcada» y el teclado la maneja con la barra espaciadora, sin que haya que
- * programar nada de eso a mano.
+ * Casilla de verdad (`input type="checkbox"`). Si la opción no lleva a ningún
+ * producto (total 0) y no está marcada, se DESHABILITA: se ve en gris, no se
+ * puede pulsar, pero sigue ocupando su sitio para que el panel no cambie de
+ * forma. Una opción a 0 pero marcada sigue activa, para poder soltarla.
  */
 function Opcion({
   nombre,
@@ -101,11 +102,13 @@ function Opcion({
   marcada: boolean;
   onChange: () => void;
 }) {
-  const vacia = faceta.total === 0;
+  const deshabilitada = faceta.total === 0 && !marcada;
   return (
     <label
-      className={`flex min-h-9 cursor-pointer items-center gap-2.5 rounded-control px-2 py-1 text-body-sm transition-colors hover:bg-brand-50 ${
-        vacia ? 'text-content-subtle' : 'text-content'
+      className={`flex min-h-9 items-center gap-2.5 rounded-control px-2 py-1 text-body-sm transition-colors ${
+        deshabilitada
+          ? 'cursor-not-allowed text-content-subtle opacity-50'
+          : 'cursor-pointer text-content hover:bg-brand-50'
       }`}
     >
       <span className="relative flex h-[18px] w-[18px] shrink-0 items-center justify-center">
@@ -113,8 +116,9 @@ function Opcion({
           type="checkbox"
           name={nombre}
           checked={marcada}
+          disabled={deshabilitada}
           onChange={onChange}
-          className="peer h-[18px] w-[18px] cursor-pointer appearance-none rounded-[5px] border border-edge-strong bg-surface checked:border-brand-600 checked:bg-brand-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+          className="peer h-[18px] w-[18px] cursor-pointer appearance-none rounded-[5px] border border-edge-strong bg-surface checked:border-brand-600 checked:bg-brand-600 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
         />
         <Check
           className="pointer-events-none absolute h-3 w-3 text-cream opacity-0 peer-checked:opacity-100"
@@ -124,7 +128,8 @@ function Opcion({
       <span className="flex-1">{faceta.nombre}</span>
       {/*
         El recuento es informativo y ya va dicho en el nombre accesible del
-        grupo, así que no se repite en voz alta por cada opción.
+        grupo, así que no se repite en voz alta por cada opción. `tabular-nums`
+        hace que al cambiar de 13 a 6 no se mueva nada a los lados.
       */}
       <span className="text-caption tabular-nums text-content-subtle" aria-hidden="true">
         {faceta.total}
@@ -136,11 +141,6 @@ function Opcion({
 /**
  * Rango de precio (desde–hasta). Los inputs guardan su valor en estado LOCAL y
  * solo CONFIRMAN el filtro al salir del campo (blur) o con Enter.
- *
- * Antes confirmaban en cada tecla: al pulsar «1» ya se re-pedían productos, el
- * grupo «Precio» se desmontaba a mitad (mientras `facetas` recargaba) y el input
- * perdía el foco, así que era imposible escribir «10». Con estado local se
- * teclea entero y el filtro se aplica una sola vez, al terminar.
  */
 function RangoPrecio({
   min,
@@ -211,21 +211,14 @@ function RangoPrecio({
 /**
  * EL FILTRO «TIPO DE PRODUCTO» VA AGRUPADO, NO PLANO.
  *
- * Antes listaba las categorías sueltas de la base —«Alimentación seca»,
- * «húmeda», «semihúmeda», «Snacks»…— y eso, visto de golpe, es ruido: cinco
- * entradas para decir «comida». La estructura comercial tiene dos niveles, y el
- * panel ahora los respeta: arriba el grupo (Alimentación, Suplementos y
- * cosmética, Accesorios…) y, al abrirlo, sus subcategorías. Antes de abrir no
- * se ve el detalle, igual que en una tienda de verdad.
- *
- * El grupo de ACCESORIOS es especial: en la base es UNA sola categoría, así que
- * no tiene sentido enseñar una subcategoría «Accesorios» dentro de «Accesorios».
- * Lo que cuelga de él son las LÍNEAS de accesorio (jaulas, camas, toallitas…),
- * que es como el cliente los piensa.
+ * Arriba el grupo (Alimentación, Cosmética, Accesorios…) y, al abrirlo, sus
+ * subcategorías. El grupo de ACCESORIOS es especial: en la base es UNA sola
+ * categoría, así que lo que cuelga de él son las LÍNEAS de accesorio (jaulas,
+ * camas, toallitas…), que es como el cliente los piensa.
  */
 type GrupoTipo = { nombre: string; cats: string[]; esAccesorios?: boolean };
 
-/** Las líneas de la categoría «accesorios» (su subcategoría real). */
+/** Las líneas de la categoría «accesorios» (su subcategoría real). Lista FIJA. */
 const LINEAS_ACCESORIO = [
   'Jaulas y transportines',
   'Descanso',
@@ -250,10 +243,6 @@ const GRUPOS_TIPO: GrupoTipo[] = [
 
 /**
  * Cabecera plegable de SEGUNDO nivel (dentro de «Tipo de producto»).
- *
- * Más ligera que `Grupo` —peso normal, no mayúsculas— porque cuelga de él.
- * Sigue siendo un botón de verdad con `aria-expanded`/`aria-controls`, así que
- * el teclado y el lector de pantalla la manejan igual.
  */
 function SubGrupo({
   titulo,
@@ -295,7 +284,12 @@ function SubGrupo({
   );
 }
 
-export function Filtros({ facetas, filtros, poner, alternar }: Props) {
+/**
+ * Panel de filtros. MEMOIZADO: como recibe las facetas (estables entre páginas)
+ * y callbacks estables desde la página, no se vuelve a dibujar cuando el listado
+ * de productos del centro carga o crece. Se renderiza aparte.
+ */
+export const Filtros = memo(function Filtros({ facetas, filtros, poner, alternar }: Props) {
   if (!facetas) {
     return (
       <div className="space-y-4" aria-hidden="true">
@@ -306,38 +300,22 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
     );
   }
 
-  const animales = visibles(facetas.animals, filtros.animal ?? []);
-  const categorias = visibles(facetas.categories, filtros.category ?? []);
-  const necesidades = visibles(facetas.needs, filtros.need ?? []);
-  const marcas = visibles(facetas.brands, filtros.brand ?? []);
-  const lineas = visibles(facetas.lines, filtros.line ?? []);
-  const tamanos = visibles(facetas.sizes, filtros.size ?? []);
+  // Universo COMPLETO y en orden fijo, tal cual lo da el servidor. No se filtra
+  // por recuento: las opciones a 0 se deshabilitan, no se quitan.
+  const animales = facetas.animals;
+  const categorias = facetas.categories;
+  const necesidades = facetas.needs;
+  const marcas = facetas.brands;
+  const tamanos = facetas.sizes;
 
-  // ── «Tipo de producto» agrupado ────────────────────────────────────────
-  // Las líneas de accesorio cuelgan del grupo «Accesorios»; las de marca (que
-  // dependen de la marca) se quedan en su grupo «Línea» de más abajo.
-  const lineasAccesorio = lineas.filter((l) => LINEAS_ACCESORIO.includes(l.slug));
-  const lineasMarca = lineas.filter((l) => !LINEAS_ACCESORIO.includes(l.slug));
+  // Recuentos de línea por slug, para superponerlos sobre la lista FIJA de
+  // líneas de accesorio (las que no vengan en la respuesta cuentan 0).
+  const lineCount = new Map(facetas.lines.map((l) => [l.slug, l.total] as const));
+  // Líneas de marca presentes (dependen de la marca elegida): es un desglose
+  // contextual, sólo se ofrece cuando hay una marca seleccionada.
+  const lineasMarca = facetas.lines.filter((l) => !LINEAS_ACCESORIO.includes(l.slug));
 
-  // El filtro «Marca» se oculta SOLO cuando la marca es el único filtro activo:
-  // ahí la faceta de marca se calcula sin esa dimensión y devuelve TODO el
-  // catálogo (p. ej. entrar por Animally mostraría las 50 marcas). En cualquier
-  // otro caso —filtrando por línea, categoría, animal…— las marcas del resultado
-  // sí interesan, aunque solo haya una (aglomerantes y areneros son de Nobleza,
-  // y hay que poder verlo).
-  const hayOtroFiltro =
-    (filtros.category?.length ?? 0) > 0 ||
-    (filtros.line?.length ?? 0) > 0 ||
-    (filtros.animal?.length ?? 0) > 0 ||
-    (filtros.need?.length ?? 0) > 0 ||
-    (filtros.size?.length ?? 0) > 0 ||
-    Boolean(filtros.oferta) ||
-    filtros.minPrice != null ||
-    filtros.maxPrice != null ||
-    Boolean(filtros.q);
-  const marcaGlobalizada = (filtros.brand?.length ?? 0) > 0 && !hayOtroFiltro;
-  // Ninguna categoría puede desaparecer: las que no caen en un grupo conocido
-  // se recogen en un grupo «Más» al final.
+  // ── «Tipo de producto» agrupado (estructura CONSTANTE) ──────────────────
   const enAlgunGrupo = new Set(GRUPOS_TIPO.flatMap((g) => g.cats));
   const sueltas = categorias.filter((c) => !enAlgunGrupo.has(c.slug));
   const defsGrupo = sueltas.length
@@ -347,8 +325,12 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
     .map((g) => {
       const miembros = categorias.filter((c) => g.cats.includes(c.slug));
       const esLinea = Boolean((g as GrupoTipo).esAccesorios);
-      const hijos = esLinea ? lineasAccesorio : miembros;
+      const hijos: Faceta[] = esLinea
+        ? LINEAS_ACCESORIO.map((nombre) => ({ slug: nombre, nombre, total: lineCount.get(nombre) ?? 0 }))
+        : miembros;
       const total = miembros.reduce((s, c) => s + c.total, 0);
+      // Sólo fija el estado INICIAL del subgrupo; luego se conserva lo que haga
+      // el usuario (no hay remontaje).
       const activo = esLinea
         ? (filtros.category ?? []).includes('accesorios') ||
           (filtros.line ?? []).some((x) => LINEAS_ACCESORIO.includes(x))
@@ -359,21 +341,15 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
 
   return (
     <div className="space-y-6">
-      {/*
-        Ofertas sólo se ofrece si hay algo rebajado. Un filtro «En oferta» que
-        deja la pantalla vacía es exactamente la promesa incumplida que esta
-        tienda ya tuvo una vez.
-      */}
-      {(facetas.ofertas > 0 || filtros.oferta) && (
-        <Grupo titulo="Precio rebajado">
-          <Opcion
-            nombre="oferta"
-            faceta={{ slug: 'oferta', nombre: 'Sólo en oferta', total: facetas.ofertas }}
-            marcada={Boolean(filtros.oferta)}
-            onChange={() => poner('oferta', filtros.oferta ? null : '1')}
-          />
-        </Grupo>
-      )}
+      {/* Ofertas: fila fija. Si no hay rebajas, queda deshabilitada, no desaparece. */}
+      <Grupo titulo="Precio rebajado">
+        <Opcion
+          nombre="oferta"
+          faceta={{ slug: 'oferta', nombre: 'Sólo en oferta', total: facetas.ofertas }}
+          marcada={Boolean(filtros.oferta)}
+          onChange={() => poner('oferta', filtros.oferta ? null : '1')}
+        />
+      </Grupo>
 
       {animales.length > 0 && (
         <Grupo titulo="Mascota">
@@ -395,14 +371,7 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
         <Grupo titulo="Tipo de producto">
           <div>
             {grupos.map((gr) => (
-              <SubGrupo
-                key={gr.nombre}
-                titulo={gr.nombre}
-                total={gr.total}
-                // Abierto si ya hay algo elegido de ese grupo (para poder
-                // soltarlo) o si es el único que queda a la vista.
-                defaultOpen={gr.activo || grupos.length === 1}
-              >
+              <SubGrupo key={gr.nombre} titulo={gr.nombre} total={gr.total} defaultOpen={gr.activo}>
                 <div className="-mx-2">
                   {gr.hijos.map((h) => (
                     <Opcion
@@ -436,18 +405,8 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
         </Grupo>
       )}
 
-      {marcas.length > 0 && !marcaGlobalizada && (
+      {marcas.length > 0 && (
         <Grupo titulo="Marca">
-          {/*
-           * El filtro «Marca» se oculta solo cuando la marca es el único filtro
-           * (ver `marcaGlobalizada`): entonces la faceta trae todo el catálogo y
-           * no dice nada. Con cualquier otro filtro puesto, las marcas del
-           * resultado sí interesan —aunque sea una sola.
-           *
-           * Sin tope de alto ni scroll propio: la lista se ve entera y se recorre
-           * con el scroll normal de la página. Antes (`max-h-72 overflow-y-auto`)
-           * era una segunda barra dentro del panel, difícil de usar.
-           */}
           <div className="-mx-2">
             {marcas.map((m) => (
               <Opcion
@@ -463,12 +422,9 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
       )}
 
       {/*
-        Línea de marca (Premium Recetas, Profesional, Ultra Premium…). La línea
-        DEPENDE DE LA MARCA: cada fabricante tiene las suyas, así que mezclarlas
-        sin marca elegida no significa nada. Por eso sólo se ofrece cuando hay
-        una marca seleccionada, y entonces muestra las líneas de ESA marca (sus
-        recuentos ya se calculan dentro de la marca). El `slug` de la faceta es
-        el nombre de la línea tal cual.
+        Línea de marca (Premium Recetas, Profesional…). DEPENDE de la marca, así
+        que es un desglose contextual: sólo aparece cuando hay una marca elegida,
+        y entonces muestra las líneas de ESA marca. No es churn: es profundizar.
       */}
       {(filtros.brand?.length ?? 0) > 0 && lineasMarca.length > 0 && (
         <Grupo titulo="Línea">
@@ -486,11 +442,6 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
         </Grupo>
       )}
 
-      {/*
-        Tamaño por peso: rangos fijos (Hasta 1 kg, 1–3 kg…) que el servidor
-        cuenta sobre las variantes en gramos/mililitros. Un accesorio sin peso
-        no cae en ningún rango, así que no ensucia el recuento.
-      */}
       {tamanos.length > 0 && (
         <Grupo titulo="Tamaño">
           <div className="-mx-2">
@@ -508,9 +459,8 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
       )}
 
       {/*
-        El precio se acota con el rango REAL de lo que hay ahora mismo en
-        pantalla, no con un 0-1000 inventado: hoy el catálogo va de 1,35 € a
-        62,99 €, y un deslizador hasta 1000 sería casi todo recorrido inútil.
+        El precio se acota con el rango REAL de lo que hay en el catálogo. Se
+        muestra mientras haya un rango con recorrido (min distinto de max).
       */}
       {facetas.precio && facetas.precio.min !== facetas.precio.max && (
         <Grupo titulo="Precio">
@@ -525,4 +475,4 @@ export function Filtros({ facetas, filtros, poner, alternar }: Props) {
       )}
     </div>
   );
-}
+});

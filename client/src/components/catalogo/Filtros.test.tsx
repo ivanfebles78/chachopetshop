@@ -118,8 +118,11 @@ describe('el filtro «Marca»', () => {
     expect(screen.getByRole('checkbox', { name: /Nobleza/i })).toBeInTheDocument();
   });
 
-  it('se oculta cuando la marca es el ÚNICO filtro (la faceta trae todo el catálogo)', () => {
+  it('se ofrece SIEMPRE, también cuando la marca es el único filtro (panel estable)', () => {
+    // Panel de estructura fija: el grupo «Marca» no desaparece nunca. Las marcas
+    // sin producto en el contexto se deshabilitan, no se quitan.
     montar({ brand: ['gamarq'] });
-    expect(screen.queryByRole('button', { name: /^Marca$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Marca$/i })).toBeInTheDocument();
+    expect(screen.getByRole('checkbox', { name: /Gamarq/i })).toBeChecked();
   });
 });
