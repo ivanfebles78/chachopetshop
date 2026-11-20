@@ -56,4 +56,11 @@ WORKDIR /app/server
 # consola. Se ponen las dos variables, se redespliega y queda hecho; luego se
 # puede quitar ADMIN_PASSWORD. Si el usuario ya existía, le pone esa contraseña
 # y el rol ADMIN. (Cada arranque con esas variables reafirma la contraseña.)
-CMD ["sh", "-c", "npx prisma migrate deploy && if [ \"$IMPORTAR_CATALOGO\" = \"1\" ]; then echo '>> IMPORTAR_CATALOGO=1: importando catálogo de tienda...'; npx tsx prisma/sembrar-tienda.ts || echo '>> AVISO: la importación del catálogo falló; la API arranca igual.'; fi; if [ -n \"$ADMIN_EMAIL\" ] && [ -n \"$ADMIN_PASSWORD\" ]; then echo '>> Creando/actualizando usuario admin...'; node scripts/crear-admin.mjs || echo '>> AVISO: no se pudo crear el admin; la API arranca igual.'; fi; node dist/index.js"]
+#
+# Limpieza de PEDIDOS DEMO: igual que lo anterior, con un interruptor. Si al
+# arrancar está LIMPIAR_DEMO=1, se borran los pedidos de demostración que sembró
+# el seed de ejemplo (correos `…@ejemplo.com` / «Cliente Demo»), para que las
+# estadísticas reflejen la realidad. No toca pedidos reales. Se pone la variable,
+# se redespliega y DESPUÉS se quita (si se deja, en el siguiente arranque no
+# encuentra pedidos demo y no hace nada).
+CMD ["sh", "-c", "npx prisma migrate deploy && if [ \"$IMPORTAR_CATALOGO\" = \"1\" ]; then echo '>> IMPORTAR_CATALOGO=1: importando catálogo de tienda...'; npx tsx prisma/sembrar-tienda.ts || echo '>> AVISO: la importación del catálogo falló; la API arranca igual.'; fi; if [ -n \"$ADMIN_EMAIL\" ] && [ -n \"$ADMIN_PASSWORD\" ]; then echo '>> Creando/actualizando usuario admin...'; node scripts/crear-admin.mjs || echo '>> AVISO: no se pudo crear el admin; la API arranca igual.'; fi; if [ \"$LIMPIAR_DEMO\" = \"1\" ]; then echo '>> LIMPIAR_DEMO=1: borrando pedidos de demostración...'; node scripts/limpiar-demo.mjs || echo '>> AVISO: no se pudo limpiar los pedidos demo; la API arranca igual.'; fi; node dist/index.js"]
