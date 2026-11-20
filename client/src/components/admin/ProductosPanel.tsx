@@ -584,6 +584,19 @@ function EditorProducto({
         </div>
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
+          {/*
+            Aviso: qué aguanta la sincronización con Factusol y qué no. Evita que
+            el dueño pierda a mano cambios que la próxima sync revertiría.
+          */}
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-relaxed text-amber-800">
+            <p className="font-semibold">Los cambios se guardan solo en tu tienda, nunca en Factusol.</p>
+            <p className="mt-1">
+              Al sincronizar con Factusol se <strong>conservan</strong> marca, imagen y descripción, pero se{' '}
+              <strong>sobrescriben</strong> nombre, precio, stock, categoría, familia y EAN con los de Factusol. Esos
+              cámbialos en Factusol, no aquí.
+            </p>
+          </div>
+
           <CampoImagen imagen={imagen} nombre={producto.name} onCambio={setImagen} />
 
           <Campo etiqueta="Nombre">
