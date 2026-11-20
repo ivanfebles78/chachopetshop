@@ -3,6 +3,7 @@ import type {
   AdminProductPatch,
   AdminProductsResponse,
   Analytics,
+  Brand,
   ImportMode,
   ImportResult,
   ImportRow,
@@ -174,6 +175,16 @@ export const api = {
     request<{ product: AdminProduct }>(`/admin/products/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
   adminImportProducts: (mode: ImportMode, rows: ImportRow[]) =>
     request<ImportResult>('/admin/products/import', { method: 'POST', body: JSON.stringify({ mode, rows }) }),
+  /*
+   * Crear una marca al vuelo desde el editor de producto, para poder asignar
+   * marcas que Factusol no trae (Internutri, Purina…). Idempotente en el
+   * servidor: si ya existe, devuelve la que hay con `creada: false`.
+   */
+  adminCreateBrand: (name: string) =>
+    request<{ brand: Brand; creada: boolean }>('/admin/brands', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    }),
   adminDeleteProduct: (id: string) => request<{ ok: boolean }>(`/admin/products/${id}`, { method: 'DELETE' }),
   adminOrders: () => request<{ orders: (Order & { siguientes: string[] })[] }>('/admin/orders'),
   /*

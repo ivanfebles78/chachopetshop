@@ -33,10 +33,17 @@ adminRouter.get('/analytics', async (_req, res, next) => {
 // propias servidas por el front (`/productos/…`). `z.string().url()` rechazaba
 // las segundas, así que al guardar un accesorio desde el panel fallaba la
 // validación. Aceptamos ambas.
+// Las imágenes del catálogo pueden ser URLs externas, rutas propias servidas por
+// el front (`/productos/…`) o, desde que el panel permite SUBIR una foto, una
+// data-URL (`data:image/…;base64,…`) que el cliente genera ya redimensionada y
+// que viaja dentro del propio campo, sin almacenamiento externo.
 const imagen = z
   .string()
   .min(1)
-  .refine((s) => /^https?:\/\//.test(s) || s.startsWith('/'), 'Debe ser una URL http(s) o una ruta que empiece por «/».');
+  .refine(
+    (s) => /^https?:\/\//.test(s) || s.startsWith('/') || /^data:image\/[a-z0-9.+-]+;base64,/i.test(s),
+    'Debe ser una URL http(s), una ruta que empiece por «/» o una imagen subida.',
+  );
 
 const productBody = z.object({
   name: z.string().min(1),
@@ -103,6 +110,8 @@ adminRouter.get('/products', async (_req, res, next) => {
           price: true,
           active: true,
           line: true,
+          ean: true,
+          familia: true,
           brand: { select: { id: true, name: true, slug: true } },
           animals: { select: { id: true, slug: true, name: true } },
           categories: { select: { id: true, slug: true, name: true } },
@@ -146,6 +155,12 @@ const productPatch = z.object({
   animalIds: z.array(z.string()).optional(),
   categoryIds: z.array(z.string()).optional(),
   needIds: z.array(z.string()).optional(),
+  // Editables desde el panel y guardados SÓLO en nuestra BD (nunca en Factusol):
+  // así, aunque Factusol mande un artículo sin marca o sin EAN útil, la ficha
+  // nuestra conserva lo que el dueño corrige. `null` = vaciar el campo.
+  ean: z.string().trim().nullable().optional(),
+  familia: z.string().trim().nullable().optional(),
+  image: imagen.optional(),
 });
 
 adminRouter.patch('/products/:id', async (req, res, next) => {
@@ -158,6 +173,9 @@ adminRouter.patch('/products/:id', async (req, res, next) => {
     if (b.line !== undefined) data.line = b.line; // null = quitar la línea
     if (b.active !== undefined) data.active = b.active;
     if (b.price !== undefined) data.price = b.price;
+    if (b.ean !== undefined) data.ean = b.ean || null; // '' = vaciar
+    if (b.familia !== undefined) data.familia = b.familia || null;
+    if (b.image !== undefined) data.image = b.image;
     if (b.brandId !== undefined) data.brand = b.brandId ? { connect: { id: b.brandId } } : { disconnect: true };
     if (b.animalIds) data.animals = { set: b.animalIds.map((x) => ({ id: x })) };
     if (b.categoryIds) data.categories = { set: b.categoryIds.map((x) => ({ id: x })) };
@@ -388,6 +406,36 @@ adminRouter.delete('/products/:id', async (req, res, next) => {
   try {
     await prisma.product.delete({ where: { id: req.params.id } });
     res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * POST /api/admin/brands — crear una marca desde el panel.
+ *
+ * El editor de producto lo usa cuando la marca que el dueño quiere asignar aún
+ * no existe (p. ej. Internutri, Purina, Sevican…). Factusol no trae marcas, así
+ * que la única forma de que esos artículos aparezcan en el filtro de marca es
+ * crearla aquí y asignarla. Idempotente: si ya existe una con ese nombre o slug,
+ * se devuelve la que hay en lugar de fallar, para que el editor pueda asignarla
+ * igual sin tratar el 409 como un error.
+ */
+adminRouter.post('/brands', async (req, res, next) => {
+  try {
+    const { name } = z.object({ name: z.string().trim().min(1, 'Escribe el nombre de la marca.') }).parse(req.body);
+    const slug = slugify(name);
+    if (!slug) return res.status(400).json({ error: 'Ese nombre no es válido para una marca.' });
+    const existente = await prisma.brand.findFirst({
+      where: { OR: [{ slug }, { name: { equals: name, mode: 'insensitive' } }] },
+      select: { id: true, name: true, slug: true, logoUrl: true, featured: true },
+    });
+    if (existente) return res.json({ brand: existente, creada: false });
+    const brand = await prisma.brand.create({
+      data: { name, slug },
+      select: { id: true, name: true, slug: true, logoUrl: true, featured: true },
+    });
+    res.status(201).json({ brand, creada: true });
   } catch (err) {
     next(err);
   }
