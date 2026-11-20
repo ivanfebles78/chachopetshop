@@ -398,22 +398,7 @@ export const Filtros = memo(function Filtros({ facetas, filtros, poner, alternar
         </Grupo>
       )}
 
-      {necesidades.length > 0 && (
-        <Grupo titulo="Necesidad">
-          <div className="-mx-2">
-            {necesidades.map((n) => (
-              <Opcion
-                key={n.slug}
-                nombre="need"
-                faceta={n}
-                marcada={(filtros.need ?? []).includes(n.slug)}
-                onChange={() => alternar('need', n.slug)}
-              />
-            ))}
-          </div>
-        </Grupo>
-      )}
-
+      {/* Marca va justo después de «Tipo de producto» y antes de «Necesidad». */}
       {marcas.length > 0 && (
         <Grupo titulo="Marca">
           <div className="-mx-2">
@@ -424,6 +409,22 @@ export const Filtros = memo(function Filtros({ facetas, filtros, poner, alternar
                 faceta={m}
                 marcada={(filtros.brand ?? []).includes(m.slug)}
                 onChange={() => alternar('brand', m.slug)}
+              />
+            ))}
+          </div>
+        </Grupo>
+      )}
+
+      {necesidades.length > 0 && (
+        <Grupo titulo="Necesidad">
+          <div className="-mx-2">
+            {necesidades.map((n) => (
+              <Opcion
+                key={n.slug}
+                nombre="need"
+                faceta={n}
+                marcada={(filtros.need ?? []).includes(n.slug)}
+                onChange={() => alternar('need', n.slug)}
               />
             ))}
           </div>
