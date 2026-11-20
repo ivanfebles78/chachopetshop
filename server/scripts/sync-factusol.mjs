@@ -158,6 +158,26 @@ async function main() {
   const idAnimal = Object.fromEntries(animales.map((a) => [a.slug, a.id]));
   const idCat = Object.fromEntries(cats.map((c) => [c.slug, c.id]));
 
+  // Marcas que YA tenemos: para reconocerlas en el nombre del artículo cuando
+  // Factusol no trae marca (Factusol no tiene campo de marca; va en el nombre).
+  const marcas = await prisma.brand.findMany({ select: { id: true, name: true } });
+  const norm = (s) =>
+    String(s ?? '')
+      .normalize('NFKD')
+      .replace(/[̀-ͯ]/g, '')
+      .toUpperCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+  const marcasOrden = marcas
+    .map((b) => ({ id: b.id, needle: norm(b.name) }))
+    .filter((b) => b.needle.length >= 3)
+    .sort((a, b) => b.needle.length - a.needle.length); // la más larga primero (Atlantic Pet antes que Atlantic)
+  const marcaDeNombre = (nombre) => {
+    const n = norm(nombre);
+    for (const m of marcasOrden) if (n === m.needle || n.startsWith(m.needle + ' ')) return m.id;
+    return null;
+  };
+
   // 3) Productos existentes (para casar por EAN/ref/código y heredar foto)
   const existentes = await prisma.product.findMany({ include: { variants: { select: { sku: true } } } });
   const porSku = new Map();
@@ -175,6 +195,7 @@ async function main() {
 
   const tocados = new Set();
   let creados = 0, actualizados = 0, conFoto = 0, sinFoto = 0, sinPrecio = 0;
+  let marcaHeredada = 0, marcaDeducida = 0, sinMarca = 0;
   const errores = [];
 
   for (const a of arts) {
@@ -200,6 +221,15 @@ async function main() {
 
       if (prod) {
         conFoto++; actualizados++; tocados.add(prod.id);
+        // Marca: se CONSERVA la que ya tenga (nunca se sobrescribe). Si no tiene,
+        // se intenta deducir reconociendo en el nombre una marca que ya exista.
+        let marcaConnect;
+        if (prod.brandId) marcaHeredada++;
+        else {
+          const bId = marcaDeNombre(nombre);
+          if (bId) { marcaConnect = { connect: { id: bId } }; marcaDeducida++; }
+          else sinMarca++;
+        }
         if (dry) continue;
         await prisma.product.update({
           where: { id: prod.id },
@@ -209,12 +239,16 @@ async function main() {
             active: true,
             categories: catId ? { set: [{ id: catId }] } : undefined,
             animals: { set: animalIds.map((id) => ({ id })) },
-            // Se conservan: image, gallery, description, contenido, brand.
+            ...(marcaConnect ? { brand: marcaConnect } : {}),
+            // Se conservan: image, gallery, description, contenido, y la marca si ya tenía.
           },
         });
         await prisma.productVariant.update({ where: { sku: matchedSku }, data: { price: precio, stock } });
       } else {
         creados++; sinFoto++;
+        // Marca del producto nuevo: la que reconozcamos en el nombre (si alguna).
+        const marcaNuevaId = marcaDeNombre(nombre);
+        if (marcaNuevaId) marcaDeducida++; else sinMarca++;
         // sku único para el producto nuevo
         let sku = ean || cod;
         if (!sku || skusUsados.has(sku)) sku = 'FS-' + cod;
@@ -237,6 +271,7 @@ async function main() {
             active: true,
             ...(catId ? { categories: { connect: [{ id: catId }] } } : {}),
             ...(animalIds.length ? { animals: { connect: animalIds.map((id) => ({ id })) } } : {}),
+            ...(marcaNuevaId ? { brand: { connect: { id: marcaNuevaId } } } : {}),
             variants: { create: [{ label: 'Único', sku, price: precio, stock, packUnits: 1 }] },
           },
           select: { id: true },
@@ -265,6 +300,7 @@ async function main() {
   console.log(`  · ${creados} creados nuevos (con imagen de relleno)`);
   console.log(`  · ${ocultados} ocultados (estaban en la web y no están en Factusol)`);
   console.log(`  · ${sinPrecio} artículos sin precio (se muestran como «a consultar»)`);
+  console.log(`  · Marca: ${marcaHeredada} heredada de tu BD · ${marcaDeducida} deducida del nombre · ${sinMarca} sin marca (asignar a mano)`);
   if (errores.length) {
     console.log(`  · ${errores.length} errores:`);
     errores.slice(0, 20).forEach((e) => console.log('     -', e));
