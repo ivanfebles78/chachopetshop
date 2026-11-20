@@ -78,19 +78,13 @@ beforeEach(() => { n = 0; });
 /* ══ 1. Ninguna opción vacía ═══════════════════════════════════════════ */
 
 describe('el panel de filtros no ofrece callejones sin salida', () => {
-  it('las facetas con cero productos se muestran DESHABILITADAS (no desaparecen)', async () => {
-    /*
-     * Panel de estructura FIJA: una opción a 0 ya no se quita —quitarla y
-     * reponerla al filtrar es lo que hacía saltar el panel— sino que se
-     * DESHABILITA (gris, no pulsable), así que tampoco es un callejón sin salida.
-     */
+  it('las facetas con cero productos NO se pintan', async () => {
+    // Una opción sin producto no es un filtro, es una trampa: no se enseña
+    // (salvo que esté puesta). Como el resto no se reordena, tampoco hace saltar.
     montar();
     await screen.findByRole('heading', { level: 1 });
-    const reptiles = screen.getByRole('checkbox', { name: /reptiles/i });
-    expect(reptiles).toBeInTheDocument();
-    expect(reptiles).toBeDisabled();
-    // El rango de tamaño sin producto también sale, deshabilitado.
-    expect(screen.getByRole('checkbox', { name: /más de 15 kg/i })).toBeDisabled();
+    expect(screen.queryByRole('checkbox', { name: /reptiles/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /más de 15 kg/i })).not.toBeInTheDocument();
   });
 
   it('las que sí tienen producto salen con su recuento', async () => {
@@ -117,14 +111,10 @@ describe('el panel de filtros no ofrece callejones sin salida', () => {
     expect(screen.getByRole('checkbox', { name: /reptiles/i })).toBeChecked();
   });
 
-  it('el filtro de ofertas se muestra deshabilitado si no hay rebajas', async () => {
-    // Fila fija: en vez de aparecer/desaparecer (lo que mueve el panel), queda
-    // siempre visible y deshabilitada cuando no hay nada rebajado.
+  it('el filtro de ofertas no aparece si no hay rebajas', async () => {
     montar('/tienda', { facets: { ...FACETAS, ofertas: 0 } });
     await screen.findByRole('heading', { level: 1 });
-    const oferta = screen.getByRole('checkbox', { name: /oferta/i });
-    expect(oferta).toBeInTheDocument();
-    expect(oferta).toBeDisabled();
+    expect(screen.queryByRole('checkbox', { name: /oferta/i })).not.toBeInTheDocument();
   });
 });
 
