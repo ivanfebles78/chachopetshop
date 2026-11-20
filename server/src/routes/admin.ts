@@ -10,6 +10,7 @@ import {
 import { requireAuth, requireAdmin } from '../middleware/auth.js';
 import { serializeProduct, toNumber } from '../lib/serialize.js';
 import { computeAnalytics } from '../lib/analytics.js';
+import { buscarArticuloFactusol, hayCredencialesFactusol } from '../lib/factusol.js';
 
 export const adminRouter = Router();
 adminRouter.use(requireAuth, requireAdmin);
@@ -436,6 +437,32 @@ adminRouter.post('/brands', async (req, res, next) => {
       select: { id: true, name: true, slug: true, logoUrl: true, featured: true },
     });
     res.status(201).json({ brand, creada: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/**
+ * GET /api/admin/factusol — trae el artículo de Factusol que case con un EAN o
+ * SKU, para el comparador del editor («Base de datos vs Factusol»).
+ *
+ * SOLO LECTURA de Factusol (SELECT). Si el servidor no tiene credenciales, se
+ * dice con un 503 para que el panel lo explique en vez de fallar en seco.
+ */
+const factusolQuery = z.object({
+  ean: z.string().trim().max(40).optional(),
+  sku: z.string().trim().max(40).optional(),
+});
+
+adminRouter.get('/factusol', async (req, res, next) => {
+  try {
+    if (!hayCredencialesFactusol()) {
+      return res.status(503).json({ error: 'Factusol no está configurado en el servidor.' });
+    }
+    const { ean, sku } = factusolQuery.parse(req.query);
+    if (!ean && !sku) return res.status(400).json({ error: 'Falta el EAN o el SKU para consultar Factusol.' });
+    const articulo = await buscarArticuloFactusol({ ean, sku });
+    res.json({ articulo });
   } catch (err) {
     next(err);
   }

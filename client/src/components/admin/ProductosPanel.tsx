@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Check, FileDown, FileUp, ImageOff, ImagePlus, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
+import { ArrowLeftRight, Check, FileDown, FileUp, ImageOff, ImagePlus, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { cn, eur } from '@/lib/cn';
@@ -9,6 +9,7 @@ import { useOverlay } from '@/lib/useOverlay';
 import { archivoAImagen } from '@/lib/imagen';
 import { exportarProductosAExcel } from '@/lib/excelProductos';
 import { ImportDialog } from './ImportDialog';
+import { ComparadorFactusol } from './ComparadorFactusol';
 import type { AdminProduct, AdminProductsResponse, Brand, RefTax, Taxonomy } from '@/lib/types';
 
 /**
@@ -476,6 +477,7 @@ function EditorProducto({
   const [animales, setAnimales] = useState<Set<string>>(new Set(producto.animals.map((a) => a.id)));
   const [categorias, setCategorias] = useState<Set<string>>(new Set(producto.categories.map((c) => c.id)));
   const [guardando, setGuardando] = useState(false);
+  const [comparando, setComparando] = useState(false);
 
   // Marcas: copia local para poder AÑADIR una recién creada sin esperar a que el
   // panel recargue la taxonomía entera.
@@ -566,9 +568,19 @@ function EditorProducto({
       >
         <div className="flex shrink-0 items-center justify-between border-b border-brand-900/10 px-6 py-4">
           <h2 className="font-display text-lg font-bold text-ink">Editar producto</h2>
-          <button onClick={onCerrar} className="rounded-lg p-2 text-content-subtle hover:bg-brand-900/5" aria-label="Cerrar">
-            <X className="h-5 w-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setComparando(true)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-sm font-semibold text-brand-700 hover:bg-brand-100"
+            >
+              <ArrowLeftRight className="h-4 w-4" aria-hidden="true" />
+              Comparar con Factusol
+            </button>
+            <button onClick={onCerrar} className="rounded-lg p-2 text-content-subtle hover:bg-brand-900/5" aria-label="Cerrar">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-6 py-5">
@@ -718,6 +730,10 @@ function EditorProducto({
           </button>
         </div>
       </div>
+
+      {comparando && (
+        <ComparadorFactusol producto={producto} taxonomia={taxonomia} onCerrar={() => setComparando(false)} />
+      )}
     </div>
   );
 }

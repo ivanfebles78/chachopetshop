@@ -95,6 +95,20 @@ export type AdminProduct = {
 
 export type AdminProductsResponse = { products: AdminProduct[]; lineas: string[] };
 
+/** El artículo tal y como vive en Factusol (solo lectura), para el comparador. */
+export type FactusolArticulo = {
+  codart: string;
+  eanart: string;
+  refart: string;
+  desart: string;
+  famart: string;
+  pvp: number | null;
+  stock: number | null;
+  /** Traducción de la familia a animal (slug) y categoría web (slug). */
+  animal: string | null;
+  categoria: string;
+};
+
 /** Importación masiva: cómo tratar lo que ya existe. */
 export type ImportMode = 'merge' | 'replace';
 

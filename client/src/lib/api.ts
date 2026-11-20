@@ -10,6 +10,7 @@ import type {
   AuthUser,
   ContactMessage,
   Envio,
+  FactusolArticulo,
   MenuAnimal,
   Order,
   Product,
@@ -185,6 +186,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ name }),
     }),
+  /*
+   * Trae de Factusol (SOLO LECTURA) el artículo que case con el EAN o el SKU,
+   * para comparar su info con la de nuestra BD en el editor del panel.
+   */
+  adminFactusol: (ids: { ean?: string | null; sku?: string | null }) => {
+    const q = new URLSearchParams();
+    if (ids.ean) q.set('ean', ids.ean);
+    if (ids.sku) q.set('sku', ids.sku);
+    return request<{ articulo: FactusolArticulo | null }>(`/admin/factusol?${q.toString()}`);
+  },
   adminDeleteProduct: (id: string) => request<{ ok: boolean }>(`/admin/products/${id}`, { method: 'DELETE' }),
   adminOrders: () => request<{ orders: (Order & { siguientes: string[] })[] }>('/admin/orders'),
   /*
