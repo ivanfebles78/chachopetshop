@@ -652,7 +652,7 @@ function EditorProducto({
                       {b.name}
                     </option>
                   ))}
-                  <option value={VALOR_NUEVA_MARCA}>➕ Crear marca nueva…</option>
+                  <option value={VALOR_NUEVA_MARCA}>+ Crear marca nueva…</option>
                 </select>
               )}
             </Campo>
