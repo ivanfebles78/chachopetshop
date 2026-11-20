@@ -6,22 +6,20 @@ import type { Faceta, Facetas } from '@/lib/types';
 /**
  * PANEL DE FILTROS — ESTRUCTURA ESTABLE, RECUENTOS VIVOS.
  *
- * El servidor (`?facets=1`) devuelve el UNIVERSO COMPLETO de cada dimensión
- * —todas las mascotas, categorías, necesidades, marcas y tamaños, en orden fijo,
- * cada una con su recuento, incluidos los ceros—. Antes el cliente ESCONDÍA las
- * opciones a 0 y montaba/desmontaba grupos según la selección: al deseleccionar
- * un filtro reaparecían decenas de opciones y el panel pegaba saltos. Ya no.
+ * El servidor (`?facets=1`) devuelve el universo de cada dimensión en orden fijo
+ * con su recuento. Reglas, pensadas para NO ofrecer callejones sin salida y a la
+ * vez NO hacer saltar el panel:
  *
- * Reglas nuevas, pensadas para que el panel NO SE MUEVA al filtrar:
+ *   · Una opción con 0 productos NO se enseña (salvo que esté seleccionada, para
+ *     poder soltarla). Así no hay filtros-trampa ni listas infladas de ceros.
+ *   · El orden es fijo y nunca se reordena: al filtrar, las listas sólo se
+ *     acortan o se alargan, pero cada opción se queda en su sitio.
+ *   · Los grupos no se auto-abren ni se remontan: lo que pliegues se queda
+ *     plegado, y los recuentos cambian en el sitio (cifras de ancho fijo).
  *
- *   · Se pinta SIEMPRE el mismo conjunto de opciones, en el mismo orden. Lo único
- *     que cambia al filtrar es el número de al lado (en el sitio, con cifras de
- *     ancho fijo) y qué casillas están marcadas.
- *   · Una opción con 0 productos NO desaparece: se DESHABILITA en gris (no es un
- *     filtro-trampa, pero tampoco hace saltar la lista). Si estaba marcada, sigue
- *     activa para poder quitarla.
- *   · Los grupos no aparecen ni desaparecen ni se auto-abren: lo que pliegues se
- *     queda plegado.
+ * Esto es lo que diferencia el acortado normal de una lista del «baile» de
+ * antes, que venía de que el panel se remontaba entero a esqueleto, se
+ * re-renderizaba con el listado del centro y reseteaba lo plegado.
  *
  * Además el componente está MEMOIZADO y recibe callbacks estables desde la
  * página, así que no se re-renderiza cuando el listado de productos del centro
@@ -284,6 +282,11 @@ function SubGrupo({
   );
 }
 
+/** Las opciones que merecen enseñarse: con producto, o ya seleccionadas (para poder soltarlas). */
+function visibles(lista: Faceta[] | undefined, puestas: string[]): Faceta[] {
+  return (lista ?? []).filter((f) => f.total > 0 || puestas.includes(f.slug));
+}
+
 /**
  * Panel de filtros. MEMOIZADO: como recibe las facetas (estables entre páginas)
  * y callbacks estables desde la página, no se vuelve a dibujar cuando el listado
@@ -300,13 +303,15 @@ export const Filtros = memo(function Filtros({ facetas, filtros, poner, alternar
     );
   }
 
-  // Universo COMPLETO y en orden fijo, tal cual lo da el servidor. No se filtra
-  // por recuento: las opciones a 0 se deshabilitan, no se quitan.
-  const animales = facetas.animals;
-  const categorias = facetas.categories;
-  const necesidades = facetas.needs;
-  const marcas = facetas.brands;
-  const tamanos = facetas.sizes;
+  // Orden fijo del servidor, pero OCULTANDO lo que no lleva a ningún producto
+  // (recuento 0), salvo lo que esté seleccionado (para poder soltarlo). El orden
+  // no cambia y el resto del panel sigue estable (grupos fijos, sin remontaje,
+  // memoizado), así que las listas se acortan al filtrar sin que el menú salte.
+  const animales = visibles(facetas.animals, filtros.animal ?? []);
+  const categorias = visibles(facetas.categories, filtros.category ?? []);
+  const necesidades = visibles(facetas.needs, filtros.need ?? []);
+  const marcas = visibles(facetas.brands, filtros.brand ?? []);
+  const tamanos = visibles(facetas.sizes, filtros.size ?? []);
 
   // Recuentos de línea por slug, para superponerlos sobre la lista FIJA de
   // líneas de accesorio (las que no vengan en la respuesta cuentan 0).
@@ -326,7 +331,9 @@ export const Filtros = memo(function Filtros({ facetas, filtros, poner, alternar
       const miembros = categorias.filter((c) => g.cats.includes(c.slug));
       const esLinea = Boolean((g as GrupoTipo).esAccesorios);
       const hijos: Faceta[] = esLinea
-        ? LINEAS_ACCESORIO.map((nombre) => ({ slug: nombre, nombre, total: lineCount.get(nombre) ?? 0 }))
+        ? LINEAS_ACCESORIO.map((nombre) => ({ slug: nombre, nombre, total: lineCount.get(nombre) ?? 0 })).filter(
+            (h) => h.total > 0 || (filtros.line ?? []).includes(h.slug),
+          )
         : miembros;
       const total = miembros.reduce((s, c) => s + c.total, 0);
       // Sólo fija el estado INICIAL del subgrupo; luego se conserva lo que haga
@@ -341,15 +348,17 @@ export const Filtros = memo(function Filtros({ facetas, filtros, poner, alternar
 
   return (
     <div className="space-y-6">
-      {/* Ofertas: fila fija. Si no hay rebajas, queda deshabilitada, no desaparece. */}
-      <Grupo titulo="Precio rebajado">
-        <Opcion
-          nombre="oferta"
-          faceta={{ slug: 'oferta', nombre: 'Sólo en oferta', total: facetas.ofertas }}
-          marcada={Boolean(filtros.oferta)}
-          onChange={() => poner('oferta', filtros.oferta ? null : '1')}
-        />
-      </Grupo>
+      {/* Ofertas: sólo si hay algo rebajado (o ya está puesto el filtro). */}
+      {(facetas.ofertas > 0 || filtros.oferta) && (
+        <Grupo titulo="Precio rebajado">
+          <Opcion
+            nombre="oferta"
+            faceta={{ slug: 'oferta', nombre: 'Sólo en oferta', total: facetas.ofertas }}
+            marcada={Boolean(filtros.oferta)}
+            onChange={() => poner('oferta', filtros.oferta ? null : '1')}
+          />
+        </Grupo>
+      )}
 
       {animales.length > 0 && (
         <Grupo titulo="Mascota">
