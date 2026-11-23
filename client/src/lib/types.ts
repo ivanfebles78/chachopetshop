@@ -81,6 +81,8 @@ export type AdminProduct = {
   image: string;
   price: number | null;
   active: boolean;
+  /** Solo tienda física: oculto de la web (la sync no lo toca). */
+  soloTienda: boolean;
   line: string | null;
   /** EAN (código de barras) de Factusol. null si el artículo no lo trae. */
   ean: string | null;
@@ -150,6 +152,8 @@ export type AdminProductPatch = Partial<{
   price: number | null;
   brandId: string | null;
   active: boolean;
+  /** Solo tienda física: oculta de la web; la sync no lo toca. */
+  soloTienda: boolean;
   animalIds: string[];
   categoryIds: string[];
   needIds: string[];

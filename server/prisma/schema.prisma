@@ -184,6 +184,16 @@ model Product {
   featured    Boolean          @default(false)
   bestseller  Boolean          @default(false)
   active      Boolean          @default(true)
+  /**
+   * SOLO TIENDA FÍSICA — no se vende online.
+   * `active` no sirve para esto: el sincronizador de Factusol vuelve a poner
+   * `active=true` en cada pasada a todo lo que está en Factusol, así que ocultar
+   * un artículo con «Visible en la tienda» no aguantaría. Este campo es una
+   * decisión MANUAL del dueño que el sincronizador NUNCA toca: cuando es `true`,
+   * el producto desaparece de toda la web (catálogo, filtros, menú, ficha y
+   * checkout) aunque esté activo, pero sigue existiendo para la tienda física.
+   */
+  soloTienda  Boolean          @default(false)
   animals     Animal[]         @relation("ProductAnimals")
   categories  Category[]       @relation("ProductCategories")
   needs       Need[]           @relation("ProductNeeds")

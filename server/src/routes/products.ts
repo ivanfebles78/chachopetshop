@@ -66,7 +66,7 @@ productsRouter.get('/', async (req, res, next) => {
   try {
     const p = listQuery.parse(req.query);
 
-    const where: Prisma.ProductWhereInput = { active: true };
+    const where: Prisma.ProductWhereInput = { active: true, soloTienda: false };
     const and: Prisma.ProductWhereInput[] = [];
 
     /*
@@ -226,7 +226,7 @@ productsRouter.get('/:slug', async (req, res, next) => {
         variants: { orderBy: { price: 'asc' } },
       },
     });
-    if (!product || !product.active) {
+    if (!product || !product.active || product.soloTienda) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
 
@@ -264,7 +264,7 @@ productsRouter.get('/:slug', async (req, res, next) => {
     for (const franja of franjas) {
       if (related.length >= 4) break;
       const filas = await prisma.product.findMany({
-        where: { active: true, id: { notIn: [...vistos] }, ...franja.where },
+        where: { active: true, soloTienda: false, id: { notIn: [...vistos] }, ...franja.where },
         take: 4 - related.length,
         orderBy: { featured: 'desc' },
         include: incluir,

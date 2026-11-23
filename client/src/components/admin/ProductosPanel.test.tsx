@@ -47,7 +47,7 @@ const DATA: AdminProductsResponse = {
   products: [
     {
       id: 'p1', name: 'Nobleza Jaula de Alambre', slug: 'nobleza-jaula', description: 'Una jaula',
-      image: '/productos/accesorios/x.webp', price: 46.8, active: true, line: 'Jaulas y transportines',
+      image: '/productos/accesorios/x.webp', price: 46.8, active: true, soloTienda: false, line: 'Jaulas y transportines',
       ean: '8719138198733', familia: 'PAC',
       brand: { id: 'b1', name: 'Nobleza', slug: 'nobleza' },
       animals: [{ id: 'a1', slug: 'perro', name: 'Perros' }],
@@ -57,7 +57,7 @@ const DATA: AdminProductsResponse = {
     },
     {
       id: 'p2', name: 'Gamarq Colchón', slug: 'gamarq-colchon', description: 'Un colchón',
-      image: '/productos/accesorios/y.webp', price: 20, active: true, line: 'Descanso',
+      image: '/productos/accesorios/y.webp', price: 20, active: true, soloTienda: false, line: 'Descanso',
       ean: '8022967045711', familia: 'PEL',
       brand: { id: 'b2', name: 'Gamarq', slug: 'gamarq' },
       animals: [{ id: 'a1', slug: 'perro', name: 'Perros' }, { id: 'a2', slug: 'gato', name: 'Gatos' }],
@@ -69,7 +69,7 @@ const DATA: AdminProductsResponse = {
       // Llega de Factusol SIN foto (relleno picsum) y SIN marca: el caso que el
       // dueño quiere arreglar desde el panel.
       id: 'p3', name: 'Internutri Perro Adulto 20 kg', slug: 'internutri-perro-20', description: '',
-      image: 'https://picsum.photos/seed/chacho-123/800/800', price: null, active: true, line: null,
+      image: 'https://picsum.photos/seed/chacho-123/800/800', price: null, active: true, soloTienda: false, line: null,
       ean: '1234567890123', familia: 'PAS',
       brand: null,
       animals: [{ id: 'a1', slug: 'perro', name: 'Perros' }],

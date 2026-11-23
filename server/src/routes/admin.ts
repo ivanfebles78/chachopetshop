@@ -110,6 +110,7 @@ adminRouter.get('/products', async (_req, res, next) => {
           image: true,
           price: true,
           active: true,
+          soloTienda: true,
           line: true,
           ean: true,
           familia: true,
@@ -153,6 +154,8 @@ const productPatch = z.object({
   price: z.number().min(0).nullable().optional(),
   brandId: z.string().nullable().optional(),
   active: z.boolean().optional(),
+  /** Solo tienda física: oculta de la web y la sync NUNCA lo toca. */
+  soloTienda: z.boolean().optional(),
   animalIds: z.array(z.string()).optional(),
   categoryIds: z.array(z.string()).optional(),
   needIds: z.array(z.string()).optional(),
@@ -173,6 +176,7 @@ adminRouter.patch('/products/:id', async (req, res, next) => {
     if (b.description !== undefined) data.description = b.description;
     if (b.line !== undefined) data.line = b.line; // null = quitar la línea
     if (b.active !== undefined) data.active = b.active;
+    if (b.soloTienda !== undefined) data.soloTienda = b.soloTienda;
     if (b.price !== undefined) data.price = b.price;
     if (b.ean !== undefined) data.ean = b.ean || null; // '' = vaciar
     if (b.familia !== undefined) data.familia = b.familia || null;

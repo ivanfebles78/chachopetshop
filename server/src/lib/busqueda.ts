@@ -65,6 +65,7 @@ export async function idsQueCoinciden(texto: string): Promise<string[]> {
     FROM "Product" p
     LEFT JOIN "Brand" b ON b.id = p."brandId"
     WHERE p.active = true
+      AND p."soloTienda" = false
       AND (
            ${coincide(Prisma.sql`p.name`)}
         OR ${coincide(Prisma.sql`p.description`)}

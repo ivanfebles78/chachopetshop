@@ -13,7 +13,7 @@ taxonomyRouter.get('/menu', async (_req, res, next) => {
   try {
     const [productos, animales] = await Promise.all([
       prisma.product.findMany({
-        where: { active: true },
+        where: { active: true, soloTienda: false },
         select: {
           line: true,
           animals: { select: { slug: true } },

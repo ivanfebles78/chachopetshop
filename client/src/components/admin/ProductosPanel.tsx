@@ -32,6 +32,7 @@ const POR_PAGINA = 25;
 
 type Estado = 'todos' | 'activos' | 'inactivos';
 type Imagen = 'todas' | 'con' | 'sin';
+type Venta = 'todos' | 'online' | 'solo';
 type Orden = 'nombre' | 'precio-asc' | 'precio-desc';
 
 /**
@@ -61,6 +62,7 @@ export function ProductosPanel({
   const [fFamilia, setFFamilia] = useState('');
   const [fImagen, setFImagen] = useState<Imagen>('todas');
   const [fEstado, setFEstado] = useState<Estado>('todos');
+  const [fVenta, setFVenta] = useState<Venta>('todos');
   const [orden, setOrden] = useState<Orden>('nombre');
   const [pagina, setPagina] = useState(1);
   const [editando, setEditando] = useState<AdminProduct | null>(null);
@@ -106,6 +108,8 @@ export function ProductosPanel({
       if (fImagen === 'sin' && tieneImagen(p.image)) return false;
       if (fEstado === 'activos' && !p.active) return false;
       if (fEstado === 'inactivos' && p.active) return false;
+      if (fVenta === 'online' && p.soloTienda) return false;
+      if (fVenta === 'solo' && !p.soloTienda) return false;
       return true;
     });
     const precio = (p: AdminProduct) => p.price ?? p.variants[0]?.price ?? Infinity;
@@ -117,10 +121,10 @@ export function ProductosPanel({
         : precio(b) - precio(a),
     );
     return lista;
-  }, [productos, q, fEan, fAnimal, fCategoria, fLinea, fMarca, fFamilia, fImagen, fEstado, orden]);
+  }, [productos, q, fEan, fAnimal, fCategoria, fLinea, fMarca, fFamilia, fImagen, fEstado, fVenta, orden]);
 
   // Cualquier cambio de filtro vuelve a la primera página.
-  useEffect(() => setPagina(1), [q, fEan, fAnimal, fCategoria, fLinea, fMarca, fFamilia, fImagen, fEstado, orden]);
+  useEffect(() => setPagina(1), [q, fEan, fAnimal, fCategoria, fLinea, fMarca, fFamilia, fImagen, fEstado, fVenta, orden]);
 
   const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
   const paginaActual = Math.min(pagina, totalPaginas);
@@ -151,10 +155,11 @@ export function ProductosPanel({
     setFFamilia('');
     setFImagen('todas');
     setFEstado('todos');
+    setFVenta('todos');
     setOrden('nombre');
   };
   const hayFiltros =
-    q || fEan || fAnimal || fCategoria || fLinea || fMarca || fFamilia || fImagen !== 'todas' || fEstado !== 'todos';
+    q || fEan || fAnimal || fCategoria || fLinea || fMarca || fFamilia || fImagen !== 'todas' || fEstado !== 'todos' || fVenta !== 'todos';
 
   const sinFoto = productos.filter((p) => !tieneImagen(p.image)).length;
 
@@ -229,6 +234,15 @@ export function ProductosPanel({
             <option value="inactivos">Ocultos</option>
           </select>
           <select
+            value={fVenta}
+            onChange={(e) => setFVenta(e.target.value as Venta)}
+            className="h-11 rounded-full border border-brand-900/10 bg-white px-3 text-sm font-semibold outline-none focus:border-brand-500"
+          >
+            <option value="todos">Venta: todas</option>
+            <option value="online">Se venden online</option>
+            <option value="solo">Solo tienda física</option>
+          </select>
+          <select
             value={orden}
             onChange={(e) => setOrden(e.target.value as Orden)}
             className="h-11 rounded-full border border-brand-900/10 bg-white px-3 text-sm font-semibold outline-none focus:border-brand-500"
@@ -292,6 +306,7 @@ export function ProductosPanel({
                           {p.name}
                         </Link>
                         {!p.active && <span className="text-xs text-content-subtle">Oculto en la tienda</span>}
+                        {p.soloTienda && <span className="block text-xs font-semibold text-amber-700">Solo tienda física</span>}
                       </div>
                     </div>
                   </td>
@@ -474,6 +489,7 @@ function EditorProducto({
   const [linea, setLinea] = useState(producto.line ?? '');
   const [imagen, setImagen] = useState(producto.image);
   const [activo, setActivo] = useState(producto.active);
+  const [soloTienda, setSoloTienda] = useState(producto.soloTienda);
   const [animales, setAnimales] = useState<Set<string>>(new Set(producto.animals.map((a) => a.id)));
   const [categorias, setCategorias] = useState<Set<string>>(new Set(producto.categories.map((c) => c.id)));
   const [guardando, setGuardando] = useState(false);
@@ -544,6 +560,7 @@ function EditorProducto({
         familia: familia.trim() === '' ? null : familia.trim(),
         brandId: marca || null,
         active: activo,
+        soloTienda,
         animalIds: [...animales],
         categoryIds: [...categorias],
         ...(cambioImagen ? { image: imagenLimpia } : {}),
@@ -726,6 +743,21 @@ function EditorProducto({
           <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-ink">
             <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} className="h-4 w-4" />
             Visible en la tienda
+          </label>
+
+          <label className="flex cursor-pointer items-start gap-2 text-sm font-semibold text-ink">
+            <input
+              type="checkbox"
+              checked={soloTienda}
+              onChange={(e) => setSoloTienda(e.target.checked)}
+              className="mt-0.5 h-4 w-4"
+            />
+            <span>
+              Solo en tienda física (no vender online)
+              <span className="mt-0.5 block text-xs font-normal text-content-subtle">
+                Lo oculta de la web aunque esté activo. La sincronización con Factusol NO lo revierte.
+              </span>
+            </span>
           </label>
         </div>
 
