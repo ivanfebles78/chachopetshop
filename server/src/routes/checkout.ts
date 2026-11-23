@@ -84,7 +84,7 @@ type Entrada = z.infer<typeof checkoutBody>;
 async function construirLineas(input: Entrada) {
   const ids = [...new Set(input.items.map((i) => i.productId))];
   const productos = await prisma.product.findMany({
-    where: { id: { in: ids }, active: true },
+    where: { id: { in: ids }, active: true, soloTienda: false },
     include: { variants: true },
   });
   const porId = new Map(productos.map((p) => [p.id, p]));

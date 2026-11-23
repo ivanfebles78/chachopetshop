@@ -67,7 +67,7 @@ function salvo(c: Condiciones, dimension: keyof Condiciones | null): Prisma.Prod
   if (dimension !== 'line' && c.line) and.push(c.line);
   if (dimension !== 'size' && c.size) and.push(c.size);
   if (dimension !== 'oferta' && c.oferta) and.push(...c.oferta);
-  return { active: true, ...(and.length ? { AND: and } : {}) };
+  return { active: true, soloTienda: false, ...(and.length ? { AND: and } : {}) };
 }
 
 /**
