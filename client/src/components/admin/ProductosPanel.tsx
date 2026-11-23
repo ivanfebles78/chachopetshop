@@ -488,7 +488,6 @@ function EditorProducto({
   const [familia, setFamilia] = useState(producto.familia ?? '');
   const [linea, setLinea] = useState(producto.line ?? '');
   const [imagen, setImagen] = useState(producto.image);
-  const [activo, setActivo] = useState(producto.active);
   const [soloTienda, setSoloTienda] = useState(producto.soloTienda);
   const [animales, setAnimales] = useState<Set<string>>(new Set(producto.animals.map((a) => a.id)));
   const [categorias, setCategorias] = useState<Set<string>>(new Set(producto.categories.map((c) => c.id)));
@@ -559,7 +558,6 @@ function EditorProducto({
         ean: ean.trim() === '' ? null : ean.trim(),
         familia: familia.trim() === '' ? null : familia.trim(),
         brandId: marca || null,
-        active: activo,
         soloTienda,
         animalIds: [...animales],
         categoryIds: [...categorias],
@@ -739,11 +737,6 @@ function EditorProducto({
               className="field w-full resize-y py-2"
             />
           </Campo>
-
-          <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold text-ink">
-            <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} className="h-4 w-4" />
-            Visible en la tienda
-          </label>
 
           <label className="flex cursor-pointer items-start gap-2 text-sm font-semibold text-ink">
             <input
