@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeftRight, Check, FileDown, FileUp, ImageOff, ImagePlus, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
+import { ArrowLeftRight, Check, EyeOff, FileDown, FileUp, ImageOff, ImagePlus, Pencil, Plus, Search, Store, Trash2, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useFetch } from '@/lib/useFetch';
 import { cn, eur } from '@/lib/cn';
@@ -29,6 +29,9 @@ import type { AdminProduct, AdminProductsResponse, Brand, RefTax, Taxonomy } fro
  */
 
 const POR_PAGINA = 25;
+
+/** Valor centinela del filtro de marca para «productos sin marca en Factusol». */
+const SIN_MARCA = '__sin_marca__';
 
 type Estado = 'todos' | 'activos' | 'inactivos';
 type Imagen = 'todas' | 'con' | 'sin';
@@ -102,7 +105,9 @@ export function ProductosPanel({
       if (fAnimal && !p.animals.some((a) => a.slug === fAnimal)) return false;
       if (fCategoria && !p.categories.some((c) => c.slug === fCategoria)) return false;
       if (fLinea && p.line !== fLinea) return false;
-      if (fMarca && p.brand?.slug !== fMarca) return false;
+      if (fMarca === SIN_MARCA) {
+        if (p.brand) return false;
+      } else if (fMarca && p.brand?.slug !== fMarca) return false;
       if (fFamilia && p.familia !== fFamilia) return false;
       if (fImagen === 'con' && !tieneImagen(p.image)) return false;
       if (fImagen === 'sin' && tieneImagen(p.image)) return false;
@@ -162,6 +167,8 @@ export function ProductosPanel({
     q || fEan || fAnimal || fCategoria || fLinea || fMarca || fFamilia || fImagen !== 'todas' || fEstado !== 'todos' || fVenta !== 'todos';
 
   const sinFoto = productos.filter((p) => !tieneImagen(p.image)).length;
+  const soloTiendaN = productos.filter((p) => p.soloTienda).length;
+  const ocultosN = productos.filter((p) => !p.active).length;
 
   return (
     <div className="space-y-4">
@@ -214,7 +221,13 @@ export function ProductosPanel({
           <Selector valor={fCategoria} onChange={setFCategoria} vacio="Categoría" opciones={taxonomia.data?.categories ?? []} />
           <SelectorTexto valor={fFamilia} onChange={setFFamilia} vacio="Familia" opciones={familias} />
           <SelectorTexto valor={fLinea} onChange={setFLinea} vacio="Línea" opciones={data.lineas} />
-          <Selector valor={fMarca} onChange={setFMarca} vacio="Marca" opciones={taxonomia.data?.brands ?? []} />
+          <Selector
+            valor={fMarca}
+            onChange={setFMarca}
+            vacio="Marca"
+            opciones={taxonomia.data?.brands ?? []}
+            extra={[{ value: SIN_MARCA, label: 'Sin marca' }]}
+          />
           <select
             value={fImagen}
             onChange={(e) => setFImagen(e.target.value as Imagen)}
@@ -269,6 +282,24 @@ export function ProductosPanel({
             >
               <ImageOff className="h-3.5 w-3.5" aria-hidden="true" />
               {sinFoto} sin foto propia
+            </button>
+          )}
+          {soloTiendaN > 0 && (
+            <button
+              onClick={() => setFVenta('solo')}
+              className="inline-flex items-center gap-1 font-semibold text-amber-700 hover:underline"
+            >
+              <Store className="h-3.5 w-3.5" aria-hidden="true" />
+              {soloTiendaN} solo en tienda física
+            </button>
+          )}
+          {ocultosN > 0 && (
+            <button
+              onClick={() => setFEstado('inactivos')}
+              className="inline-flex items-center gap-1 font-semibold text-content-subtle hover:underline"
+            >
+              <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
+              {ocultosN} ocultos en la tienda
             </button>
           )}
         </div>
@@ -409,11 +440,14 @@ function Selector({
   onChange,
   vacio,
   opciones,
+  extra,
 }: {
   valor: string;
   onChange: (v: string) => void;
   vacio: string;
   opciones: RefTax[];
+  /** Opciones extra al final del desplegable (p. ej. «Sin marca»). */
+  extra?: { value: string; label: string }[];
 }) {
   return (
     <select
@@ -425,6 +459,11 @@ function Selector({
       {opciones.map((o) => (
         <option key={o.id} value={o.slug}>
           {o.name}
+        </option>
+      ))}
+      {extra?.map((o) => (
+        <option key={o.value} value={o.value}>
+          {o.label}
         </option>
       ))}
     </select>
