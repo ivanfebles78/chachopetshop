@@ -53,6 +53,11 @@ export type ProductFilters = {
   animal?: string[];
   /** Categorías (Alimentación, Accesorios…). Multi-selección: se muestran todas. */
   category?: string[];
+  /**
+   * Familia(s) de Factusol (PAS, GAH, AAV…). Viene del menú de cabecera, que
+   * enlaza a familias concretas (p. ej. «Perros · Húmeda» = PAH). Acepta varias.
+   */
+  familia?: string[];
   brand?: string[];
   /** Línea de marca (atributo del producto). El menú enlaza marca + línea. */
   line?: string[];
@@ -85,6 +90,7 @@ function toQuery(f: ProductFilters): string {
   const p = new URLSearchParams();
   if (f.animal?.length) p.set('animal', f.animal.join(','));
   if (f.category?.length) p.set('category', f.category.join(','));
+  if (f.familia?.length) p.set('familia', f.familia.join(','));
   if (f.brand?.length) p.set('brand', f.brand.join(','));
   if (f.line?.length) p.set('line', f.line.join(','));
   if (f.size?.length) p.set('size', f.size.join(','));

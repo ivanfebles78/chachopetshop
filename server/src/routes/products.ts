@@ -13,6 +13,12 @@ const listQuery = z.object({
   // Facetas (slug). Se aceptan como CSV: ?need=alergias,piel
   animal: z.string().optional(),
   category: z.string().optional(),
+  /**
+   * Familia(s) de Factusol (PAS, GAH, AAV…). El menú de cabecera enlaza a una o
+   * varias familias concretas (p. ej. «Perros · Húmeda» = PAH; «Aseo» = GBA,PGA).
+   * Es el código crudo que el sincronizador guarda en `Product.familia`. Acepta CSV.
+   */
+  familia: z.string().optional(),
   brand: z.string().optional(),
   /** Línea de marca (atributo del producto). Valor exacto; acepta CSV. */
   line: z.string().optional(),
@@ -89,6 +95,18 @@ productsRouter.get('/', async (req, res, next) => {
     if (categorias.length) {
       cond.category = { categories: { some: { slug: { in: categorias } } } };
       and.push(cond.category);
+    }
+
+    // Familia de Factusol: filtro directo del menú de cabecera (no es una faceta
+    // del panel lateral). Es un atributo escalar del producto, no una tabla. Va
+    // como condición BASE (siempre aplicada, igual que la búsqueda o el precio):
+    // así los recuentos de las facetas del panel se calculan ya dentro de la
+    // familia elegida, que es lo correcto cuando se llega desde «Perros · Húmeda».
+    const familias = csv(p.familia);
+    if (familias.length) {
+      const c = { familia: { in: familias } };
+      cond.base.push(c);
+      and.push(c);
     }
 
     const brands = csv(p.brand);

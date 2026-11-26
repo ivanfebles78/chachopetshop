@@ -10,6 +10,7 @@ import {
   migasDe,
   tituloDe,
 } from '@/lib/catalogo';
+import { etiquetaFamilias } from '@/lib/familias';
 import { canonicaDeCatalogo, useSeo } from '@/lib/useSeo';
 import { useOverlay } from '@/lib/useOverlay';
 import { ProductCard, ProductCardSkeleton } from '@/components/ProductCard';
@@ -282,9 +283,13 @@ export function CatalogPage() {
                 correcto sigue siendo el de siempre.
               */
               categoriaVacia={
-                filtros.category?.length === 1 && !filtros.q
-                  ? facetas?.categories?.find((c) => c.slug === filtros.category![0])?.nombre
-                  : undefined
+                filtros.q
+                  ? undefined
+                  : filtros.familia?.length
+                    ? etiquetaFamilias(filtros.familia)
+                    : filtros.category?.length === 1
+                      ? facetas?.categories?.find((c) => c.slug === filtros.category![0])?.nombre
+                      : undefined
               }
             />
           )}
