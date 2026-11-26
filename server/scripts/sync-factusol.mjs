@@ -28,6 +28,7 @@
  */
 import { PrismaClient } from '@prisma/client';
 import { writeFileSync } from 'node:fs';
+import { limpiarNombreMarca } from './nombres.mjs';
 
 const prisma = new PrismaClient();
 const dry = process.argv.includes('--dry-run');
@@ -207,7 +208,11 @@ async function main() {
       const map = FAMILIAS[fam] || DEFECTO;
       const precio = a.PVP != null && Number(a.PVP) > 0 ? Number(a.PVP) : null;
       const stock = a.STOCK != null ? Math.max(0, Math.floor(Number(a.STOCK))) : 0;
-      const nombre = String(a.DESART ?? cod).trim() || cod;
+      // El nombre viene de Factusol (DESART). Se le recorta la marca repetida
+      // («Men for san…», «Frontline…») para no mostrarla dos veces; si al quitarla
+      // no quedara nada, se conserva el texto original. Ver `scripts/nombres.mjs`.
+      const bruto = String(a.DESART ?? cod).trim() || cod;
+      const nombre = limpiarNombreMarca(bruto) || bruto;
       if (precio == null) sinPrecio++;
 
       const catId = idCat[map.cat] || idCat['otros'];
