@@ -8,6 +8,8 @@ import {
   Dog,
   Cat,
   Rabbit,
+  Bird,
+  Fish,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -34,9 +36,15 @@ export type ItemMenu = {
   hijos?: ItemMenu[];
 };
 
-const F = (animal: string) => (slug: string) => `/tienda?animal=${animal}&category=${slug}`;
-const porPerro = F('perro');
-const porGato = F('gato');
+/**
+ * Un enlace que filtra el catálogo por una o varias FAMILIAS de Factusol —el
+ * código crudo que el sincronizador guarda en cada producto (ver el filtro
+ * `familia` del catálogo)—. Opcionalmente fija también la mascota, para que el
+ * titular y las migas digan «… para perros». Varias familias van separadas por
+ * coma (p. ej. «Aseo» = GBA,PGA); el servidor las separa igual.
+ */
+const porFamilia = (familia: string, animal?: string) =>
+  `/tienda?${animal ? `animal=${animal}&` : ''}familia=${familia}`;
 
 /**
  * Un enlace a la categoría «accesorios» con una LÍNEA ya seleccionada. La línea
@@ -45,33 +53,65 @@ const porGato = F('gato');
 const porLinea = (linea: string) =>
   `/tienda?category=accesorios&line=${encodeURIComponent(linea)}`;
 
-/** Las cuatro categorías de alimentación, iguales para perro y gato. */
-const alimentacion = (por: (slug: string) => string): ItemMenu[] => [
-  { etiqueta: 'Seca', href: por('alimentacion-seca') },
-  { etiqueta: 'Húmeda', href: por('alimentacion-humeda') },
-  { etiqueta: 'Semihúmeda', href: por('alimentacion-semihumeda') },
-  { etiqueta: 'Snacks y premios', href: por('snacks-y-premios') },
-];
-
 export const MENU_PRINCIPAL: ItemMenu[] = [
   {
     etiqueta: 'Alimentación',
     icono: Bone,
     hijos: [
-      { etiqueta: 'Perros', iconoHijo: Dog, href: '/tienda?animal=perro', hijos: alimentacion(porPerro) },
-      { etiqueta: 'Gatos', iconoHijo: Cat, href: '/tienda?animal=gato', hijos: alimentacion(porGato) },
       {
-        etiqueta: 'Conejos',
+        etiqueta: 'Perros',
+        iconoHijo: Dog,
+        href: '/tienda?animal=perro',
+        hijos: [
+          { etiqueta: 'Seca', href: porFamilia('PAS', 'perro') },
+          { etiqueta: 'Semihúmeda', href: porFamilia('PSH', 'perro') },
+          { etiqueta: 'Húmeda', href: porFamilia('PAH', 'perro') },
+          { etiqueta: 'Snacks', href: porFamilia('PSN', 'perro') },
+        ],
+      },
+      {
+        etiqueta: 'Gatos',
+        iconoHijo: Cat,
+        href: '/tienda?animal=gato',
+        hijos: [
+          { etiqueta: 'Seca', href: porFamilia('GAS', 'gato') },
+          { etiqueta: 'Semihúmeda', href: porFamilia('GSH', 'gato') },
+          { etiqueta: 'Húmeda', href: porFamilia('GAH', 'gato') },
+          { etiqueta: 'Snacks', href: porFamilia('GSN', 'gato') },
+        ],
+      },
+      {
+        etiqueta: 'Roedores',
         iconoHijo: Rabbit,
         href: '/tienda?animal=roedor',
-        hijos: [{ etiqueta: 'Heno', href: '/tienda?animal=roedor&category=semillas-y-forraje' }],
+        hijos: [
+          { etiqueta: 'Alimentos', href: porFamilia('RAL', 'roedor') },
+          { etiqueta: 'Snack', href: porFamilia('RSN', 'roedor') },
+        ],
+      },
+      { etiqueta: 'Reptiles', href: porFamilia('REA', 'reptil') },
+      { etiqueta: 'Peces', iconoHijo: Fish, href: porFamilia('PCL', 'pez') },
+      {
+        etiqueta: 'Ave',
+        iconoHijo: Bird,
+        href: '/tienda?animal=ave',
+        hijos: [
+          { etiqueta: 'Pastas', href: porFamilia('AAP', 'ave') },
+          { etiqueta: 'Semillas', href: porFamilia('AAS', 'ave') },
+          { etiqueta: 'Mezclas', href: porFamilia('AAM', 'ave') },
+        ],
       },
     ],
   },
   {
-    etiqueta: 'Cosméticos',
+    etiqueta: 'Salud y Cosméticos',
     icono: Sparkles,
-    hijos: [{ etiqueta: 'Animally', href: '/tienda?brand=animally' }],
+    hijos: [
+      // Vitaminas y suplementos: AAV (ave), GSU (gato) y PSU (perro).
+      { etiqueta: 'Vitaminas y suplementos', href: porFamilia('AAV,GSU,PSU') },
+      // Aseo: GBA (gato baño) y PGA (perro aseo).
+      { etiqueta: 'Aseo', href: porFamilia('GBA,PGA') },
+    ],
   },
   {
     etiqueta: 'Accesorios',
@@ -93,7 +133,8 @@ export const MENU_PRINCIPAL: ItemMenu[] = [
   {
     etiqueta: 'Antiparasitarios',
     icono: ShieldCheck,
-    href: '/tienda?category=salud-y-antiparasitarios',
+    // PAN (perro) y GAN (gato).
+    href: porFamilia('PAN,GAN'),
   },
   {
     etiqueta: 'Marcas',

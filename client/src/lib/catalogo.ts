@@ -1,5 +1,6 @@
 import type { ProductFilters } from './api';
 import type { Facetas } from './types';
+import { etiquetaFamilias } from './familias';
 
 /**
  * EL ESTADO DEL CATÁLOGO VIVE EN LA URL.
@@ -56,6 +57,7 @@ export function filtrosDeParams(params: URLSearchParams): ProductFilters {
   return {
     animal: lista('animal'),
     category: lista('category'),
+    familia: lista('familia'),
     need: lista('need'),
     brand: lista('brand'),
     line: lista('line'),
@@ -76,6 +78,9 @@ export function cuantosFiltros(f: ProductFilters): number {
   return (
     (f.animal?.length ?? 0) +
     (f.category?.length ?? 0) +
+    // La familia viene del menú: cuenta como UN filtro aunque lleve varias
+    // familias (p. ej. «Aseo» = GBA,PGA), porque es una sola elección.
+    (f.familia?.length ? 1 : 0) +
     (f.oferta ? 1 : 0) +
     (f.q ? 1 : 0) +
     (f.minPrice !== undefined || f.maxPrice !== undefined ? 1 : 0) +
@@ -105,6 +110,13 @@ export function filtrosPuestos(f: ProductFilters, facetas: Facetas | undefined):
   // Categoría es multi-selección: una ficha por cada una, con su `valor` para
   // poder soltarlas de una en una (como marcas o necesidades).
   for (const s of f.category ?? []) puestos.push({ clave: 'category', valor: s, etiqueta: nombre(facetas?.categories, s) });
+  // Familia: una SOLA ficha con su nombre legible (p. ej. «Alimentación húmeda»
+  // o «Aseo»). Sin `valor`, así que al quitarla se suelta la familia entera, que
+  // es lo que se quiere: llegó como una elección única desde el menú.
+  if (f.familia?.length) {
+    const etq = etiquetaFamilias(f.familia);
+    if (etq) puestos.push({ clave: 'familia', etiqueta: etq });
+  }
   for (const s of f.need ?? []) puestos.push({ clave: 'need', valor: s, etiqueta: nombre(facetas?.needs, s) });
   for (const s of f.brand ?? []) puestos.push({ clave: 'brand', valor: s, etiqueta: nombre(facetas?.brands, s) });
   // La línea es un texto legible en sí mismo («Grain Free»), no un slug.
@@ -138,10 +150,13 @@ export function tituloDe(f: ProductFilters, facetas: Facetas | undefined): strin
   // elegida. Con varias marcadas no hay un titular único que las resuma.
   const animal = f.animal?.length === 1 ? nombre(facetas?.animals, f.animal[0]) : undefined;
   const categoria = f.category?.length === 1 ? nombre(facetas?.categories, f.category[0]) : undefined;
+  // La familia (venida del menú) hace de «sección» cuando no hay una categoría
+  // elegida: «Alimentación húmeda», «Antiparasitarios», «Aseo»…
+  const seccion = categoria ?? etiquetaFamilias(f.familia ?? []);
 
   if (f.oferta) return animal ? `Ofertas para ${animal.toLowerCase()}` : 'Ofertas';
-  if (categoria && animal) return `${categoria} para ${animal.toLowerCase()}`;
-  if (categoria) return categoria;
+  if (seccion && animal) return `${seccion} para ${animal.toLowerCase()}`;
+  if (seccion) return seccion;
   if (animal) return animal;
   return 'Toda la tienda';
 }
@@ -152,8 +167,9 @@ export function migasDe(f: ProductFilters, titulo: string): { etiqueta: string; 
     { etiqueta: 'Inicio', href: '/' },
     { etiqueta: 'Tienda', href: '/tienda' },
   ];
-  // Con UNA mascota Y categoría, la mascota es un escalón intermedio real.
-  if (f.animal?.length === 1 && f.category?.length && !f.q) {
+  // Con UNA mascota Y una sección (categoría o familia), la mascota es un
+  // escalón intermedio real: «Perros › Alimentación húmeda».
+  if (f.animal?.length === 1 && (f.category?.length || f.familia?.length) && !f.q) {
     migas.push({ etiqueta: titulo.split(' para ')[1] ?? '', href: `/tienda?animal=${f.animal[0]}` });
   }
   if (titulo !== 'Toda la tienda') migas.push({ etiqueta: titulo });

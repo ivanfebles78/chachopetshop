@@ -139,12 +139,15 @@ describe('el menú superior se anuncia y es navegable', () => {
     expect(alim).toHaveAttribute('aria-expanded', 'true');
   });
 
-  it('al abrir Alimentación salen Perros, Gatos y Conejos', async () => {
+  it('al abrir Alimentación salen los animales (Perros, Gatos, Roedores, Ave…)', async () => {
     const user = userEvent.setup();
     await abrirSeccion(user, 'Alimentación');
     expect(screen.getByRole('link', { name: 'Perros' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Gatos' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Conejos' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Roedores' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Ave' })).toBeInTheDocument();
+    // «Conejos» era el nombre antiguo; ahora es «Roedores».
+    expect(screen.queryByRole('link', { name: 'Conejos' })).not.toBeInTheDocument();
   });
 
   it('Escape cierra el menú abierto', async () => {
@@ -173,7 +176,7 @@ describe('el menú superior tiene las secciones fijas', () => {
     pintarCabecera();
     const nav = await screen.findByRole('navigation', { name: 'Catálogo' });
     expect(within(nav).getByRole('link', { name: /antiparasitarios/i }).getAttribute('href')).toContain(
-      'salud-y-antiparasitarios',
+      'familia=PAN',
     );
     expect(within(nav).getByRole('link', { name: /contacto/i }).getAttribute('href')).toContain('/contacto');
     // No son desplegables: no hay botón con ese nombre.
@@ -201,11 +204,10 @@ describe('las subcategorías se abren a la derecha', () => {
 
     // Al entrar el ratón en la fila de Perros, se abre su submenú.
     fireEvent.mouseEnter(perros.closest('li')!);
-    expect(screen.getByRole('link', { name: 'Seca' }).getAttribute('href')).toContain(
-      'category=alimentacion-seca',
-    );
+    expect(screen.getByRole('link', { name: 'Seca' }).getAttribute('href')).toContain('familia=PAS');
     expect(screen.getByRole('link', { name: 'Semihúmeda' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Snacks y premios' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Húmeda' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Snacks' })).toBeInTheDocument();
   });
 
   it('el flyout de la subcategoría se posiciona a la derecha (left-full), no abajo', () => {

@@ -167,3 +167,51 @@ describe('titular y migas', () => {
     expect(migas.map((m) => m.etiqueta)).toEqual(['Inicio', 'Tienda']);
   });
 });
+
+/* ══ 5. El filtro por familia de Factusol (menú de cabecera) ═══════════ */
+
+describe('el filtro por familia que enlaza el menú', () => {
+  it('lee una o varias familias de la URL', () => {
+    expect(filtrosDeParams(params('animal=perro&familia=PAH')).familia).toEqual(['PAH']);
+    expect(filtrosDeParams(params('familia=GBA,PGA')).familia).toEqual(['GBA', 'PGA']);
+  });
+
+  it('cuenta como UN solo filtro aunque lleve varias familias', () => {
+    // «Aseo» = GBA,PGA es una única elección del menú, no dos filtros.
+    expect(cuantosFiltros(filtrosDeParams(params('familia=GBA,PGA')))).toBe(1);
+    expect(cuantosFiltros(filtrosDeParams(params('animal=perro&familia=PAH')))).toBe(2);
+  });
+
+  it('se enseña como una ficha con nombre legible, soltable entera', () => {
+    const puestos = filtrosPuestos(filtrosDeParams(params('familia=PAH')), FACETAS);
+    const ficha = puestos.find((p) => p.clave === 'familia');
+    expect(ficha?.etiqueta).toBe('Alimentación húmeda');
+    // Sin `valor`: al quitarla se borra la familia entera.
+    expect(ficha?.valor).toBeUndefined();
+  });
+
+  it('un grupo de familias usa el nombre del grupo', () => {
+    const puestos = filtrosPuestos(filtrosDeParams(params('familia=AAV,GSU,PSU')), FACETAS);
+    expect(puestos.find((p) => p.clave === 'familia')?.etiqueta).toBe('Vitaminas y suplementos');
+  });
+
+  it('el titular nombra la sección de familia, con la mascota si la hay', () => {
+    expect(tituloDe(filtrosDeParams(params('animal=perro&familia=PAH')), FACETAS)).toBe(
+      'Alimentación húmeda para perros',
+    );
+    expect(tituloDe(filtrosDeParams(params('familia=PAN,GAN')), FACETAS)).toBe('Antiparasitarios');
+    expect(tituloDe(filtrosDeParams(params('familia=GBA,PGA')), FACETAS)).toBe('Aseo');
+  });
+
+  it('las migas meten la mascota como escalón cuando hay familia', () => {
+    const f = filtrosDeParams(params('animal=perro&familia=PAH'));
+    const migas = migasDe(f, tituloDe(f, FACETAS));
+    expect(migas.map((m) => m.etiqueta)).toEqual([
+      'Inicio',
+      'Tienda',
+      'perros',
+      'Alimentación húmeda para perros',
+    ]);
+    expect(migas[2]!.href).toBe('/tienda?animal=perro');
+  });
+});
