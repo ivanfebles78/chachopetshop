@@ -115,14 +115,22 @@ function FilaPanel({ item, cerrar }: { item: ItemMenu; cerrar: () => void }) {
     </>
   );
 
-  // Hoja: enlace directo, sin flecha ni flyout.
+  // Hoja: enlace directo, sin flecha ni flyout. Si lleva icono de animal
+  // (`iconoHijo`) —caso de Reptiles y Peces, que no despliegan porque tienen una
+  // sola familia— se pinta con el MISMO peso que las filas de animal con hijos,
+  // para que no se vea de segunda fila junto a Perros, Gatos o Ave.
   if (!item.hijos) {
+    const comoAnimal = Boolean(IconoHijo);
     return (
       <li>
         <Link
           to={item.href ?? '#'}
           onClick={cerrar}
-          className="flex min-h-10 items-center gap-2.5 rounded-control px-3 text-body-sm font-medium text-content transition-colors hover:bg-brand-50 hover:text-brand-800"
+          className={`flex items-center gap-2.5 rounded-control px-3 transition-colors hover:bg-brand-50 hover:text-brand-800 ${
+            comoAnimal
+              ? 'min-h-11 text-body font-semibold text-content'
+              : 'min-h-10 text-body-sm font-medium text-content'
+          }`}
         >
           {contenido}
         </Link>

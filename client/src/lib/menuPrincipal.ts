@@ -10,6 +10,7 @@ import {
   Rabbit,
   Bird,
   Fish,
+  Turtle,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -89,7 +90,10 @@ export const MENU_PRINCIPAL: ItemMenu[] = [
           { etiqueta: 'Snack', href: porFamilia('RSN', 'roedor') },
         ],
       },
-      { etiqueta: 'Reptiles', href: porFamilia('REA', 'reptil') },
+      // Reptiles y Peces tienen UNA sola familia de alimentación cada uno (REA y
+      // PCL), así que no despliegan como los demás; llevan su icono para salir al
+      // mismo nivel visual que Perros, Gatos, Roedores y Ave.
+      { etiqueta: 'Reptiles', iconoHijo: Turtle, href: porFamilia('REA', 'reptil') },
       { etiqueta: 'Peces', iconoHijo: Fish, href: porFamilia('PCL', 'pez') },
       {
         etiqueta: 'Ave',
