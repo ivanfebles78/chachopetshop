@@ -36,28 +36,74 @@ async function cargarXLSX(): Promise<XLSXModule> {
   return w.XLSX;
 }
 
-const CABECERAS = ['SKU', 'Nombre', 'Descripción', 'Marca', 'Animales', 'Categorías', 'Línea', 'Precio', 'Activo', 'Imagen', 'Slug'];
+const CABECERAS = ['SKU', 'Nombre', 'Descripción', 'Marca', 'Animales', 'Categorías', 'Línea', 'Precio', 'Activo', 'Origen', 'Imagen', 'Slug'];
 
-export async function exportarProductosAExcel(products: AdminProduct[]) {
-  const XLSX = await cargarXLSX();
-  const filas = products.map((p) => ({
-    SKU: p.variants[0]?.sku ?? '',
+/**
+ * ORIGEN de la ficha: «Factusol» o «Base de datos».
+ *
+ * Se decide por la familia de Factusol (`FAMART`): el sincronizador la pone en
+ * cada producto que casa con un artículo de Factusol, y un producto creado o
+ * gestionado a mano (accesorios, marcas que Factusol no trae…) no la tiene. Así
+ * que tener familia = vino de Factusol; no tenerla = es de nuestra base de datos.
+ * Es la misma señal que usa el panel para el filtro de familia.
+ */
+export function origenDeProducto(p: Pick<AdminProduct, 'familia'>): 'Factusol' | 'Base de datos' {
+  return p.familia ? 'Factusol' : 'Base de datos';
+}
+
+/**
+ * Convierte los productos en las filas del Excel. Función PURA (sin SheetJS ni
+ * descarga) para poder probar el contenido —sobre todo la columna «Origen»— sin
+ * navegador.
+ */
+export function filasExcelDeProductos(products: AdminProduct[]) {
+  return products.map((p) => ({
+    SKU: p.variants?.[0]?.sku ?? '',
     Nombre: p.name,
     'Descripción': p.description,
     Marca: p.brand?.slug ?? '',
-    Animales: p.animals.map((a) => a.slug).join('|'),
-    'Categorías': p.categories.map((c) => c.slug).join('|'),
+    Animales: (p.animals ?? []).map((a) => a.slug).join('|'),
+    'Categorías': (p.categories ?? []).map((c) => c.slug).join('|'),
     'Línea': p.line ?? '',
-    Precio: p.price ?? p.variants[0]?.price ?? '',
+    Precio: p.price ?? p.variants?.[0]?.price ?? '',
     Activo: p.active ? 'sí' : 'no',
+    Origen: origenDeProducto(p),
     Imagen: p.image,
     Slug: p.slug,
   }));
-  const ws = XLSX.utils.json_to_sheet(filas, { header: CABECERAS });
+}
+
+export async function exportarProductosAExcel(products: AdminProduct[]) {
+  const XLSX = await cargarXLSX();
+  const ws = XLSX.utils.json_to_sheet(filasExcelDeProductos(products), { header: CABECERAS });
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Productos');
   const fecha = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(wb, `productos-chacho-${fecha}.xlsx`);
+
+  /*
+   * Descarga por Blob + enlace, NO `XLSX.writeFile`.
+   *
+   * `exportarProductosAExcel` es `async`: la PRIMERA vez descarga la librería
+   * (`cargarXLSX`) con un `await` de red, y para cuando se llamaba a
+   * `XLSX.writeFile` el navegador ya no veía un «gesto de usuario» reciente y
+   * descartaba la descarga en silencio —el botón «no hacía nada»—. Construir el
+   * fichero en memoria y pinchar un enlace propio es el camino que los
+   * navegadores sí respetan de forma consistente.
+   */
+  const datos = XLSX.write(wb, { type: 'array', bookType: 'xlsx' }) as ArrayBuffer;
+  const blob = new Blob([datos], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `productos-chacho-${fecha}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  // Se libera un instante después: revocar antes de que el navegador tome el
+  // blob cancelaría la descarga en algunos navegadores.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 const norm = (s: string) =>

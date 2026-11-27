@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import * as XLSX from 'xlsx';
-import { parsearProductosDeExcel } from './excelProductos';
+import { parsearProductosDeExcel, filasExcelDeProductos, origenDeProducto } from './excelProductos';
+import type { AdminProduct } from './types';
 
 // En producción SheetJS se carga del CDN; en jsdom no hay red, así que lo
 // dejamos ya disponible en `window` (el cargador lo reutiliza si existe).
@@ -50,5 +51,49 @@ describe('parsearProductosDeExcel', () => {
     const rows = await parsearProductosDeExcel(f);
     expect(rows).toHaveLength(1);
     expect(rows[0]!.sku).toBe('9');
+  });
+});
+
+/** Un AdminProduct mínimo para probar la exportación. */
+function prod(over: Partial<AdminProduct> = {}): AdminProduct {
+  return {
+    id: 'p1',
+    name: 'Producto',
+    slug: 'producto',
+    description: '',
+    image: '',
+    price: 10,
+    active: true,
+    soloTienda: false,
+    line: null,
+    ean: null,
+    familia: null,
+    brand: null,
+    animals: [],
+    categories: [],
+    needs: [],
+    variants: [{ id: 'v1', sku: 'SKU1', price: 10, stock: 3, label: 'Único' }],
+    ...over,
+  };
+}
+
+describe('exportar productos: columna Origen', () => {
+  it('con familia de Factusol, el origen es «Factusol»', () => {
+    expect(origenDeProducto({ familia: 'PAS' })).toBe('Factusol');
+    const [fila] = filasExcelDeProductos([prod({ familia: 'PAS' })]);
+    expect(fila!.Origen).toBe('Factusol');
+  });
+
+  it('sin familia, el origen es «Base de datos»', () => {
+    expect(origenDeProducto({ familia: null })).toBe('Base de datos');
+    const [fila] = filasExcelDeProductos([prod({ familia: null })]);
+    expect(fila!.Origen).toBe('Base de datos');
+  });
+
+  it('las demás columnas siguen saliendo', () => {
+    const [fila] = filasExcelDeProductos([
+      prod({ name: 'Cama', slug: 'cama', familia: null, brand: { id: 'b', slug: 'nobleza', name: 'Nobleza' } }),
+    ]);
+    expect(fila).toMatchObject({ Nombre: 'Cama', Slug: 'cama', Marca: 'nobleza', SKU: 'SKU1', Activo: 'sí' });
   });
 });
