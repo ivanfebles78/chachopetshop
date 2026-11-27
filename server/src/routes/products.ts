@@ -244,7 +244,16 @@ productsRouter.get('/:slug', async (req, res, next) => {
         variants: { orderBy: { price: 'asc' } },
       },
     });
-    if (!product || !product.active || product.soloTienda) {
+    /*
+     * Un producto oculto (`active=false`, p. ej. retirado de Factusol) o de SOLO
+     * tienda física no se sirve al público: 404. Pero el panel enlaza el nombre
+     * de cada producto —incluidos los ocultos— a esta misma ficha pública, y un
+     * admin tiene que poder abrirla para revisarla. Así que a un admin
+     * autenticado se le sirve igual; al público, no. No expone nada: sigue
+     * haciendo falta la sesión de admin (cookie JWT con rol ADMIN).
+     */
+    const esAdmin = req.user?.role === 'ADMIN';
+    if (!product || (!esAdmin && (!product.active || product.soloTienda))) {
       return res.status(404).json({ error: 'Producto no encontrado' });
     }
 
