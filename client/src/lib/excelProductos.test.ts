@@ -97,3 +97,23 @@ describe('exportar productos: columna Origen', () => {
     expect(fila).toMatchObject({ Nombre: 'Cama', Slug: 'cama', Marca: 'nobleza', SKU: 'SKU1', Activo: 'sí' });
   });
 });
+
+describe('exportar productos: límite de celda de Excel (32767)', () => {
+  it('una imagen incrustada (data:) no revienta: se exporta en blanco', () => {
+    const dataUrl = 'data:image/png;base64,' + 'A'.repeat(60000);
+    const [fila] = filasExcelDeProductos([prod({ image: dataUrl })]);
+    expect(fila!.Imagen).toBe('');
+  });
+
+  it('una imagen normal (URL o ruta) se exporta tal cual', () => {
+    const [u] = filasExcelDeProductos([prod({ image: 'https://cdn.test/foto.jpg' })]);
+    expect(u!.Imagen).toBe('https://cdn.test/foto.jpg');
+    const [r] = filasExcelDeProductos([prod({ image: '/productos/nobleza/x.webp' })]);
+    expect(r!.Imagen).toBe('/productos/nobleza/x.webp');
+  });
+
+  it('cualquier celda larguísima se recorta a 32767 y no rompe SheetJS', () => {
+    const [fila] = filasExcelDeProductos([prod({ description: 'x'.repeat(40000) })]);
+    expect((fila!['Descripción'] as string).length).toBe(32767);
+  });
+});

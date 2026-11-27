@@ -52,24 +52,46 @@ export function origenDeProducto(p: Pick<AdminProduct, 'familia'>): 'Factusol' |
 }
 
 /**
+ * Límite DURO de una celda de Excel: 32767 caracteres. Pasarse hace que SheetJS
+ * lance «Text length must not exceed 32767 characters» y no se genera el fichero.
+ */
+const MAX_CELDA = 32767;
+const recortar = (v: unknown) =>
+  typeof v === 'string' && v.length > MAX_CELDA ? v.slice(0, MAX_CELDA) : v;
+
+/**
+ * El valor de la columna «Imagen».
+ *
+ * Algunas fichas guardan la imagen INCRUSTADA como `data:` (base64): son cadenas
+ * de decenas de miles de caracteres que ni caben en una celda ni sirven de nada
+ * como texto en el Excel. Se dejan en blanco —y, de paso, al reimportar el
+ * fichero el importador ignora la celda vacía y NO toca la imagen—. Las imágenes
+ * normales (URL o ruta `/productos/…`) van tal cual.
+ */
+function celdaImagen(image: string | null | undefined): string {
+  const s = image ?? '';
+  return s.startsWith('data:') ? '' : s;
+}
+
+/**
  * Convierte los productos en las filas del Excel. Función PURA (sin SheetJS ni
  * descarga) para poder probar el contenido —sobre todo la columna «Origen»— sin
- * navegador.
+ * navegador. Recorta cualquier celda al límite de Excel para no romper el export.
  */
 export function filasExcelDeProductos(products: AdminProduct[]) {
   return products.map((p) => ({
-    SKU: p.variants?.[0]?.sku ?? '',
-    Nombre: p.name,
-    'Descripción': p.description,
-    Marca: p.brand?.slug ?? '',
-    Animales: (p.animals ?? []).map((a) => a.slug).join('|'),
-    'Categorías': (p.categories ?? []).map((c) => c.slug).join('|'),
-    'Línea': p.line ?? '',
+    SKU: recortar(p.variants?.[0]?.sku ?? ''),
+    Nombre: recortar(p.name),
+    'Descripción': recortar(p.description),
+    Marca: recortar(p.brand?.slug ?? ''),
+    Animales: recortar((p.animals ?? []).map((a) => a.slug).join('|')),
+    'Categorías': recortar((p.categories ?? []).map((c) => c.slug).join('|')),
+    'Línea': recortar(p.line ?? ''),
     Precio: p.price ?? p.variants?.[0]?.price ?? '',
     Activo: p.active ? 'sí' : 'no',
     Origen: origenDeProducto(p),
-    Imagen: p.image,
-    Slug: p.slug,
+    Imagen: recortar(celdaImagen(p.image)),
+    Slug: recortar(p.slug),
   }));
 }
 
