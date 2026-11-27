@@ -77,43 +77,53 @@ function prod(over: Partial<AdminProduct> = {}): AdminProduct {
   };
 }
 
-describe('exportar productos: columna Origen', () => {
-  it('con familia de Factusol, el origen es «Factusol»', () => {
-    expect(origenDeProducto({ familia: 'PAS' })).toBe('Factusol');
-    const [fila] = filasExcelDeProductos([prod({ familia: 'PAS' })]);
-    expect(fila!.Origen).toBe('Factusol');
-  });
-
-  it('sin familia, el origen es «Base de datos»', () => {
-    expect(origenDeProducto({ familia: null })).toBe('Base de datos');
-    const [fila] = filasExcelDeProductos([prod({ familia: null })]);
-    expect(fila!.Origen).toBe('Base de datos');
-  });
-
-  it('las demás columnas siguen saliendo', () => {
-    const [fila] = filasExcelDeProductos([
-      prod({ name: 'Cama', slug: 'cama', familia: null, brand: { id: 'b', slug: 'nobleza', name: 'Nobleza' } }),
+describe('exportar productos: columnas y origen', () => {
+  it('exporta SOLO las 8 columnas pedidas, en orden', () => {
+    const [fila] = filasExcelDeProductos([prod()]);
+    expect(Object.keys(fila!)).toEqual([
+      'SKU o EAN',
+      'Nombre',
+      'Marca',
+      'Animal',
+      'Familia',
+      'Categoría',
+      'Origen',
+      'Activo',
     ]);
-    expect(fila).toMatchObject({ Nombre: 'Cama', Slug: 'cama', Marca: 'nobleza', SKU: 'SKU1', Activo: 'sí' });
-  });
-});
-
-describe('exportar productos: límite de celda de Excel (32767)', () => {
-  it('una imagen incrustada (data:) no revienta: se exporta en blanco', () => {
-    const dataUrl = 'data:image/png;base64,' + 'A'.repeat(60000);
-    const [fila] = filasExcelDeProductos([prod({ image: dataUrl })]);
-    expect(fila!.Imagen).toBe('');
   });
 
-  it('una imagen normal (URL o ruta) se exporta tal cual', () => {
-    const [u] = filasExcelDeProductos([prod({ image: 'https://cdn.test/foto.jpg' })]);
-    expect(u!.Imagen).toBe('https://cdn.test/foto.jpg');
-    const [r] = filasExcelDeProductos([prod({ image: '/productos/nobleza/x.webp' })]);
-    expect(r!.Imagen).toBe('/productos/nobleza/x.webp');
+  it('incluye la familia de Factusol', () => {
+    const [fila] = filasExcelDeProductos([prod({ familia: 'PAS' })]);
+    expect(fila!.Familia).toBe('PAS');
   });
 
-  it('cualquier celda larguísima se recorta a 32767 y no rompe SheetJS', () => {
-    const [fila] = filasExcelDeProductos([prod({ description: 'x'.repeat(40000) })]);
-    expect((fila!['Descripción'] as string).length).toBe(32767);
+  it('con familia, origen «Factusol»; sin familia, «Base de datos»', () => {
+    expect(origenDeProducto({ familia: 'GAH' })).toBe('Factusol');
+    expect(origenDeProducto({ familia: null })).toBe('Base de datos');
+    expect(filasExcelDeProductos([prod({ familia: 'GAH' })])[0]!.Origen).toBe('Factusol');
+    expect(filasExcelDeProductos([prod({ familia: null })])[0]!.Origen).toBe('Base de datos');
+  });
+
+  it('«SKU o EAN» usa el SKU y, si no hay, el EAN', () => {
+    const conSku = prod({ variants: [{ id: 'v', sku: 'SKU1', price: 1, stock: 1, label: 'u' }], ean: '84000000' });
+    expect(filasExcelDeProductos([conSku])[0]!['SKU o EAN']).toBe('SKU1');
+    const sinSku = prod({ variants: [], ean: '84000000' });
+    expect(filasExcelDeProductos([sinSku])[0]!['SKU o EAN']).toBe('84000000');
+  });
+
+  it('marca, animal y categoría salen como slugs', () => {
+    const [fila] = filasExcelDeProductos([
+      prod({
+        brand: { id: 'b', slug: 'nobleza', name: 'Nobleza' },
+        animals: [{ id: 'a', slug: 'perro', name: 'Perros' }],
+        categories: [{ id: 'c', slug: 'accesorios', name: 'Accesorios' }],
+      }),
+    ]);
+    expect(fila).toMatchObject({ Marca: 'nobleza', Animal: 'perro', 'Categoría': 'accesorios', Activo: 'sí' });
+  });
+
+  it('una celda larguísima se recorta a 32767 y no rompe SheetJS', () => {
+    const [fila] = filasExcelDeProductos([prod({ name: 'x'.repeat(40000) })]);
+    expect((fila!.Nombre as string).length).toBe(32767);
   });
 });

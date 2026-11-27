@@ -36,7 +36,17 @@ async function cargarXLSX(): Promise<XLSXModule> {
   return w.XLSX;
 }
 
-const CABECERAS = ['SKU', 'Nombre', 'Descripción', 'Marca', 'Animales', 'Categorías', 'Línea', 'Precio', 'Activo', 'Origen', 'Imagen', 'Slug'];
+/*
+ * LAS COLUMNAS DEL EXPORT — y SOLO estas, en este orden.
+ *
+ * Es un informe para revisar el catálogo (de dónde viene cada producto, su
+ * familia, si está activo…), no una copia completa: a propósito NO lleva
+ * descripción, línea, precio, imagen ni slug.
+ *
+ * El identificador va como «SKU o EAN»: el SKU de la primera variante y, si no
+ * tuviera, el EAN. El importador reconoce igualmente esa cabecera como clave.
+ */
+const CABECERAS = ['SKU o EAN', 'Nombre', 'Marca', 'Animal', 'Familia', 'Categoría', 'Origen', 'Activo'];
 
 /**
  * ORIGEN de la ficha: «Factusol» o «Base de datos».
@@ -60,38 +70,20 @@ const recortar = (v: unknown) =>
   typeof v === 'string' && v.length > MAX_CELDA ? v.slice(0, MAX_CELDA) : v;
 
 /**
- * El valor de la columna «Imagen».
- *
- * Algunas fichas guardan la imagen INCRUSTADA como `data:` (base64): son cadenas
- * de decenas de miles de caracteres que ni caben en una celda ni sirven de nada
- * como texto en el Excel. Se dejan en blanco —y, de paso, al reimportar el
- * fichero el importador ignora la celda vacía y NO toca la imagen—. Las imágenes
- * normales (URL o ruta `/productos/…`) van tal cual.
- */
-function celdaImagen(image: string | null | undefined): string {
-  const s = image ?? '';
-  return s.startsWith('data:') ? '' : s;
-}
-
-/**
  * Convierte los productos en las filas del Excel. Función PURA (sin SheetJS ni
  * descarga) para poder probar el contenido —sobre todo la columna «Origen»— sin
  * navegador. Recorta cualquier celda al límite de Excel para no romper el export.
  */
 export function filasExcelDeProductos(products: AdminProduct[]) {
   return products.map((p) => ({
-    SKU: recortar(p.variants?.[0]?.sku ?? ''),
+    'SKU o EAN': recortar(p.variants?.[0]?.sku || p.ean || ''),
     Nombre: recortar(p.name),
-    'Descripción': recortar(p.description),
     Marca: recortar(p.brand?.slug ?? ''),
-    Animales: recortar((p.animals ?? []).map((a) => a.slug).join('|')),
-    'Categorías': recortar((p.categories ?? []).map((c) => c.slug).join('|')),
-    'Línea': recortar(p.line ?? ''),
-    Precio: p.price ?? p.variants?.[0]?.price ?? '',
-    Activo: p.active ? 'sí' : 'no',
+    Animal: recortar((p.animals ?? []).map((a) => a.slug).join('|')),
+    Familia: recortar(p.familia ?? ''),
+    'Categoría': recortar((p.categories ?? []).map((c) => c.slug).join('|')),
     Origen: origenDeProducto(p),
-    Imagen: recortar(celdaImagen(p.image)),
-    Slug: recortar(p.slug),
+    Activo: p.active ? 'sí' : 'no',
   }));
 }
 
@@ -137,7 +129,7 @@ const norm = (s: string) =>
 
 /** Cabeceras aceptadas para cada campo (tolerante a tildes y sinónimos). */
 const CLAVES: Record<string, string[]> = {
-  sku: ['sku', 'ean', 'referencia', 'ref'],
+  sku: ['sku', 'ean', 'sku o ean', 'referencia', 'ref'],
   slug: ['slug'],
   name: ['nombre', 'name', 'producto'],
   description: ['descripcion', 'description'],
